@@ -55,27 +55,50 @@ def setup_commands(app):
         cities = ["Madrid", "Barcelona", "Granada", "Valencia"]
         count = int(count)
 
-        if count <= 0:
-            print("Count must be greater than 0.")
-            return
-
+        # Load all places
         places = db.session.execute(select(Place)).scalars().all()
 
         if not places:
             print("No places found. Create places before inserting locations.")
             return
 
+        # Ensure we create at least one location per place.
+        if count < len(places):
+            print(f"Adjusting count to {len(places)} so every place gets a location.")
+            count = len(places)
+
+        # Build every possible place-city combination.
         all_combinations = []
         for place in places:
             for city in cities:
                 all_combinations.append((place, city))
 
+        # Cap the count at the maximum number of unique combinations.
         if count > len(all_combinations):
             print(f"Only creating {len(all_combinations)} locations because that is the maximum number of unique combinations.")
             count = len(all_combinations)
 
-        selected_combinations = random.sample(all_combinations, count)
+        # Start by giving each place one random city.
+        selected_combinations = []
+        used_combinations = set()
 
+        for place in places:
+            city = random.choice(cities)
+            selected_combinations.append((place, city))
+            used_combinations.add((place.id, city))
+
+        # Keep only the combinations that have not been used yet.
+        remaining_combinations = []
+        for place, city in all_combinations:
+            if (place.id, city) not in used_combinations:
+                remaining_combinations.append((place, city))
+
+        # Fill any remaining slots with extra unique combinations.
+        remaining_count = count - len(selected_combinations)
+        if remaining_count > 0:
+            selected_combinations.extend(random.sample(remaining_combinations, remaining_count))
+
+        # Create and save the selected location records.
         for place, city in selected_combinations:
             location = Location()
             location.city = city
