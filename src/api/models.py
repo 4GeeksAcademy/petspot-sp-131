@@ -41,6 +41,9 @@ class Place(db.Model):
     # Relationship One - Many
     locations: Mapped[list["Location"]] = relationship("Location", back_populates="place")
 
+    def __str__(self):
+        return self.name
+
     def serialize(self):
         return {
             "id": self.id,
