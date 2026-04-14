@@ -1,7 +1,8 @@
 
 import click, random
-from api.models import db, User, Place, EstablishmentType
+from api.models import db, User, Place, EstablishmentType, Location
 from werkzeug.security import generate_password_hash
+from sqlalchemy import select
 
 """
 In this file, you can add as many commands as you want using the @app.cli.command decorator
@@ -46,6 +47,45 @@ def setup_commands(app):
             print("Place: ", place.email, " created.")
 
         print("All test places created")
+
+    @app.cli.command("insert-test-locations") # name of our command
+    @click.argument("count") # argument of out command
+    def insert_test_locations(count):
+        print("Creating test locations based on existing places")
+        cities = ["Madrid", "Barcelona", "Granada", "Valencia"]
+        count = int(count)
+
+        if count <= 0:
+            print("Count must be greater than 0.")
+            return
+
+        places = db.session.execute(select(Place)).scalars().all()
+
+        if not places:
+            print("No places found. Create places before inserting locations.")
+            return
+
+        all_combinations = []
+        for place in places:
+            for city in cities:
+                all_combinations.append((place, city))
+
+        if count > len(all_combinations):
+            print(f"Only creating {len(all_combinations)} locations because that is the maximum number of unique combinations.")
+            count = len(all_combinations)
+
+        selected_combinations = random.sample(all_combinations, count)
+
+        for place, city in selected_combinations:
+            location = Location()
+            location.city = city
+            location.place = place
+            db.session.add(location)
+            print(f"Location for {place.name} in {city} created.")
+
+        db.session.commit()
+
+        print("All test locations created")
 
     @app.cli.command("insert-test-data")
     def insert_test_data():
