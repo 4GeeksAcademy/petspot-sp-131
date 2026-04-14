@@ -39,7 +39,7 @@ class Place(db.Model):
     pet_rules: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # Relationship One - Many
-    locations: Mapped[list["Location"]] = relationship("Location", back_populates="place")
+    locations: Mapped[list["Location"]] = relationship("Location", back_populates="place", cascade="all, delete-orphan")
 
     def __str__(self):
         return self.name

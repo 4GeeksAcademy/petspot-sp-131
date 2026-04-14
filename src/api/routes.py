@@ -105,3 +105,11 @@ def add_place():
     db.session.commit()
     
     return jsonify(place.serialize()), 201
+
+@api.route("/places/<int:place_id>", methods=["DELETE"])
+def delete_place(place_id):
+    place_exists = db.get_or_404(Place, place_id, description="Place not found")
+    db.session.delete(place_exists)
+    db.session.commit()
+    return jsonify(response="Place deleted"), 200
+
