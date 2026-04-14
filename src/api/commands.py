@@ -1,6 +1,7 @@
 
-import click
-from api.models import db, User
+import click, random
+from api.models import db, User, Place, EstablishmentType
+from werkzeug.security import generate_password_hash
 
 """
 In this file, you can add as many commands as you want using the @app.cli.command decorator
@@ -28,6 +29,23 @@ def setup_commands(app):
             print("User: ", user.email, " created.")
 
         print("All test users created")
+
+    @app.cli.command("insert-test-places") # name of our command
+    @click.argument("count") # argument of out command
+    def insert_test_places(count):
+        print("Creating test places")
+        for x in range(1, int(count) + 1):
+            place = Place()
+            place.email = "test_place" + str(x) + "@test.com"
+            place.password = generate_password_hash("123456")
+            place.name = "Place_" + str(x)
+            place.establishment_type = random.choice(list(EstablishmentType))
+            place.pet_rules = "Pets allowed under supervision"
+            db.session.add(place)
+            db.session.commit()
+            print("Place: ", place.email, " created.")
+
+        print("All test places created")
 
     @app.cli.command("insert-test-data")
     def insert_test_data():
