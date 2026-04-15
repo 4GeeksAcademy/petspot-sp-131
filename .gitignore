@@ -6,6 +6,7 @@
 !.github
 php_errorlog
 .log
+!.python-version
 
 # do not ignore gitpod and render files
 !.gitpod.Dockerfile
