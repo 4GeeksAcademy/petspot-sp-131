@@ -113,3 +113,82 @@ def delete_place(place_id):
     db.session.commit()
     return jsonify(response="Place deleted"), 200
 
+@api.route("/places/<int:place_id>", methods=["PUT"])
+def update_place(place_id):
+    place = db.get_or_404(Place, place_id, description="Place not found")
+    data = request.get_json(silent=True) or {}
+    email = data.get("email")
+    password = data.get("password")
+    name = data.get("name")
+    establishment_type = data.get("establishment_type")
+    locations = data.get("locations")
+    pet_rules_provided = "pet_rules" in data
+    pet_rules = data.get("pet_rules")
+
+    if email is not None:
+        if not isinstance(email, str):
+            return jsonify(response="Email must be a string"), 400
+        email = email.strip()
+        if not email:
+            return jsonify(response="Email cannot be empty"), 400
+
+        email_exists = db.session.execute(
+            select(Place).where(Place.email == email, Place.id != place_id)
+        ).scalar_one_or_none()
+        if email_exists is not None:
+            return jsonify(response="Unable to update account with the provided information"), 400
+
+        place.email = email
+
+    if password is not None:
+        if not isinstance(password, str):
+            return jsonify(response="Password must be a string"), 400
+        password = password.strip()
+        if not password:
+            return jsonify(response="Password cannot be empty"), 400
+        place.password = generate_password_hash(password)
+
+    if name is not None:
+        if not isinstance(name, str):
+            return jsonify(response="Name must be a string"), 400
+        name = name.strip()
+        if not name:
+            return jsonify(response="Name cannot be empty"), 400
+        place.name = name
+
+    if establishment_type is not None:
+        if not isinstance(establishment_type, str):
+            return jsonify(response="Establishment type must be a string"), 400
+        try:
+            place.establishment_type = EstablishmentType(establishment_type.strip())
+        except ValueError:
+            return jsonify(response="Invalid establishment type"), 400
+
+    if pet_rules_provided:
+        if pet_rules is None:
+            place.pet_rules = None
+        else:
+            pet_rules = str(pet_rules).strip()
+            if len(pet_rules) > 250:
+                return jsonify(response="pet_rules cannot exceed 250 characters"), 400
+            place.pet_rules = pet_rules or None
+
+    if locations is not None:
+        if not isinstance(locations, list):
+            return jsonify(response="Locations must be a list"), 400
+        if not len(locations):
+            return jsonify(response="Locations cannot be empty"), 400
+        if not all(isinstance(city, str) for city in locations):
+            return jsonify(response="All locations must be strings"), 400
+
+        normalized_locations = [city.strip().title() for city in locations]
+        if not all(normalized_locations):
+            return jsonify(response="Location entries cannot be empty"), 400
+
+        place.locations.clear()
+        for city in normalized_locations:
+            place.locations.append(Location(city=city))
+
+    db.session.commit()
+
+    return jsonify(place.serialize()), 200
