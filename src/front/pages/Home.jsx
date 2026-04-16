@@ -48,7 +48,8 @@ export const Home = () => {
 					</span>
 				)}
 			</div>
-			<Link to="/usuario/admin" className="btn btn-primary mt-3">Admin</Link>
+			<Link to="/usuario/admin" className="btn btn-primary mt-3 me-2">Admin</Link>
+			<Link to="/places" className="btn btn-primary mt-3 me-2">Places</Link>
 		</div>
 	);
 }; 
