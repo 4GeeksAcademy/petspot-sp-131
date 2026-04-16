@@ -182,6 +182,14 @@ def get_admins():
     return jsonify([admin.serialize() for admin in admins]), 200
 
 
+@api.route('/admin/<int:id>', methods=['GET'])
+def get_admin(id):
+    admin = AdminUser.query.get(id)
+    if not admin:
+        return jsonify({"error": "Admin not found"}), 404
+    return jsonify(admin.serialize()), 200
+
+
 @api.route('/admin', methods=['POST'])
 def create_admin():
     data = request.get_json()
@@ -194,6 +202,7 @@ def create_admin():
     password = data.get('password')
 
     if not name or not email or not password:
+
         return jsonify({"error": "Missing name, email or password"}), 400
 
     existing_admin = AdminUser.query.filter_by(email=email).first()
