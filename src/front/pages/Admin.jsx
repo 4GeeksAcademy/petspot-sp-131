@@ -1,289 +1,427 @@
 import React, { useState, useEffect } from "react";
+import { Link, useParams, useNavigate, Outlet } from "react-router-dom";
 
-export const Admin = () => {
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    password: ""
-  });
-
-  const [message, setMessage] = useState("");
+// ========= COMPONENTE: LISTADO DE ADMINS =========
+export const AdminList = () => {
   const [admins, setAdmins] = useState([]);
-  const [editing, setEditing] = useState(false);
-  const [editingId, setEditingId] = useState(null);
-
-  // Cargar la lista de admins al montar el componente
-  useEffect(() => {
-    fetchAdmins();
-  }, []);
+  const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(true);
 
   const fetchAdmins = async () => {
+    setLoading(true);
     try {
       const backendUrl = import.meta.env.VITE_BACKEND_URL;
       const response = await fetch(`${backendUrl}/api/admin`, {
         method: "GET",
-        headers: {
-          "Content-Type": "application/json"
-        }
+        headers: { "Content-Type": "application/json" }
       });
       if (response.ok) {
         const data = await response.json();
         setAdmins(data);
+      } else {
+        const errorData = await response.json();
+        setMessage(errorData.msg || "Error al cargar los admins");
       }
     } catch (error) {
       console.error("Error al cargar admins:", error);
+      setMessage("Error al conectar con el servidor");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    try {
-      const backendUrl = import.meta.env.VITE_BACKEND_URL;
-      const response = await fetch(`${backendUrl}/api/admin`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(formData)
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setMessage("Admin creado correctamente");
-        setFormData({
-          name: "",
-          email: "",
-          password: ""
-        });
-        fetchAdmins(); // Recargar la lista
-      } else {
-        setMessage(data.error || "Error al crear admin");
-      }
-    } catch (error) {
-      setMessage("No se pudo conectar con el backend");
-    }
-  };
-
-  const handleEdit = (admin) => {
-    setEditing(true);
-    setEditingId(admin.id);
-    setFormData({
-      name: admin.name,
-      email: admin.email,
-      password: ""
-    });
-    setMessage("");
-  };
-
-  const handleUpdateSubmit = async (e) => {
-    e.preventDefault();
-
-    try {
-      const backendUrl = import.meta.env.VITE_BACKEND_URL;
-      const updateData = {
-        name: formData.name,
-        email: formData.email
-      };
-      // Solo incluir password si no está vacío
-      if (formData.password) {
-        updateData.password = formData.password;
-      }
-
-      const response = await fetch(`${backendUrl}/api/admin/${editingId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(updateData)
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setMessage("Admin actualizado correctamente");
-        setFormData({
-          name: "",
-          email: "",
-          password: ""
-        });
-        setEditing(false);
-        setEditingId(null);
-        fetchAdmins(); // Recargar la lista
-      } else {
-        setMessage(data.error || "Error al actualizar admin");
-      }
-    } catch (error) {
-      setMessage("No se pudo conectar con el backend");
-    }
-  };
+  useEffect(() => {
+    fetchAdmins();
+  }, []);
 
   const handleDelete = async (id) => {
-    if (!confirm("¿Estás seguro de que quieres eliminar este admin?")) {
-      return;
-    }
-
+    setLoading(true);
     try {
       const backendUrl = import.meta.env.VITE_BACKEND_URL;
       const response = await fetch(`${backendUrl}/api/admin/${id}`, {
         method: "DELETE",
-        headers: {
-          "Content-Type": "application/json"
-        }
+        headers: { "Content-Type": "application/json" }
       });
-
-      const data = await response.json();
-
       if (response.ok) {
-        setMessage("Admin eliminado correctamente");
-        fetchAdmins(); // Recargar la lista
+        setMessage("Admin eliminado exitosamente");
+        fetchAdmins();
       } else {
-        setMessage(data.error || "Error al eliminar admin");
+        const errorData = await response.json();
+        setMessage(errorData.msg || "Error al eliminar admin");
       }
     } catch (error) {
-      setMessage("No se pudo conectar con el backend");
+      console.error("Error al eliminar admin:", error);
+      setMessage("Error al conectar con el servidor");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleCancelEdit = () => {
-    setEditing(false);
-    setEditingId(null);
-    setFormData({
-      name: "",
-      email: "",
-      password: ""
-    });
-    setMessage("");
-  };
+  if (loading) {
+    return <div className="text-center mt-5"><p>Cargando admins...</p></div>;
+  }
 
   return (
-    <div className="container">
-      <h1 className="text-center my-4">
-        {editing ? "Editar Admin" : "Crear Admin"}
-      </h1>
+    <div className="container mt-5">
+      <h1 className="mb-4">Administradores</h1>
 
-      {/* Formulario de creación/edición */}
-      <form
-        onSubmit={editing ? handleUpdateSubmit : handleSubmit}
-        className="row g-3 justify-content-center"
-      >
-        <div className="col-md-6">
-          <label className="form-label">Nombre</label>
+      {message && <div className="alert alert-info">{message}</div>}
+
+      <Link to="/usuario/admin/crear" className="btn btn-success mb-3">
+        + Crear Admin
+      </Link>
+
+      <table className="table table-striped">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Nombre</th>
+            <th>Email</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {admins.length === 0 ? (
+            <tr>
+              <td colSpan="4" className="text-center">No hay admins registrados</td>
+            </tr>
+          ) : (
+            admins.map((admin) => (
+              <tr key={admin.id}>
+                <td>{admin.id}</td>
+                <td>{admin.name}</td>
+                <td>{admin.email}</td>
+                <td>
+                  <Link to={`/usuario/admin/editar/${admin.id}`} className="btn btn-primary me-2">
+                    Editar
+                  </Link>
+                  <Link to={`/usuario/admin/eliminar/${admin.id}`} className="btn btn-danger">
+                    Eliminar
+                  </Link>
+                </td>
+              </tr>
+            ))
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
+};
+
+// ========= COMPONENTE: EDITAR ADMIN =========
+export const AdminEdit = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [admin, setAdmin] = useState({ name: "", email: "", password: "" });
+  const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    const fetchAdmin = async () => {
+      try {
+        const backendUrl = import.meta.env.VITE_BACKEND_URL;
+        const response = await fetch(`${backendUrl}/api/admin/${id}`, {
+          method: "GET",
+          headers: { "Content-Type": "application/json" }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setAdmin(data);
+        } else {
+          setMessage("Error al cargar datos del admin");
+        }
+      } catch (error) {
+        console.error("Error al cargar admin:", error);
+        setMessage("Error al conectar con el servidor");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAdmin();
+  }, [id]);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setAdmin({ ...admin, [name]: value });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    try {
+      const backendUrl = import.meta.env.VITE_BACKEND_URL;
+      const dataToSend = { ...admin };
+      if (!dataToSend.password) {
+        delete dataToSend.password;
+      }
+      const response = await fetch(`${backendUrl}/api/admin/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(dataToSend)
+      });
+      if (response.ok) {
+        setMessage("Admin actualizado exitosamente");
+      } else {
+        const errorData = await response.json();
+        setMessage(errorData.msg || "Error al actualizar admin");
+      }
+    } catch (error) {
+      console.error("Error al actualizar admin:", error);
+      setMessage("Error al conectar con el servidor");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (loading) {
+    return <div className="text-center mt-5"><p>Cargando...</p></div>;
+  }
+
+  return (
+    <div className="container mt-5">
+      <h1 className="mb-4">Editar Admin</h1>
+
+      {message && <div className={`alert ${message.includes("exitosamente") ? "alert-success" : "alert-danger"}`}>{message}</div>}
+
+      <form onSubmit={handleSubmit}>
+        <div className="mb-3">
+          <label htmlFor="name" className="form-label">Nombre</label>
           <input
             type="text"
             className="form-control"
+            id="name"
             name="name"
-            value={formData.name}
-            onChange={handleChange}
-            placeholder="Nombre del admin"
+            value={admin.name}
+            onChange={handleInputChange}
             required
           />
         </div>
-
-        <div className="col-md-6">
-          <label className="form-label">Email</label>
+        <div className="mb-3">
+          <label htmlFor="email" className="form-label">Email</label>
           <input
             type="email"
             className="form-control"
+            id="email"
             name="email"
-            value={formData.email}
-            onChange={handleChange}
-            placeholder="Email del admin"
+            value={admin.email}
+            onChange={handleInputChange}
             required
           />
         </div>
-
-        <div className="col-md-6">
-          <label className="form-label">Password</label>
+        <div className="mb-3">
+          <label htmlFor="password" className="form-label">Password (dejar vacio para no cambiar)</label>
           <input
             type="password"
             className="form-control"
+            id="password"
             name="password"
-            value={formData.password}
-            onChange={handleChange}
-            placeholder={
-              editing ? "Dejar vacío para mantener el actual" : "Password"
-            }
-            required={!editing}
+            value={admin.password}
+            onChange={handleInputChange}
+            placeholder="Nueva contrasena"
           />
         </div>
-
-        <div className="col-12 text-center">
-          {editing ? (
-            <>
-              <button
-                type="submit"
-                className="btn btn-warning me-2"
-              >
-                Actualizar Admin
-              </button>
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={handleCancelEdit}
-              >
-                Cancelar
-              </button>
-            </>
-          ) : (
-            <button type="submit" className="btn btn-success">
-              Crear admin
-            </button>
-          )}
-        </div>
+        <button type="submit" className="btn btn-primary" disabled={submitting}>
+          {submitting ? "Guardando..." : "Guardar Cambios"}
+        </button>
+        <Link to="/usuario/admin" className="btn btn-secondary ms-2">
+          Volver al listado
+        </Link>
       </form>
-
-      {message && <p className="text-center mt-3">{message}</p>}
-
-      {/* Tabla de admins */}
-      <div className="row mt-5">
-        <h3 className="text-center">Lista de Admins</h3>
-        {admins.length === 0 ? (
-          <p className="text-center">No hay admins registrados aún.</p>
-        ) : (
-          <table className="table table-striped">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Nombre</th>
-                <th>Email</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {admins.map((admin) => (
-                <tr key={admin.id}>
-                  <td>{admin.id}</td>
-                  <td>{admin.name}</td>
-                  <td>{admin.email}</td>
-                  <td>
-                    <button
-                      className="btn btn-sm btn-warning me-2"
-                      onClick={() => handleEdit(admin)}
-                    >
-                      Editar
-                    </button>
-                    <button
-                      className="btn btn-sm btn-danger"
-                      onClick={() => handleDelete(admin.id)}
-                    >
-                      Eliminar
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
     </div>
   );
+};
+
+// ========= COMPONENTE: ELIMINAR ADMIN (VISTA DE CONFIRMACION) =========
+export const AdminDelete = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [admin, setAdmin] = useState(null);
+  const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchAdmin = async () => {
+      try {
+        const backendUrl = import.meta.env.VITE_BACKEND_URL;
+        const response = await fetch(`${backendUrl}/api/admin/${id}`, {
+          method: "GET",
+          headers: { "Content-Type": "application/json" }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setAdmin(data);
+        } else {
+          setMessage("No se pudo encontrar el admin");
+        }
+      } catch (error) {
+        console.error("Error al cargar admin:", error);
+        setMessage("Error al conectar con el servidor");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAdmin();
+  }, [id]);
+
+  const handleConfirmDelete = async () => {
+    try {
+      const backendUrl = import.meta.env.VITE_BACKEND_URL;
+      const response = await fetch(`${backendUrl}/api/admin/${id}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" }
+      });
+      if (response.ok) {
+        navigate("/usuario/admin");
+      } else {
+        const errorData = await response.json();
+        setMessage(errorData.msg || "Error al eliminar admin");
+      }
+    } catch (error) {
+      console.error("Error al eliminar admin:", error);
+      setMessage("Error al conectar con el servidor");
+    }
+  };
+
+  if (loading) {
+    return <div className="text-center mt-5"><p>Cargando...</p></div>;
+  }
+
+  if (message && !admin) {
+    return (
+      <div className="container mt-5">
+        <div className="alert alert-danger">{message}</div>
+        <Link to="/usuario/admin" className="btn btn-secondary">Volver al listado</Link>
+      </div>
+    );
+  }
+
+  return (
+    <div className="container mt-5">
+      <div className="card">
+        <div className="card-header bg-danger text-white">
+          <h3>Eliminar Admin</h3>
+        </div>
+        <div className="card-body">
+          <p>¿Estás seguro de que quieres eliminar este administrador?</p>
+          <div className="alert alert-warning">
+            <strong>ID:</strong> {admin.id}<br />
+            <strong>Nombre:</strong> {admin.name}<br />
+            <strong>Email:</strong> {admin.email}
+          </div>
+          <p className="text-danger">
+            <strong>Esta accion no se puede deshacer.</strong>
+          </p>
+        </div>
+        <div className="card-footer text-center">
+          <button
+            onClick={handleConfirmDelete}
+            className="btn btn-danger me-2"
+          >
+            Si, eliminar
+          </button>
+          <Link to="/usuario/admin" className="btn btn-secondary">
+            Cancelar y volver
+          </Link>
+        </div>
+      </div>
+
+      {message && <p className="text-center mt-3">{message}</p>}
+    </div>
+  );
+};
+
+// ========= COMPONENTE: CREAR ADMIN (VISTA DE CREACION) =========
+export const AdminCreate = () => {
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({ name: "", email: "", password: "" });
+  const [message, setMessage] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    try {
+      const backendUrl = import.meta.env.VITE_BACKEND_URL;
+      const response = await fetch(`${backendUrl}/api/admin`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData)
+      });
+      if (response.ok) {
+        navigate("/usuario/admin");
+      } else {
+        const errorData = await response.json();
+        setMessage(errorData.msg || "Error al crear admin");
+      }
+    } catch (error) {
+      console.error("Error al crear admin:", error);
+      setMessage("Error al conectar con el servidor");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="container mt-5">
+      <h1 className="mb-4">Crear Admin</h1>
+
+      {message && <div className="alert alert-danger">{message}</div>}
+
+      <form onSubmit={handleSubmit}>
+        <div className="mb-3">
+          <label htmlFor="name" className="form-label">Nombre</label>
+          <input
+            type="text"
+            className="form-control"
+            id="name"
+            name="name"
+            value={formData.name}
+            onChange={handleInputChange}
+            required
+          />
+        </div>
+        <div className="mb-3">
+          <label htmlFor="email" className="form-label">Email</label>
+          <input
+            type="email"
+            className="form-control"
+            id="email"
+            name="email"
+            value={formData.email}
+            onChange={handleInputChange}
+            required
+          />
+        </div>
+        <div className="mb-3">
+          <label htmlFor="password" className="form-label">Password</label>
+          <input
+            type="password"
+            className="form-control"
+            id="password"
+            name="password"
+            value={formData.password}
+            onChange={handleInputChange}
+            required
+          />
+        </div>
+        <button type="submit" className="btn btn-success" disabled={submitting}>
+          {submitting ? "Creando..." : "Crear Admin"}
+        </button>
+        <Link to="/usuario/admin" className="btn btn-secondary ms-2">
+          Volver al listado
+        </Link>
+      </form>
+    </div>
+  );
+};
+
+// ========= COMPONENTE PRINCIPAL: ADMIN (CONTENEDOR DE RUTAS) =========
+export const Admin = () => {
+  return <Outlet />;
 };
