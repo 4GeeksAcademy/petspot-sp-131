@@ -29,7 +29,7 @@ function PlaceCard({ placeObj }) {
                         <p className="card-text m-0">{pet_rules}</p>
                         <div className="d-grid d-sm-flex gap-2 justify-content-sm-end">
                             <Link to={`/places/edit/${id}`} className="btn btn-outline-warning">Edit</Link>
-                            <Link to="#" className="btn btn-outline-danger">Delete</Link>
+                            <Link to={`/places/delete/${id}`} className="btn btn-outline-danger">Delete</Link>
                         </div>
                     </div>
                 </div>

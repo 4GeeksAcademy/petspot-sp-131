@@ -10,6 +10,7 @@ function EditPlaceForm() {
 
     const { store, dispatch } = useGlobalReducer();
     const { id } = useParams();
+    const activePlace = store.places.find((place) => place.id === Number(id))
 
     const [email, setEmail] = useState("")
     const [placeName, setPlaceName] = useState("")
@@ -21,8 +22,6 @@ function EditPlaceForm() {
     const navigate = useNavigate();
 
     useEffect(() => {
-        const activePlace = store.places.find((place) => place.id === Number(id))
-
         if (activePlace) {
             setEmail(activePlace.email)
             setPlaceName(activePlace.name)
@@ -30,7 +29,7 @@ function EditPlaceForm() {
             setPlaceLocations(activePlace.locations.map((location) => location.city))
             setPetRules(activePlace.pet_rules || "")
         }
-    }, [store.places, id])
+    }, [activePlace])
 
     function handleSubmit(event) {
         event.preventDefault()
@@ -114,6 +113,10 @@ function EditPlaceForm() {
             event.preventDefault()
             handleAddLocation(event)
         }
+    }
+
+    if (!activePlace && store.places.length > 0) {
+        return <p className="text-center text-body-secondary">Place not found.</p>
     }
 
     return (

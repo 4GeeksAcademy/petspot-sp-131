@@ -52,6 +52,12 @@ export default function storeReducer(store, action = {}) {
         places: store.places.map((place) => place.id === action.payload.id ? action.payload : place)
       }
 
+    case 'DELETE_PLACE':
+      return {
+        ...store,
+        places: store.places.filter((place) => place.id !== action.payload)
+      }
+
     default:
       throw Error('Unknown action.');
   }
