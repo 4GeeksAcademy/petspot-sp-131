@@ -92,6 +92,9 @@ export const AdminList = () => {
                 <td>{admin.name}</td>
                 <td>{admin.email}</td>
                 <td>
+                  <Link to={`/usuario/admin/detalle/${admin.id}`} className="btn btn-info me-2 text-white">
+                    Ver perfil
+                  </Link>
                   <Link to={`/usuario/admin/editar/${admin.id}`} className="btn btn-primary me-2">
                     Editar
                   </Link>
@@ -417,6 +420,71 @@ export const AdminCreate = () => {
           Volver al listado
         </Link>
       </form>
+    </div>
+  );
+};
+
+// ========= COMPONENTE: DETALLE ADMIN =========
+export const AdminDetail = () => {
+  const { id } = useParams();
+  const [admin, setAdmin] = useState(null);
+  const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchAdmin = async () => {
+      try {
+        const backendUrl = import.meta.env.VITE_BACKEND_URL;
+        const response = await fetch(`${backendUrl}/api/admin/${id}`, {
+          method: "GET",
+          headers: { "Content-Type": "application/json" }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setAdmin(data);
+        } else {
+          setMessage("No se pudo encontrar el admin");
+        }
+      } catch (error) {
+        console.error("Error al cargar admin:", error);
+        setMessage("Error al conectar con el servidor");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAdmin();
+  }, [id]);
+
+  if (loading) {
+    return <div className="text-center mt-5"><p>Cargando admin...</p></div>;
+  }
+
+  if (message && !admin) {
+    return (
+      <div className="container mt-5">
+        <div className="alert alert-danger">{message}</div>
+        <Link to="/usuario/admin" className="btn btn-secondary">Volver al listado</Link>
+      </div>
+    );
+  }
+
+  return (
+    <div className="container mt-5">
+      <div className="card">
+        <div className="card-header bg-info text-white">
+          <h3>Perfil de Administrador</h3>
+        </div>
+        <div className="card-body">
+          <p className="fs-5"><strong>ID:</strong> {admin.id}</p>
+          <p className="fs-5"><strong>Nombre:</strong> {admin.name}</p>
+          <p className="fs-5"><strong>Email:</strong> {admin.email}</p>
+        </div>
+        <div className="card-footer">
+          <Link to="/usuario/admin" className="btn btn-secondary">
+            Volver al listado
+          </Link>
+        </div>
+      </div>
     </div>
   );
 };
