@@ -23,7 +23,7 @@ def handle_hello():
 
 @api.route("/places", methods=["GET"])
 def get_places():
-    places = db.session.execute(select(Place)).scalars().all()
+    places = db.session.execute(select(Place).order_by(Place.id.desc())).scalars().all()
     response = [place.serialize() for place in places]
     return jsonify(response), 200
 

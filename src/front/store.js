@@ -13,7 +13,7 @@ export const initialStore = () => {
         background: null,
       }
     ],
-    places: null
+    places: []
   }
 }
 
@@ -34,11 +34,18 @@ export default function storeReducer(store, action = {}) {
         todos: store.todos.map((todo) => (todo.id === id ? { ...todo, background: color } : todo))
       };
 
-    case 'ADD_PLACES':
+    case 'GET_PLACES':
       return {
         ...store,
         places: action.payload
       }
+
+    case 'ADD_PLACE':
+      return {
+        ...store,
+        places: [action.payload, ...store.places]
+      }
+
     default:
       throw Error('Unknown action.');
   }

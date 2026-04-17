@@ -17,7 +17,7 @@ function PlacesList() {
                 }
                 const responseJSON = await response.json()
                 dispatch({
-                    type: "ADD_PLACES",
+                    type: "GET_PLACES",
                     payload: responseJSON
                 })
 
@@ -31,11 +31,11 @@ function PlacesList() {
 
     return (
         <>
-            {store.places ? store.places.map((place) => {
-                return <PlaceCard placeObj={place} key={place.id} />
-            }) :
-                "Loading..."
-            }
+            {store.places.length > 0
+                ? store.places.map((place) => {
+                    return <PlaceCard placeObj={place} key={place.id} />
+                })
+                : "No places registered yet."}
         </>
     )
 }

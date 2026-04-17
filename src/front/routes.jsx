@@ -30,8 +30,8 @@ export const router = createBrowserRouter(
       </Route>
       <Route path="places" element={<Places />} />
       <Route path="places/add" element={<AddPlace />} />
-      <Route path="places/edit/:place_id" element={<EditPlace />} />
-      <Route path="places/delete/:place_id" element={<DeletePlace />} />
+      <Route path="places/edit/:id" element={<EditPlace />} />
+      <Route path="places/delete/:id" element={<DeletePlace />} />
       <Route path="*" element={<h1>Not found!</h1>} />
     </Route>
   )
