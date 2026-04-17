@@ -34,7 +34,7 @@ function DeletePlaceConfirmation() {
     }
 
     if (!activePlace) {
-        return <p className="text-center text-body-secondary">Place not found.</p>
+        return <p className="text-center text-body-secondary alert alert-danger mx-auto" style={{ maxWidth: 600 }}>Place not found</p>
     }
 
     return (
@@ -51,9 +51,12 @@ function DeletePlaceConfirmation() {
             <div className="mb-3">
                 <span className="fw-bold">Establishment type: </span>{activePlace.establishment_type}
             </div>
-            <div className="mb-4">
+            <div className="mb-3">
                 <span className="fw-bold">Locations: </span>
                 {activePlace.locations.map((location) => location.city).join(", ")}
+            </div>
+            <div className="mb-4">
+                <span className="fw-bold">Pet rules: </span>{activePlace.pet_rules ? activePlace.pet_rules : "-"}
             </div>
             <button type="button" className="btn btn-danger d-block mx-auto" onClick={handleDeletePlace}>
                 Confirm delete

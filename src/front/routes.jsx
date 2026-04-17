@@ -17,6 +17,7 @@ import Places from "./pages/Places/Places";
 import AddPlace from "./pages/Places/AddPlace";
 import EditPlace from "./pages/Places/EditPlace";
 import DeletePlace from "./pages/Places/DeletePlace";
+import PlaceDetail from "./pages/Places/PlaceDetail";
 import { Admin } from "./pages/Admin";
 import { AdminList, AdminCreate, AdminEdit, AdminDelete, AdminDetail } from "./pages/Admin";
 
@@ -43,6 +44,7 @@ export const router = createBrowserRouter(
       <Route path="places/add" element={<AddPlace />} />
       <Route path="places/edit/:id" element={<EditPlace />} />
       <Route path="places/delete/:id" element={<DeletePlace />} />
+      <Route path="places/view/:id" element={<PlaceDetail />} />
       <Route path="*" element={<h1>Not found!</h1>} />
     </Route>
   )

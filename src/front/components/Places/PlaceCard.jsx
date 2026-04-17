@@ -28,6 +28,7 @@ function PlaceCard({ placeObj }) {
                     <div className="d-flex flex-column gap-3">
                         <p className="card-text m-0">{pet_rules}</p>
                         <div className="d-grid d-sm-flex gap-2 justify-content-sm-end">
+                            <Link to={`/places/view/${id}`} className="btn btn-outline-primary">View</Link>
                             <Link to={`/places/edit/${id}`} className="btn btn-outline-warning">Edit</Link>
                             <Link to={`/places/delete/${id}`} className="btn btn-outline-danger">Delete</Link>
                         </div>
