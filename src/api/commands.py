@@ -1,6 +1,8 @@
 
-import click
-from api.models import db, User
+import click, random
+from api.models import db, User, Place, EstablishmentType, Location
+from werkzeug.security import generate_password_hash
+from sqlalchemy import select
 
 """
 In this file, you can add as many commands as you want using the @app.cli.command decorator
@@ -28,6 +30,85 @@ def setup_commands(app):
             print("User: ", user.email, " created.")
 
         print("All test users created")
+
+    @app.cli.command("insert-test-places") # name of our command
+    @click.argument("count") # argument of out command
+    def insert_test_places(count):
+        print("Creating test places")
+        for x in range(1, int(count) + 1):
+            place = Place()
+            place.email = "test_place" + str(x) + "@test.com"
+            place.password = generate_password_hash("123456")
+            place.name = "Place_" + str(x)
+            place.establishment_type = random.choice(list(EstablishmentType))
+            place.pet_rules = "Pets allowed under supervision"
+            db.session.add(place)
+            db.session.commit()
+            print("Place: ", place.email, " created.")
+
+        print("All test places created")
+
+    @app.cli.command("insert-test-locations") # name of our command
+    @click.argument("count") # argument of out command
+    def insert_test_locations(count):
+        print("Creating test locations based on existing places")
+        cities = ["Madrid", "Barcelona", "Granada", "Valencia"]
+        count = int(count)
+
+        # Load all places
+        places = db.session.execute(select(Place)).scalars().all()
+
+        if not places:
+            print("No places found. Create places before inserting locations.")
+            return
+
+        # Ensure we create at least one location per place.
+        if count < len(places):
+            print(f"Adjusting count to {len(places)} so every place gets a location.")
+            count = len(places)
+
+        # Build every possible place-city combination.
+        all_combinations = []
+        for place in places:
+            for city in cities:
+                all_combinations.append((place, city))
+
+        # Cap the count at the maximum number of unique combinations.
+        if count > len(all_combinations):
+            print(f"Only creating {len(all_combinations)} locations because that is the maximum number of unique combinations.")
+            count = len(all_combinations)
+
+        # Start by giving each place one random city.
+        selected_combinations = []
+        used_combinations = set()
+
+        for place in places:
+            city = random.choice(cities)
+            selected_combinations.append((place, city))
+            used_combinations.add((place.id, city))
+
+        # Keep only the combinations that have not been used yet.
+        remaining_combinations = []
+        for place, city in all_combinations:
+            if (place.id, city) not in used_combinations:
+                remaining_combinations.append((place, city))
+
+        # Fill any remaining slots with extra unique combinations.
+        remaining_count = count - len(selected_combinations)
+        if remaining_count > 0:
+            selected_combinations.extend(random.sample(remaining_combinations, remaining_count))
+
+        # Create and save the selected location records.
+        for place, city in selected_combinations:
+            location = Location()
+            location.city = city
+            location.place = place
+            db.session.add(location)
+            print(f"Location for {place.name} in {city} created.")
+
+        db.session.commit()
+
+        print("All test locations created")
 
     @app.cli.command("insert-test-data")
     def insert_test_data():

@@ -9,13 +9,16 @@ import { Layout } from "./pages/Layout";
 import { Home } from "./pages/Home";
 import { Demo } from "./pages/Demo";
 import { Single } from "./pages/Single";
-
 import { User } from "./pages/User";
 import { UserCreate } from "./pages/UserCreate";
 import { UserEdit } from "./pages/UserEdit";
 import { UserDetail } from "./pages/UserDetail";
-
-import { Admin, AdminList, AdminCreate, AdminEdit, AdminDelete } from "./pages/Admin";
+import Places from "./pages/Places/Places";
+import AddPlace from "./pages/Places/AddPlace";
+import EditPlace from "./pages/Places/EditPlace";
+import DeletePlace from "./pages/Places/DeletePlace";
+import { Admin } from "./pages/Admin";
+import { AdminList, AdminCreate, AdminEdit, AdminDelete } from "./pages/Admin";
 
 export const router = createBrowserRouter(
   createRoutesFromElements(
@@ -35,6 +38,11 @@ export const router = createBrowserRouter(
         <Route path="editar/:id" element={<AdminEdit />} />
         <Route path="eliminar/:id" element={<AdminDelete />} />
       </Route>
+      <Route path="places" element={<Places />} />
+      <Route path="places/add" element={<AddPlace />} />
+      <Route path="places/edit/:id" element={<EditPlace />} />
+      <Route path="places/delete/:id" element={<DeletePlace />} />
+      <Route path="*" element={<h1>Not found!</h1>} />
     </Route>
   )
 );
