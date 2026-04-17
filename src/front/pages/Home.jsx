@@ -48,8 +48,17 @@ export const Home = () => {
 					</span>
 				)}
 			</div>
-			<Link to="/usuario/admin" className="btn btn-primary mt-3 me-2">Admin</Link>
-			<Link to="/places" className="btn btn-primary mt-3 me-2">Places</Link>
+			<div className="d-flex justify-content-center gap-3 mt-3">
+				<Link to="/user" className="btn btn-primary">
+					Users
+				</Link>
+				<Link to="/usuario/admin" className="btn btn-primary">
+					Admin
+				</Link>
+				<Link to="/places" className="btn btn-primary">
+					Places
+				</Link>
+			</div>
 		</div>
 	);
 }; 
