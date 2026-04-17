@@ -94,3 +94,16 @@ class AdminUser(db.Model):
             "email": self.email,
             # do not serialize the password, its a security breach
         }
+    
+class City(db.Model):
+    __tablename__ = "cities"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    city: Mapped[str] = mapped_column(String(120), nullable=False)
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "city": self.city
+        }
+
