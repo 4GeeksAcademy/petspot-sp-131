@@ -1,6 +1,7 @@
 
 import click, random
-from api.models import db, User, Place, EstablishmentType, Location
+from api.cities import cities
+from api.models import db, User, Place, EstablishmentType, Location, City
 from werkzeug.security import generate_password_hash
 from sqlalchemy import select
 
@@ -52,7 +53,6 @@ def setup_commands(app):
     @click.argument("count") # argument of out command
     def insert_test_locations(count):
         print("Creating test locations based on existing places")
-        cities = ["Madrid", "Barcelona", "Granada", "Valencia"]
         count = int(count)
 
         # Load all places
@@ -109,6 +109,18 @@ def setup_commands(app):
         db.session.commit()
 
         print("All test locations created")
+    
+    @app.cli.command("insert-cities") # name of our command
+    def insert_cities():
+        cities_exist = db.session.execute(select(City)).scalars().all()
+        for city in cities:
+            if city not in cities_exist:
+                add_city = City(city=city)
+                db.session.add(add_city)
+                db.session.commit()
+        
+        print("All cities created")
+
 
     @app.cli.command("insert-test-data")
     def insert_test_data():

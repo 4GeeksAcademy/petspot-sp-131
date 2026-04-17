@@ -101,6 +101,9 @@ class City(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
     city: Mapped[str] = mapped_column(String(120), nullable=False)
 
+    def __repr__(self):
+        return self.city
+
     def serialize(self):
         return {
             "id": self.id,
