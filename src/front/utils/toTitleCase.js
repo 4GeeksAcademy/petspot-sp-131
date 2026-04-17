@@ -6,6 +6,4 @@ function toTitleCase(str) {
     .join(" ");
 }
 
-console.log(toTitleCase("mAdrid"))
-
 export default toTitleCase;

@@ -46,6 +46,12 @@ export default function storeReducer(store, action = {}) {
         places: [action.payload, ...store.places]
       }
 
+    case 'UPDATE_PLACE':
+      return {
+        ...store,
+        places: store.places.map((place) => place.id === action.payload.id ? action.payload : place)
+      }
+
     default:
       throw Error('Unknown action.');
   }

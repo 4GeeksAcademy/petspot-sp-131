@@ -22,7 +22,7 @@ function PlacesList() {
                 })
 
             } catch (error) {
-                console.log('Get places', error)
+                alert("Unable to load places right now. Please try again.")
             }
         }
         getPlaces()

@@ -1,33 +1,44 @@
 import toTitleCase from "../../utils/toTitleCase";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import useGlobalReducer from "../../hooks/useGlobalReducer";
+import { useParams } from "react-router-dom";
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL
 
-function AddPlaceForm() {
+function EditPlaceForm() {
+
+    const { store, dispatch } = useGlobalReducer();
+    const { id } = useParams();
 
     const [email, setEmail] = useState("")
-    const [password, setPassword] = useState("")
     const [placeName, setPlaceName] = useState("")
     const [establishmentType, setEstablishmentType] = useState("")
     const [newLocation, setNewLocation] = useState("")
     const [placeLocations, setPlaceLocations] = useState([])
     const [petRules, setPetRules] = useState("")
 
-    const { dispatch } = useGlobalReducer();
     const navigate = useNavigate();
 
+    useEffect(() => {
+        const activePlace = store.places.find((place) => place.id === Number(id))
+
+        if (activePlace) {
+            setEmail(activePlace.email)
+            setPlaceName(activePlace.name)
+            setEstablishmentType(activePlace.establishment_type)
+            setPlaceLocations(activePlace.locations.map((location) => location.city))
+            setPetRules(activePlace.pet_rules || "")
+        }
+    }, [store.places, id])
 
     function handleSubmit(event) {
         event.preventDefault()
-
         const trimmedEmail = email.trim()
-        const trimmedPassword = password.trim()
         const trimmedPlaceName = placeName.trim()
         const trimmedPetRules = petRules.trim()
 
-        if (!trimmedEmail || !trimmedPassword || !trimmedPlaceName || !establishmentType) {
+        if (!trimmedEmail || !trimmedPlaceName || !establishmentType) {
             alert("Please complete all required fields before submitting the form.")
             return
         }
@@ -44,17 +55,16 @@ function AddPlaceForm() {
 
         const body = {
             email: trimmedEmail,
-            password: trimmedPassword,
             name: trimmedPlaceName,
             establishment_type: establishmentType,
             locations: placeLocations,
             pet_rules: trimmedPetRules
         }
 
-        async function addPlace() {
+        async function updatePlace() {
             try {
-                const response = await fetch(`${backendUrl}/api/places`, {
-                    method: "POST",
+                const response = await fetch(`${backendUrl}/api/places/${id}`, {
+                    method: "PUT",
                     headers: {
                         "Content-Type": "application/json"
                     },
@@ -66,21 +76,21 @@ function AddPlaceForm() {
                     alert(`Error ${response.status}: ${backendMessage}`)
                     return
                 }
-                const newPlace = await response.json()
-                
+                const updatedPlace = await response.json()
+
 
                 dispatch({
-                    type: "ADD_PLACE",
-                    payload: newPlace
+                    type: "UPDATE_PLACE",
+                    payload: updatedPlace
                 })
                 navigate("/places")
 
             } catch (error) {
-                alert("Unable to add the place right now. Please try again.")
+                alert("Unable to update the place right now. Please try again.")
             }
         }
-        addPlace()
-        
+        updatePlace()
+
     }
 
     function handleAddLocation(event) {
@@ -113,9 +123,9 @@ function AddPlaceForm() {
                     <label htmlFor="placeEmail" className="form-label">Email *</label>
                     <input onChange={(e) => setEmail(e.target.value)} value={email} type="email" className="form-control" id="placeEmail" name="email" required />
                 </div>
-                <div className="mb-3">
-                    <label htmlFor="placePassword" className="form-label">Password *</label>
-                    <input onChange={(e) => setPassword(e.target.value)} value={password} type="password" className="form-control" id="placePassword" name="password" required />
+                <div className="mb-3" >
+                    <label htmlFor="placePassword" className="form-label opacity-50 fst-italic">Password</label>
+                    <input disabled value="" type="password" className="form-control" id="placePassword" name="password" />
                 </div>
                 <hr className="my-4" />
                 <p className="text-body-secondary mb-4 text-center ">
@@ -128,19 +138,19 @@ function AddPlaceForm() {
                 <div className="mb-3">
                     <label className="form-label">Establishment Type *</label>
                     <div className="form-check">
-                        <input onChange={(event) => setEstablishmentType(event.target.value)} className="form-check-input" type="radio" name="establishmentType" id="establishmentTypeBar" value="bar" required />
+                        <input onChange={(event) => setEstablishmentType(event.target.value)} checked={establishmentType === "bar"} className="form-check-input" type="radio" name="establishmentType" id="establishmentTypeBar" value="bar" required />
                         <label className="form-check-label" htmlFor="establishmentTypeBar">
                             Bar
                         </label>
                     </div>
                     <div className="form-check">
-                        <input onChange={(event) => setEstablishmentType(event.target.value)} className="form-check-input" type="radio" name="establishmentType" id="establishmentTypeCafe" value="cafe" required />
+                        <input onChange={(event) => setEstablishmentType(event.target.value)} checked={establishmentType === "cafe"} className="form-check-input" type="radio" name="establishmentType" id="establishmentTypeCafe" value="cafe" required />
                         <label className="form-check-label" htmlFor="establishmentTypeCafe">
                             Cafe
                         </label>
                     </div>
                     <div className="form-check">
-                        <input onChange={(event) => setEstablishmentType(event.target.value)} className="form-check-input" type="radio" name="establishmentType" id="establishmentTypeRestaurant" value="restaurant" required />
+                        <input onChange={(event) => setEstablishmentType(event.target.value)} checked={establishmentType === "restaurant"} className="form-check-input" type="radio" name="establishmentType" id="establishmentTypeRestaurant" value="restaurant" required />
                         <label className="form-check-label" htmlFor="establishmentTypeRestaurant">
                             Restaurant
                         </label>
@@ -176,4 +186,4 @@ function AddPlaceForm() {
     )
 }
 
-export default AddPlaceForm;
+export default EditPlaceForm;
