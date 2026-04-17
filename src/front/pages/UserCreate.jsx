@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 export const UserCreate = () => {
     const [formData, setFormData] = useState({
@@ -52,11 +52,17 @@ export const UserCreate = () => {
     };
 
     return (
-        <div className="container">
-            <h1 className="text-center my-4">Crear Usuario</h1>
+        <div className="container mt-5">
+            <h1 className="mb-4">Crear Usuario</h1>
 
-            <form onSubmit={handleSubmit} className="row g-3 justify-content-center">
-                <div className="col-md-6">
+            {message && (
+                <div className="alert alert-danger">
+                    {message}
+                </div>
+            )}
+
+            <form onSubmit={handleSubmit}>
+                <div className="mb-3">
                     <label className="form-label">Nombre</label>
                     <input
                         type="text"
@@ -64,12 +70,11 @@ export const UserCreate = () => {
                         name="name"
                         value={formData.name}
                         onChange={handleChange}
-                        placeholder="Nombre del usuario"
                         required
                     />
                 </div>
 
-                <div className="col-md-6">
+                <div className="mb-3">
                     <label className="form-label">Email</label>
                     <input
                         type="email"
@@ -77,12 +82,11 @@ export const UserCreate = () => {
                         name="email"
                         value={formData.email}
                         onChange={handleChange}
-                        placeholder="Email del usuario"
                         required
                     />
                 </div>
 
-                <div className="col-md-6">
+                <div className="mb-3">
                     <label className="form-label">Password</label>
                     <input
                         type="password"
@@ -90,29 +94,18 @@ export const UserCreate = () => {
                         name="password"
                         value={formData.password}
                         onChange={handleChange}
-                        placeholder="Password"
                         required
                     />
                 </div>
 
-                <div className="col-md-6">
-                    <label className="form-label d-block">Activo</label>
-                    <input
-                        type="checkbox"
-                        name="is_active"
-                        checked={formData.is_active}
-                        onChange={handleChange}
-                    />
-                </div>
+                <button type="submit" className="btn btn-success">
+                    Crear Usuario
+                </button>
 
-                <div className="col-12 text-center">
-                    <button type="submit" className="btn btn-success">
-                        Crear Usuario
-                    </button>
-                </div>
+                <Link to="/user" className="btn btn-secondary ms-2">
+                    Volver al listado
+                </Link>
             </form>
-
-            {message && <p className="text-center mt-3">{message}</p>}
         </div>
     );
 };

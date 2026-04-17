@@ -44,20 +44,16 @@ export const User = () => {
   };
 
   return (
-    <div className="container">
-      <h1 className="text-center my-4">Users</h1>
+    <div className="container mt-5">
+      <h1 className="mb-4">Usuarios</h1>
 
-      {message && <p className="text-center mt-3">{message}</p>}
+      {message && <div className="alert alert-info">{message}</div>}
 
-      {/* BOTÓN CREAR */}
-      <div className="text-center mb-4">
-        <Link to="/user/create" className="btn btn-success">
-          Crear usuario
-        </Link>
-      </div>
+      <Link to="/user/create" className="btn btn-success mb-3">
+        + Crear Usuario
+      </Link>
 
-      {/* LISTA */}
-      <table className="table">
+      <table className="table table-striped">
         <thead>
           <tr>
             <th>ID</th>
@@ -80,24 +76,23 @@ export const User = () => {
                 <td>{user.id}</td>
                 <td>{user.name}</td>
                 <td>{user.email}</td>
-
                 <td>
                   <Link
                     to={`/user/detail/${user.id}`}
-                    className="btn btn-info btn-sm me-2"
+                    className="btn btn-info me-2"
                   >
                     Ver
                   </Link>
 
                   <Link
                     to={`/user/edit/${user.id}`}
-                    className="btn btn-warning btn-sm me-2"
+                    className="btn btn-primary me-2"
                   >
                     Editar
                   </Link>
 
                   <button
-                    className="btn btn-danger btn-sm"
+                    className="btn btn-danger"
                     onClick={() => handleDelete(user.id)}
                   >
                     Eliminar
