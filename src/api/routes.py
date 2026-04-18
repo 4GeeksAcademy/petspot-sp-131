@@ -373,3 +373,23 @@ def get_cities():
         return jsonify(response="No cities found"), 404
 
     return jsonify([city.serialize() for city in cities]), 200
+
+@api.route('/cities', methods=['POST'])
+def add_city():
+    data = request.get_json(silent=True) or {}
+    city = data.get("city")
+
+    if city is None:
+        return jsonify(response="City is required"), 400
+    
+    city = city.strip().title()
+    city_exists = db.session.execute(select(City).where(City.city == city)).scalar_one_or_none()
+    if city_exists:
+        return jsonify(response="City already exists"), 400
+
+    add_city = City(city=city)
+    db.session.add(add_city)
+    db.session.commit()
+
+    return jsonify(add_city.serialize()), 200
+        
