@@ -6,6 +6,7 @@ from api.models import db, User, Place, EstablishmentType, Location, AdminUser, 
 from api.utils import generate_sitemap, APIException
 from flask_cors import CORS
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from werkzeug.security import generate_password_hash
 
 
@@ -387,9 +388,13 @@ def add_city():
     if city_exists:
         return jsonify(response="City already exists"), 400
 
-    add_city = City(city=city)
-    db.session.add(add_city)
-    db.session.commit()
+    try:
+        add_city = City(city=city)
+        db.session.add(add_city)
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        return jsonify(response="City already exists"), 400
 
     return jsonify(add_city.serialize()), 200
 
@@ -413,8 +418,12 @@ def update_city(city_id):
     if city_with_existing_name:
         return jsonify(response="City cannot be updated to an existing city name"), 400
     
-    city_exists.city = city
-    db.session.commit()
+    try:
+        city_exists.city = city
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        return jsonify(response="City cannot be updated to an existing city name"), 400
     
     return jsonify(city_exists.serialize()), 200
 
