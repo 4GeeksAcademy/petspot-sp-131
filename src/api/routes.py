@@ -188,14 +188,14 @@ def add_place():
 
 @api.route("/places/<int:place_id>", methods=["DELETE"])
 def delete_place(place_id):
-    place_exists = db.get_or_404(Place, place_id, description="Place not found")
+    place_exists = db.get_or_404(Place, place_id)
     db.session.delete(place_exists)
     db.session.commit()
     return jsonify(response="Place deleted"), 200
 
 @api.route("/places/<int:place_id>", methods=["PUT"])
 def update_place(place_id):
-    place = db.get_or_404(Place, place_id, description="Place not found")
+    place = db.get_or_404(Place, place_id)
     data = request.get_json(silent=True) or {}
     email = data.get("email")
     password = data.get("password")
@@ -392,4 +392,10 @@ def add_city():
     db.session.commit()
 
     return jsonify(add_city.serialize()), 200
-        
+
+@api.route('cities/<int:city_id>', methods=['DELETE'])
+def delete_city(city_id):
+    city_exists = db.get_or_404(City, city_id)
+    db.session.delete(city_exists)
+    db.session.commit()
+    return jsonify(response="City deleted"), 200
