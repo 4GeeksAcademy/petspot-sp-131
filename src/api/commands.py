@@ -120,6 +120,15 @@ def setup_commands(app):
                 db.session.commit()
         
         print("All cities created")
+    
+    @app.cli.command("delete-cities") # name of our command
+    def deletet_cities():
+        cities_exist = db.session.execute(select(City)).scalars().all()
+        for city in cities_exist:
+            db.session.delete(city)
+            db.session.commit()
+        
+        print("All cities deleted")
 
 
     @app.cli.command("insert-test-data")
