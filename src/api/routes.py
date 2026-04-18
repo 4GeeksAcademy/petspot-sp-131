@@ -2,7 +2,7 @@
 This module takes care of starting the API Server, Loading the DB and Adding the endpoints
 """
 from flask import Flask, request, jsonify, url_for, Blueprint
-from api.models import db, User, Place, EstablishmentType, Location, AdminUser
+from api.models import db, User, Place, EstablishmentType, Location, AdminUser, City
 from api.utils import generate_sitemap, APIException
 from flask_cors import CORS
 from sqlalchemy import select
@@ -359,3 +359,11 @@ def delete_admin(id):
     db.session.commit()
 
     return jsonify({"message": "Admin deleted"}), 200
+
+@api.route('/cities', methods=['GET'])
+def get_cities():
+    cities = db.session.execute(select(City)).scalars().all() or None
+    if cities is None:
+        return jsonify(response="No cities found"), 404
+
+    return jsonify([city.serialize() for city in cities]), 200
