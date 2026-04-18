@@ -115,7 +115,10 @@ def delete_user(user_id):
 
 @api.route("/places", methods=["GET"])
 def get_places():
-    places = db.session.execute(select(Place).order_by(Place.id.desc())).scalars().all()
+    places = db.session.execute(select(Place).order_by(Place.id.desc())).scalars().all() or None
+    if places is None:
+        return jsonify(response="No places found"), 404
+
     response = [place.serialize() for place in places]
     return jsonify(response), 200
 
