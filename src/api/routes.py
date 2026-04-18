@@ -2,10 +2,11 @@
 This module takes care of starting the API Server, Loading the DB and Adding the endpoints
 """
 from flask import Flask, request, jsonify, url_for, Blueprint
-from api.models import db, User, Place, EstablishmentType, Location, AdminUser
+from api.models import db, User, Place, EstablishmentType, Location, AdminUser, City
 from api.utils import generate_sitemap, APIException
 from flask_cors import CORS
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from werkzeug.security import generate_password_hash
 
 
@@ -115,7 +116,10 @@ def delete_user(user_id):
 
 @api.route("/places", methods=["GET"])
 def get_places():
-    places = db.session.execute(select(Place).order_by(Place.id.desc())).scalars().all()
+    places = db.session.execute(select(Place).order_by(Place.id.desc())).scalars().all() or None
+    if places is None:
+        return jsonify(response="No places found"), 404
+
     response = [place.serialize() for place in places]
     return jsonify(response), 200
 
@@ -127,7 +131,10 @@ def add_place():
     name = data.get("name")
     establishment_type = data.get("establishment_type")
     locations = data.get("locations")
-    pet_rules = data.get("pet_rules")
+    pet_rules = data.get("pet_rules") 
+    
+    if not all([x for x in [email, password, name, establishment_type, locations]]):
+        return jsonify(response="Email, password, name, establishment type, and locations are required"), 400
 
     if not all([isinstance(x, str) for x in [email, password, name, establishment_type]]):
         return jsonify(response="Email, password, name, and establishment_type must be strings"), 400
@@ -182,14 +189,14 @@ def add_place():
 
 @api.route("/places/<int:place_id>", methods=["DELETE"])
 def delete_place(place_id):
-    place_exists = db.get_or_404(Place, place_id, description="Place not found")
+    place_exists = db.get_or_404(Place, place_id)
     db.session.delete(place_exists)
     db.session.commit()
     return jsonify(response="Place deleted"), 200
 
 @api.route("/places/<int:place_id>", methods=["PUT"])
 def update_place(place_id):
-    place = db.get_or_404(Place, place_id, description="Place not found")
+    place = db.get_or_404(Place, place_id)
     data = request.get_json(silent=True) or {}
     email = data.get("email")
     password = data.get("password")
@@ -359,3 +366,64 @@ def delete_admin(id):
     db.session.commit()
 
     return jsonify({"message": "Admin deleted"}), 200
+
+@api.route('/cities', methods=['GET'])
+def get_cities():
+    cities = db.session.execute(select(City).order_by(City.city.asc())).scalars().all() or None
+    if cities is None:
+        return jsonify(response="No cities found"), 404
+
+    return jsonify([city.serialize() for city in cities]), 200
+
+@api.route('/cities', methods=['POST'])
+def add_city():
+    data = request.get_json(silent=True) or {}
+    city = data.get("city")
+
+    if city is None:
+        return jsonify(response="City is required"), 400
+    
+    city = city.strip().title()
+    city_exists = db.session.execute(select(City).where(City.city == city)).scalar_one_or_none()
+    if city_exists:
+        return jsonify(response="City already exists"), 400
+
+    try:
+        add_city = City(city=city)
+        db.session.add(add_city)
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        return jsonify(response="City already exists"), 400
+
+    return jsonify(add_city.serialize()), 200
+
+@api.route('cities/<int:city_id>', methods=['DELETE'])
+def delete_city(city_id):
+    city_exists = db.get_or_404(City, city_id)
+    db.session.delete(city_exists)
+    db.session.commit()
+    return jsonify(response="City deleted"), 200
+
+@api.route('cities/<int:city_id>', methods=['PUT'])
+def update_city(city_id):
+    city_exists = db.get_or_404(City, city_id)
+    data = request.get_json(silent=True) or {}
+    city = data.get("city")
+    if city is None:
+        return jsonify(response="City is required"), 400
+    
+    city = city.strip().title()
+    city_with_existing_name = db.session.execute(select(City).where(City.city == city, City.id != city_id)).scalar_one_or_none()
+    if city_with_existing_name:
+        return jsonify(response="City cannot be updated to an existing city name"), 400
+    
+    try:
+        city_exists.city = city
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        return jsonify(response="City cannot be updated to an existing city name"), 400
+    
+    return jsonify(city_exists.serialize()), 200
+

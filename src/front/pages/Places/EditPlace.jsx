@@ -1,5 +1,4 @@
 import EditPlaceForm from "../../components/Places/EditPlaceForm";
-
 import { Link } from "react-router-dom";
 
 function EditPlace() {

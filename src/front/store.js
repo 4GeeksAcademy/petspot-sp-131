@@ -13,7 +13,8 @@ export const initialStore = () => {
         background: null,
       }
     ],
-    places: []
+    places: [],
+    cities: []
   }
 }
 
@@ -56,6 +57,30 @@ export default function storeReducer(store, action = {}) {
       return {
         ...store,
         places: store.places.filter((place) => place.id !== action.payload)
+      }
+
+    case 'GET_CITIES':
+      return {
+        ...store,
+        cities: action.payload
+      }
+
+    case 'ADD_CITY':
+      return {
+        ...store,
+        cities: [...store.cities, action.payload].sort((a, b) => a.city.localeCompare(b.city))
+      }
+
+    case 'UPDATE_CITY':
+      return {
+        ...store,
+        cities: store.cities.map((city) => city.id === action.payload.id ? action.payload : city).sort((a, b) => a.city.localeCompare(b.city))
+      }
+
+    case 'DELETE_CITY':
+      return {
+        ...store,
+        cities: store.cities.filter((city) => city.id !== action.payload)
       }
 
     default:
