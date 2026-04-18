@@ -130,7 +130,10 @@ def add_place():
     name = data.get("name")
     establishment_type = data.get("establishment_type")
     locations = data.get("locations")
-    pet_rules = data.get("pet_rules")
+    pet_rules = data.get("pet_rules") 
+    
+    if not all([x for x in [email, password, name, establishment_type, locations]]):
+        return jsonify(response="Email, password, name, establishment type, and locations are required"), 400
 
     if not all([isinstance(x, str) for x in [email, password, name, establishment_type]]):
         return jsonify(response="Email, password, name, and establishment_type must be strings"), 400
