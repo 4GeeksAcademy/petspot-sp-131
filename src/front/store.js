@@ -13,7 +13,8 @@ export const initialStore = () => {
         background: null,
       }
     ],
-    places: []
+    places: [],
+    cities: []
   }
 }
 
@@ -56,6 +57,12 @@ export default function storeReducer(store, action = {}) {
       return {
         ...store,
         places: store.places.filter((place) => place.id !== action.payload)
+      }
+
+    case 'GET_CITIES':
+      return {
+        ...store,
+        cities: action.payload
       }
 
     default:

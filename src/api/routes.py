@@ -369,7 +369,7 @@ def delete_admin(id):
 
 @api.route('/cities', methods=['GET'])
 def get_cities():
-    cities = db.session.execute(select(City)).scalars().all() or None
+    cities = db.session.execute(select(City).order_by(City.city.asc())).scalars().all() or None
     if cities is None:
         return jsonify(response="No cities found"), 404
 
