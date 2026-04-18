@@ -99,7 +99,7 @@ class City(db.Model):
     __tablename__ = "cities"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    city: Mapped[str] = mapped_column(String(120), nullable=False)
+    city: Mapped[str] = mapped_column(String(120), unique=True, nullable=False)
 
     def __repr__(self):
         return self.city
