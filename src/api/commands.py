@@ -112,17 +112,18 @@ def setup_commands(app):
     
     @app.cli.command("insert-cities") # name of our command
     def insert_cities():
-        cities_exist = db.session.execute(select(City)).scalars().all()
         for city in cities:
-            if city not in cities_exist:
+            city_exists = db.session.execute(select(City).where(City.city == city)).scalar_one_or_none()
+            if not city_exists:
                 add_city = City(city=city)
                 db.session.add(add_city)
                 db.session.commit()
+            print(f"{city} already exists")
         
         print("All cities created")
     
     @app.cli.command("delete-cities") # name of our command
-    def deletet_cities():
+    def delete_cities():
         cities_exist = db.session.execute(select(City)).scalars().all()
         for city in cities_exist:
             db.session.delete(city)
