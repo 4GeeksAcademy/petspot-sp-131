@@ -399,3 +399,22 @@ def delete_city(city_id):
     db.session.delete(city_exists)
     db.session.commit()
     return jsonify(response="City deleted"), 200
+
+@api.route('cities/<int:city_id>', methods=['PUT'])
+def update_city(city_id):
+    city_exists = db.get_or_404(City, city_id)
+    data = request.get_json(silent=True) or {}
+    city = data.get("city")
+    if city is None:
+        return jsonify(response="City is required"), 400
+    
+    city = city.strip().title()
+    city_with_existing_name = db.session.execute(select(City).where(City.city == city, City.id != city_id)).scalar_one_or_none()
+    if city_with_existing_name:
+        return jsonify(response="City cannot be updated to an existing city name"), 400
+    
+    city_exists.city = city
+    db.session.commit()
+    
+    return jsonify(city_exists.serialize()), 200
+
