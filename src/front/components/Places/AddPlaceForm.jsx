@@ -13,10 +13,16 @@ function AddPlaceForm() {
     const [establishmentType, setEstablishmentType] = useState("")
     const [newLocation, setNewLocation] = useState("")
     const [placeLocations, setPlaceLocations] = useState([])
+    const [city, setCity] = useState("")
     const [petRules, setPetRules] = useState("")
 
     const { dispatch } = useGlobalReducer();
     const navigate = useNavigate();
+
+    function handleCityChange(event) {
+        const digitsOnlyValue = event.target.value.replace(/\D/g, "")
+        setCity(digitsOnlyValue)
+    }
 
 
     function handleSubmit(event) {
@@ -26,8 +32,9 @@ function AddPlaceForm() {
         const trimmedPassword = password.trim()
         const trimmedPlaceName = placeName.trim()
         const trimmedPetRules = petRules.trim()
+        const trimmedCity = city.trim()
 
-        if (!trimmedEmail || !trimmedPassword || !trimmedPlaceName || !establishmentType) {
+        if (!trimmedEmail || !trimmedPassword || !trimmedPlaceName || !establishmentType || !trimmedCity) {
             alert("Please complete all required fields before submitting the form.")
             return
         }
@@ -47,6 +54,7 @@ function AddPlaceForm() {
             password: trimmedPassword,
             name: trimmedPlaceName,
             establishment_type: establishmentType,
+            city_id: trimmedCity,
             locations: placeLocations,
             pet_rules: trimmedPetRules
         }
@@ -162,6 +170,10 @@ function AddPlaceForm() {
                         <input onKeyDown={handleLocationKeyDown} onChange={(event) => setNewLocation(event.target.value)} value={newLocation} type="text" className="form-control" id="placeLocation" name="location" aria-label="Add a location" />
                         <button type="button" className="btn btn-primary" onClick={handleAddLocation}>Add location</button>
                     </div>
+                </div>
+                <div className="mb-3">
+                    <label htmlFor="placeCity" className="form-label">City ID *</label>
+                    <input onChange={handleCityChange} value={city} type="text" inputMode="numeric" className="form-control" id="placeCity" name="city" required />
                 </div>
                 <div className="mb-3">
                     <label htmlFor="petRules" className="form-label">Pet rules</label>

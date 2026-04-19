@@ -146,7 +146,9 @@ def add_place():
     except (TypeError, ValueError):
         return jsonify(response="city_id must be a valid integer"), 400
 
-    city = db.get_or_404(City, city_id)
+    city = db.session.get(City, city_id)
+    if city is None:
+        return jsonify(response="City not found"), 404
     
     try:
         establishment_type = establishment_type.strip()
@@ -286,7 +288,9 @@ def update_place(place_id):
         except (TypeError, ValueError):
             return jsonify(response="city_id must be a valid integer"), 400
 
-        city = db.get_or_404(City, city_id)
+        city = db.session.get(City, city_id)
+        if city is None:
+            return jsonify(response="City not found"), 404
         place.city = city
 
     db.session.commit()

@@ -24,8 +24,8 @@ function PlaceDetailCard() {
                 <span className="fw-bold">Establishment type: </span>{activePlace.establishment_type}
             </div>
             <div className="mb-3">
-                <span className="fw-bold">Locations: </span>
-                {activePlace.locations.map((location) => location.city).join(", ")}
+                <span className="fw-bold">City: </span>
+                {activePlace.city.city}
             </div>
             <div >
                 <span className="fw-bold">Pet rules: </span>{activePlace.pet_rules ? activePlace.pet_rules : "-"}
