@@ -214,6 +214,7 @@ def update_place(place_id):
     locations = data.get("locations")
     pet_rules_provided = "pet_rules" in data
     pet_rules = data.get("pet_rules")
+    city_id = data.get("city_id")
 
     if email is not None:
         if not isinstance(email, str):
@@ -268,16 +269,25 @@ def update_place(place_id):
             return jsonify(response="Locations must be a list"), 400
         if not len(locations):
             return jsonify(response="Locations cannot be empty"), 400
-        if not all(isinstance(city, str) for city in locations):
+        if not all(isinstance(location, str) for location in locations):
             return jsonify(response="All locations must be strings"), 400
 
-        normalized_locations = [city.strip().title() for city in locations]
+        normalized_locations = [location.strip().title() for location in locations]
         if not all(normalized_locations):
             return jsonify(response="Location entries cannot be empty"), 400
 
         place.locations.clear()
-        for city in normalized_locations:
-            place.locations.append(Location(city=city))
+        for location in normalized_locations:
+            place.locations.append(Location(city=location))
+    
+    if city_id is not None:
+        try:
+            city_id = int(city_id)
+        except (TypeError, ValueError):
+            return jsonify(response="city_id must be a valid integer"), 400
+
+        city = db.get_or_404(City, city_id)
+        place.city = city
 
     db.session.commit()
 
