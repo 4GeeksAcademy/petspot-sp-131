@@ -132,12 +132,21 @@ def add_place():
     establishment_type = data.get("establishment_type")
     locations = data.get("locations")
     pet_rules = data.get("pet_rules") 
+    city_id = data.get("city_id")
     
-    if not all([x for x in [email, password, name, establishment_type, locations]]):
-        return jsonify(response="Email, password, name, establishment type, and locations are required"), 400
+
+    if not all([x for x in [email, password, name, establishment_type, locations, city_id]]):
+        return jsonify(response="Email, password, name, establishment type, city_id, and locations are required"), 400
 
     if not all([isinstance(x, str) for x in [email, password, name, establishment_type]]):
         return jsonify(response="Email, password, name, and establishment_type must be strings"), 400
+
+    try:
+        city_id = int(city_id)
+    except (TypeError, ValueError):
+        return jsonify(response="city_id must be a valid integer"), 400
+
+    city = db.get_or_404(City, city_id)
     
     try:
         establishment_type = establishment_type.strip()
@@ -151,13 +160,13 @@ def add_place():
     if not len(locations):
         return jsonify(response="Locations cannot be empty"), 400
     
-    if not all([isinstance(city, str) for city in locations]):
+    if not all([isinstance(location, str) for location in locations]):
         return jsonify(response="All locations must be strings"), 400
     
     email = email.strip()
     password = password.strip()
     name = name.strip()
-    locations = [ city.strip().title() for city in locations ]
+    locations = [location.strip().title() for location in locations]
 
     if pet_rules is not None:
         pet_rules = str(pet_rules)
@@ -166,22 +175,22 @@ def add_place():
             return jsonify(response="pet_rules cannot exceed 250 characters"), 400
 
     if not all([x for x in [email, password, name]]):
-        return jsonify(response="Email, password, and name cannot be empty"), 400
+        return jsonify(response="Email, password, city, and name cannot be empty"), 400
     
-    for city in locations:
-        if not city:
+    for location in locations:
+        if not location:
             return jsonify(response="Location entries cannot be empty"), 400
     
     email_exists = db.session.execute(select(Place).where(Place.email == email)).scalar_one_or_none()
     if email_exists is not None:
-        return jsonify(response="Unable to create account with the provided information"), 400
+        return jsonify(response="Unable to create an account with the provided information"), 400
     
     hashed_password = generate_password_hash(password)
-    place = Place(name=name, email=email, password=hashed_password, establishment_type=establishment_type, pet_rules=pet_rules or None)
+    place = Place(name=name, email=email, password=hashed_password, city=city, establishment_type=establishment_type, pet_rules=pet_rules or None)
     db.session.add(place)
     db.session.flush()
-    for city in locations:
-        place.locations.append(Location(city=city))
+    for location in locations:
+        place.locations.append(Location(city=location))
     
     db.session.commit()
     
