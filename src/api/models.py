@@ -115,7 +115,6 @@ class City(db.Model):
     def serialize(self):
         return {
             "id": self.id,
-            "city": self.city,
-            "places": [place.serialize() for place in self.places]
+            "city": self.city
         }
 
