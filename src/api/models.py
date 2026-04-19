@@ -94,3 +94,26 @@ class AdminUser(db.Model):
             "email": self.email,
             # do not serialize the password, its a security breach
         }
+    
+
+class Review(db.Model):
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(nullable=False)
+    reservation_id: Mapped[int] = mapped_column(nullable=False)
+    rating: Mapped[int] = mapped_column(nullable=False)
+    title: Mapped[str] = mapped_column(String(120), nullable=False)
+    content: Mapped[str] = mapped_column(String(500), nullable=False)
+    created_at: Mapped[str] = mapped_column(String(50), nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean(), nullable=False, default=True)
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "reservation_id": self.reservation_id,
+            "rating": self.rating,
+            "title": self.title,
+            "content": self.content,
+            "created_at": self.created_at,
+            "is_active": self.is_active
+        }

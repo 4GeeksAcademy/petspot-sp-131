@@ -19,6 +19,10 @@ import EditPlace from "./pages/Places/EditPlace";
 import DeletePlace from "./pages/Places/DeletePlace";
 import { Admin } from "./pages/Admin";
 import { AdminList, AdminCreate, AdminEdit, AdminDelete, AdminDetail } from "./pages/Admin";
+import { Reviews } from "./pages/Reviews/Reviews.jsx";
+import { ReviewDetail } from "./pages/Reviews/ReviewDetail.jsx";
+import { ReviewCreate } from "./pages/Reviews/ReviewCreate.jsx";
+import { ReviewEdit } from "./pages/Reviews/ReviewEdit.jsx";
 
 export const router = createBrowserRouter(
   createRoutesFromElements(
@@ -44,6 +48,11 @@ export const router = createBrowserRouter(
       <Route path="places/edit/:id" element={<EditPlace />} />
       <Route path="places/delete/:id" element={<DeletePlace />} />
       <Route path="*" element={<h1>Not found!</h1>} />
+
+      <Route path="/reviews" element={<Reviews />} />
+      <Route path="/reviews/detail/:id" element={<ReviewDetail />} />
+      <Route path="/reviews/create" element={<ReviewCreate />} />
+      <Route path="/reviews/edit/:id" element={<ReviewEdit />} />
     </Route>
   )
 );
