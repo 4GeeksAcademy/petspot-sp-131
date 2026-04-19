@@ -41,11 +41,8 @@ class Place(db.Model):
     pet_rules: Mapped[str | None] = mapped_column(Text, nullable=True)
     city_id: Mapped[int] = mapped_column(ForeignKey("cities.id"), nullable=False)
 
-    # Relationship One - Many
-    locations: Mapped[list["Location"]] = relationship("Location", back_populates="place", cascade="all, delete-orphan")
-    # Relatuonship Many - One
+    # Relationship Many - One
     city: Mapped["City"] = relationship("City", back_populates="places")
-
 
     def __str__(self):
         return self.name
@@ -58,30 +55,9 @@ class Place(db.Model):
             "name": self.name,
             "establishment_type": self.establishment_type.value,
             "pet_rules": self.pet_rules,
-            "locations": [location.serialize() for location in self.locations],
             "city": self.city.serialize()
             # do not serialize the password, its a security breach
         }
-
-class Location(db.Model):
-    __tablename__ = "locations"
-
-    id: Mapped[int] = mapped_column(primary_key=True)
-    city: Mapped[str] = mapped_column(String(120), nullable=False)
-
-    # ForeignKeys
-    place_id: Mapped[int] = mapped_column(ForeignKey("places.id"))
-
-    # Relationship Many - One
-    place: Mapped["Place"] = relationship("Place", back_populates="locations")
-
-    def serialize(self):
-        return {
-            "city": self.city
-        }
-
-    
-
 
 class AdminUser(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)

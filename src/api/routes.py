@@ -2,7 +2,7 @@
 This module takes care of starting the API Server, Loading the DB and Adding the endpoints
 """
 from flask import Flask, request, jsonify, url_for, Blueprint
-from api.models import db, User, Place, EstablishmentType, Location, AdminUser, City
+from api.models import db, User, Place, EstablishmentType, AdminUser, City
 from api.utils import generate_sitemap, APIException
 from flask_cors import CORS
 from sqlalchemy import select
@@ -130,13 +130,11 @@ def add_place():
     password = data.get("password")
     name = data.get("name")
     establishment_type = data.get("establishment_type")
-    locations = data.get("locations")
     pet_rules = data.get("pet_rules") 
     city_id = data.get("city_id")
-    
 
-    if not all([x for x in [email, password, name, establishment_type, locations, city_id]]):
-        return jsonify(response="Email, password, name, establishment type, city_id, and locations are required"), 400
+    if not all([x for x in [email, password, name, establishment_type, city_id]]):
+        return jsonify(response="Email, password, name, establishment type, and city_id are required"), 400
 
     if not all([isinstance(x, str) for x in [email, password, name, establishment_type]]):
         return jsonify(response="Email, password, name, and establishment_type must be strings"), 400
@@ -156,19 +154,9 @@ def add_place():
     except ValueError:
         return jsonify(response="Invalid establishment type"), 400
     
-    if not isinstance(locations, list):
-        return jsonify(response="Locations must be a list"), 400
-    
-    if not len(locations):
-        return jsonify(response="Locations cannot be empty"), 400
-    
-    if not all([isinstance(location, str) for location in locations]):
-        return jsonify(response="All locations must be strings"), 400
-    
     email = email.strip()
     password = password.strip()
     name = name.strip()
-    locations = [location.strip().title() for location in locations]
 
     if pet_rules is not None:
         pet_rules = str(pet_rules)
@@ -179,10 +167,6 @@ def add_place():
     if not all([x for x in [email, password, name]]):
         return jsonify(response="Email, password, city, and name cannot be empty"), 400
     
-    for location in locations:
-        if not location:
-            return jsonify(response="Location entries cannot be empty"), 400
-    
     email_exists = db.session.execute(select(Place).where(Place.email == email)).scalar_one_or_none()
     if email_exists is not None:
         return jsonify(response="Unable to create an account with the provided information"), 400
@@ -190,10 +174,6 @@ def add_place():
     hashed_password = generate_password_hash(password)
     place = Place(name=name, email=email, password=hashed_password, city=city, establishment_type=establishment_type, pet_rules=pet_rules or None)
     db.session.add(place)
-    db.session.flush()
-    for location in locations:
-        place.locations.append(Location(city=location))
-    
     db.session.commit()
     
     return jsonify(place.serialize()), 201
@@ -213,7 +193,6 @@ def update_place(place_id):
     password = data.get("password")
     name = data.get("name")
     establishment_type = data.get("establishment_type")
-    locations = data.get("locations")
     pet_rules_provided = "pet_rules" in data
     pet_rules = data.get("pet_rules")
     city_id = data.get("city_id")
@@ -266,22 +245,6 @@ def update_place(place_id):
                 return jsonify(response="pet_rules cannot exceed 250 characters"), 400
             place.pet_rules = pet_rules or None
 
-    if locations is not None:
-        if not isinstance(locations, list):
-            return jsonify(response="Locations must be a list"), 400
-        if not len(locations):
-            return jsonify(response="Locations cannot be empty"), 400
-        if not all(isinstance(location, str) for location in locations):
-            return jsonify(response="All locations must be strings"), 400
-
-        normalized_locations = [location.strip().title() for location in locations]
-        if not all(normalized_locations):
-            return jsonify(response="Location entries cannot be empty"), 400
-
-        place.locations.clear()
-        for location in normalized_locations:
-            place.locations.append(Location(city=location))
-    
     if city_id is not None:
         try:
             city_id = int(city_id)

@@ -1,4 +1,3 @@
-import toTitleCase from "../../utils/toTitleCase";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import useGlobalReducer from "../../hooks/useGlobalReducer";
@@ -11,8 +10,6 @@ function AddPlaceForm() {
     const [password, setPassword] = useState("")
     const [placeName, setPlaceName] = useState("")
     const [establishmentType, setEstablishmentType] = useState("")
-    const [newLocation, setNewLocation] = useState("")
-    const [placeLocations, setPlaceLocations] = useState([])
     const [city, setCity] = useState("")
     const [petRules, setPetRules] = useState("")
 
@@ -39,11 +36,6 @@ function AddPlaceForm() {
             return
         }
 
-        if (placeLocations.length === 0) {
-            alert("Please add at least one location before submitting the form.")
-            return
-        }
-
         if (trimmedPetRules && trimmedPetRules.length > 250) {
             alert("Pet rules cannot exceed 250 characters.")
             return
@@ -55,7 +47,6 @@ function AddPlaceForm() {
             name: trimmedPlaceName,
             establishment_type: establishmentType,
             city_id: trimmedCity,
-            locations: placeLocations,
             pet_rules: trimmedPetRules
         }
 
@@ -89,29 +80,6 @@ function AddPlaceForm() {
         }
         addPlace()
         
-    }
-
-    function handleAddLocation(event) {
-        event.preventDefault()
-        const trimmedLocation = newLocation.trim()
-        if (!trimmedLocation) {
-            alert("Please enter a location.")
-            return
-        }
-        const formattedLocation = toTitleCase(trimmedLocation)
-        if (placeLocations.includes(formattedLocation)) {
-            alert(`"${formattedLocation}" has already been added. Please enter a different location.`)
-            return
-        }
-        setPlaceLocations([...placeLocations, formattedLocation])
-        setNewLocation("")
-    }
-
-    function handleLocationKeyDown(event) {
-        if (event.key === "Enter") {
-            event.preventDefault()
-            handleAddLocation(event)
-        }
     }
 
     return (
@@ -152,23 +120,6 @@ function AddPlaceForm() {
                         <label className="form-check-label" htmlFor="establishmentTypeRestaurant">
                             Restaurant
                         </label>
-                    </div>
-                </div>
-                <div className="mb-3">
-                    <label htmlFor="placeLocation" className="form-label">Locations *</label>
-                    <div className="mb-2 ms-2"> {placeLocations.length !== 0 ?
-                        placeLocations.map((location) => {
-                            return (
-                                <span key={location} className="me-3 fw-bold">{location}
-                                    <button type="button" className="border-0 btn-sm ms-1" onClick={() => setPlaceLocations(placeLocations.filter((currentLocation) => currentLocation !== location))}>x</button>
-                                </span>
-                            )
-                        })
-                        : <span className="fst-italic small">No locations added</span>}
-                    </div>
-                    <div className="input-group">
-                        <input onKeyDown={handleLocationKeyDown} onChange={(event) => setNewLocation(event.target.value)} value={newLocation} type="text" className="form-control" id="placeLocation" name="location" aria-label="Add a location" />
-                        <button type="button" className="btn btn-primary" onClick={handleAddLocation}>Add location</button>
                     </div>
                 </div>
                 <div className="mb-3">

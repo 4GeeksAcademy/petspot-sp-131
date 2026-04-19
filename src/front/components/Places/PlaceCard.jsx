@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 
 function PlaceCard({ placeObj }) {
-    const { name, pet_rules, locations, city, establishment_type, id } = placeObj
+    const { name, pet_rules, city, establishment_type, id } = placeObj
 
     const establishmentTypeEmoji = {
         bar: "\u{1F37A}",
