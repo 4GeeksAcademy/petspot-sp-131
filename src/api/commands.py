@@ -36,12 +36,16 @@ def setup_commands(app):
     @click.argument("count") # argument of out command
     def insert_test_places(count):
         print("Creating test places")
+        existing_cities = db.session.execute(select(City)).scalars().all() or None
+        if existing_cities is None:
+            return print("Unable to add places. Cities must exist first in the database")
         for x in range(1, int(count) + 1):
             place = Place()
             place.email = "test_place" + str(x) + "@test.com"
             place.password = generate_password_hash("123456")
             place.name = "Place_" + str(x)
             place.establishment_type = random.choice(list(EstablishmentType))
+            place.city = random.choice(existing_cities)
             place.pet_rules = "Pets allowed under supervision"
             db.session.add(place)
             db.session.commit()
