@@ -16,12 +16,15 @@ class User(db.Model):
 
     # Relationship One - Many
     reservations: Mapped[list["Reservation"]] = relationship("Reservation", back_populates="user")
+    # Relationship Many - Many
+    favorite_places: Mapped[list["Favorite"]] = relationship("Favorite", back_populates="user")
 
     def serialize(self):
         return {
             "id": self.id,
             "name": self.name,
             "email": self.email,
+            "favorite_places": [favorite.place_id for favorite in self.favorite_places],
             # do not serialize the password, its a security breach
         }
 
@@ -46,6 +49,8 @@ class Place(db.Model):
 
     # Relationship Many - One
     city: Mapped["City"] = relationship("City", back_populates="places")
+    # Relationship Many - Many
+    favorites: Mapped[list["Favorite"]] = relationship("Favorite", back_populates = "place")
 
     # Relationship One - Many
     reservations: Mapped[list["Reservation"]] = relationship("Reservation", back_populates="place")
@@ -61,7 +66,8 @@ class Place(db.Model):
             "name": self.name,
             "establishment_type": self.establishment_type.value,
             "pet_rules": self.pet_rules,
-            "city": self.city.serialize()
+            "city": self.city.serialize(),
+            "favorited_by_users": [favorite.user_id for favorite in self.favorites]
             # do not serialize the password, its a security breach
         }
 
@@ -126,6 +132,21 @@ class Reservation(db.Model):
     # Relationships
     user: Mapped["User"] = relationship("User", back_populates="reservations")
     place: Mapped["Place"] = relationship("Place", back_populates="reservations")
+class Favorite(db.Model):
+    __tablename__ = "favorites"
+    __table_args__ = (
+        UniqueConstraint("user_id", "place_id", name="uq_favorite_user_place"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+
+    # Foreign Keys
+    user_id: Mapped[int] = mapped_column(ForeignKey("user.id"), nullable=False)
+    place_id: Mapped[int] = mapped_column(ForeignKey("places.id"), nullable=False)
+
+    # Relationship Many to One
+    user: Mapped["User"] = relationship("User", back_populates="favorite_places")
+    place: Mapped["Place"] = relationship("Place", back_populates="favorites")
 
     def serialize(self):
         return {
@@ -142,4 +163,8 @@ class Reservation(db.Model):
             "notes": self.notes,
             "status": self.status.value if self.status else None
         }
+
+            "place_id": self.place_id
+        }
+
 
