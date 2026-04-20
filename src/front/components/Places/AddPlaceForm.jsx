@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import useGlobalReducer from "../../hooks/useGlobalReducer";
 
@@ -13,7 +13,8 @@ function AddPlaceForm() {
     const [city, setCity] = useState("")
     const [petRules, setPetRules] = useState("")
 
-    const { dispatch } = useGlobalReducer();
+    const { store, dispatch } = useGlobalReducer();
+
     const navigate = useNavigate();
 
     function handleCityChange(event) {
@@ -66,7 +67,7 @@ function AddPlaceForm() {
                     return
                 }
                 const newPlace = await response.json()
-                
+
 
                 dispatch({
                     type: "ADD_PLACE",
@@ -79,8 +80,32 @@ function AddPlaceForm() {
             }
         }
         addPlace()
-        
+
     }
+
+    useEffect(() => {
+        
+        if (store.cities.length === 0) {
+            async function getCities() {
+                try {
+                    const response = await fetch(`${backendUrl}/api/cities`)
+                    if (!response.ok) {
+                        throw new Error(`Request failed with status ${response.status}`)
+                    }
+                    const responseJSON = await response.json()
+                    dispatch({
+                        type: "GET_CITIES",
+                        payload: responseJSON
+                    })
+
+                } catch (error) {
+                    alert("Unable to load cities right now. Please try again.")
+                }
+            }
+            getCities()
+        }
+    }, [])
+
 
     return (
         <>
@@ -123,8 +148,14 @@ function AddPlaceForm() {
                     </div>
                 </div>
                 <div className="mb-3">
-                    <label htmlFor="placeCity" className="form-label">City ID *</label>
-                    <input onChange={handleCityChange} value={city} type="text" inputMode="numeric" className="form-control" id="placeCity" name="city" required />
+                    <label htmlFor="placeCity" className="form-label">City *</label>
+                    <select class="form-select" id="placeCity" onChange={(event) => setCity(event.target.value)} value={city} aria-label="selectCity" required>
+                        {store.cities.map((city, i) => {
+                            return (
+                                <option value={city.id} key={`${city.city}-${i}`}>{city.city}</option>
+                            )
+                        })}
+                    </select>
                 </div>
                 <div className="mb-3">
                     <label htmlFor="petRules" className="form-label">Pet rules</label>
