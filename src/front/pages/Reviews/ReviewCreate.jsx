@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 export const ReviewCreate = () => {
@@ -12,6 +12,9 @@ export const ReviewCreate = () => {
         created_at: ""
     });
 
+    const [users, setUsers] = useState([]);
+    const [reservations, setReservations] = useState([]);
+
     const [message, setMessage] = useState("");
     const [submitting, setSubmitting] = useState(false);
     const navigate = useNavigate();
@@ -24,6 +27,30 @@ export const ReviewCreate = () => {
             [name]: value
         });
     };
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const backendUrl = import.meta.env.VITE_BACKEND_URL;
+
+                const [usersRes, reservationsRes] = await Promise.all([
+                    fetch(`${backendUrl}/api/users`),
+                    fetch(`${backendUrl}/api/reservations`)
+                ]);
+
+                const usersData = await usersRes.json();
+                const reservationsData = await reservationsRes.json();
+
+                if (usersRes.ok) setUsers(usersData);
+                if (reservationsRes.ok) setReservations(reservationsData);
+
+            } catch (error) {
+                console.error("Error cargando usuarios o reservas", error);
+            }
+        };
+
+        fetchData();
+    }, []);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -62,25 +89,37 @@ export const ReviewCreate = () => {
             <h1 className="mb-4">Crear Review</h1>
             <form onSubmit={handleSubmit}>
                 <div className="mb-3">
-                    <label className="form-label">User ID</label>
-                    <input
-                        type="number"
+                    <label className="form-label">Usuario</label>
+                    <select
                         className="form-control"
                         name="user_id"
                         value={formData.user_id}
                         onChange={handleInputChange}
-                    />
+                    >
+                        <option value="">Selecciona un usuario</option>
+                        {users.map((user) => (
+                            <option key={user.id} value={user.id}>
+                                {user.name}
+                            </option>
+                        ))}
+                    </select>
                 </div>
 
                 <div className="mb-3">
-                    <label className="form-label">Reservation ID</label>
-                    <input
-                        type="number"
+                    <label className="form-label">Reserva</label>
+                    <select
                         className="form-control"
                         name="reservation_id"
                         value={formData.reservation_id}
                         onChange={handleInputChange}
-                    />
+                    >
+                        <option value="">Selecciona una reserva</option>
+                        {reservations.map((reservation) => (
+                            <option key={reservation.id} value={reservation.id}>
+                                Reserva #{reservation.id}
+                            </option>
+                        ))}
+                    </select>
                 </div>
 
                 <div className="mb-3">
@@ -141,12 +180,11 @@ export const ReviewCreate = () => {
                 <div className="mb-3">
                     <label className="form-label">Created At</label>
                     <input
-                        type="text"
+                        type="date"
                         className="form-control"
                         name="created_at"
                         value={formData.created_at}
                         onChange={handleInputChange}
-                        placeholder="2026-04-18"
                     />
                 </div>
                 <button type="submit" className="btn btn-success" disabled={submitting}>
