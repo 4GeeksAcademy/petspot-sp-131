@@ -14,7 +14,8 @@ export const initialStore = () => {
       }
     ],
     places: [],
-    cities: []
+    cities: [],
+    reservations: []
   }
 }
 
@@ -81,6 +82,12 @@ export default function storeReducer(store, action = {}) {
       return {
         ...store,
         cities: store.cities.filter((city) => city.id !== action.payload)
+      }
+
+    case 'GET_RESERVATIONS':
+      return {
+        ...store,
+        reservations: action.payload
       }
 
     default:

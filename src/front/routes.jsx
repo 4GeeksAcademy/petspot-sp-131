@@ -26,6 +26,9 @@ import EditCity from "./pages/Cities/EditCity";
 import DeleteCity from "./pages/Cities/DeleteCity";
 import CityDetail from "./pages/Cities/CityDetail";
 
+import Reservations from "./pages/Reservations/Reservations";
+import AddReservation from "./pages/Reservations/AddReservation";
+
 export const router = createBrowserRouter(
   createRoutesFromElements(
     <Route path="/" element={<Layout />} errorElement={<h1>Not found!</h1>}>
@@ -56,6 +59,9 @@ export const router = createBrowserRouter(
       <Route path="cities/edit/:id" element={<EditCity />} />
       <Route path="cities/delete/:id" element={<DeleteCity />} />
       <Route path="cities/view/:id" element={<CityDetail />} />
+
+      <Route path="reservations" element={<Reservations />} />
+      <Route path="reservations/form" element={<AddReservation />} />
 
       <Route path="*" element={<h1>Not found!</h1>} />
     </Route>
