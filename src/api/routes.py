@@ -9,6 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from werkzeug.security import generate_password_hash
 from datetime import datetime
+from sqlalchemy.orm import joinedload
 
 
 api = Blueprint('api', __name__)
@@ -516,12 +517,25 @@ def update_city(city_id):
     return jsonify(city_exists.serialize()), 200
 
 
-api.route('/reservations', methods=['GET'])
+@api.route('/reservations', methods=['GET'])
+def get_reservations():
+    reservations = db.session.execute(
+        select(Reservation)
+        .options(joinedload(Reservation.user), joinedload(Reservation.place))
+        .order_by(Reservation.id.desc())
+    ).scalars().all() or None
+
+    if not reservations:
+        return jsonify(response="No reservations found"), 404
+
+    return jsonify([res.serialize() for res in reservations]), 200
+
+""" api.route('/reservations', methods=['GET'])
 def get_reservations():
     reservations = db.session.execute(select(Reservation).options(joinedload(Reservation.user), joinedload(Reservation.place)).order_by(Reservation.id.desc())).scalars().all() or None
     if not reservations:
         return jsonify(response="No reservations found"), 404
-    return jsonify([res.serialize() for res in reservations]), 200
+    return jsonify([res.serialize() for res in reservations]), 200 """
 
 @api.route('/reservations/<int:id>', methods=['GET'])
 def get_reservation(id):

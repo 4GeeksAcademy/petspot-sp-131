@@ -41,6 +41,9 @@ export const ReviewCreate = () => {
                 const usersData = await usersRes.json();
                 const reservationsData = await reservationsRes.json();
 
+                console.log("usersData:", usersData);
+                console.log("reservationsData:", reservationsData);
+
                 if (usersRes.ok) setUsers(usersData);
                 if (reservationsRes.ok) setReservations(reservationsData);
 

@@ -1,5 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import String, Boolean, Text, ForeignKey, Date, Time
+from sqlalchemy import String, Boolean, Text, ForeignKey, Date, Time, UniqueConstraint
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from enum import Enum
@@ -15,19 +15,21 @@ class User(db.Model):
     password: Mapped[str] = mapped_column(String(255), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean(), default=True)
 
-    reviews: Mapped[list["Review"]] = relationship(
-        "Review", back_populates="user")
-    reservations: Mapped[list["Reservation"]] = relationship(
-        "Reservation", back_populates="user")
+    reviews: Mapped[list["Review"]] = relationship("Review", back_populates="user")
+    reservations: Mapped[list["Reservation"]] = relationship("Reservation", back_populates="user")
+        
 
     def __str__(self):
         return self.name
+    # Relationship Many - Many
+    favorite_places: Mapped[list["Favorite"]] = relationship("Favorite", back_populates="user")
 
     def serialize(self):
         return {
             "id": self.id,
             "name": self.name,
             "email": self.email,
+            "favorite_places": [favorite.place_id for favorite in self.favorite_places],
             # do not serialize the password, its a security breach
         }
 
@@ -57,8 +59,10 @@ class Place(db.Model):
 
     # Relationship Many - One
     city: Mapped["City"] = relationship("City", back_populates="places")
-    reservations: Mapped[list["Reservation"]] = relationship(
-        "Reservation", back_populates="place")
+    reservations: Mapped[list["Reservation"]] = relationship("Reservation", back_populates="place")
+    
+    # Relationship Many - Many
+    favorites: Mapped[list["Favorite"]] = relationship("Favorite", back_populates = "place")
 
     def __str__(self):
         return self.name
@@ -71,7 +75,8 @@ class Place(db.Model):
             "name": self.name,
             "establishment_type": self.establishment_type.value,
             "pet_rules": self.pet_rules,
-            "city": self.city.serialize()
+            "city": self.city.serialize(),
+            "favorited_by_users": [favorite.user_id for favorite in self.favorites]
             # do not serialize the password, its a security breach
         }
 
@@ -169,15 +174,13 @@ class Reservation(db.Model):
     )
 
     user: Mapped["User"] = relationship("User", back_populates="reservations")
-    place: Mapped["Place"] = relationship(
-        "Place", back_populates="reservations")
-    reviews: Mapped[list["Review"]] = relationship(
-        "Review", back_populates="reservation")
-
+    place: Mapped["Place"] = relationship("Place", back_populates="reservations")
+    reviews: Mapped[list["Review"]] = relationship("Review", back_populates="reservation")
+    
     def serialize(self):
         return {
             "id": self.id,
-            "user_id ": self.user_id,
+            "user_id": self.user_id,
             "place_id": self.place_id,
             "reservation_date": str(self.reservation_date),
             "reservation_time": str(self.reservation_time),
@@ -187,3 +190,31 @@ class Reservation(db.Model):
             "notes": self.notes,
             "status": self.status.value
         }
+    
+
+class Favorite(db.Model):
+    __tablename__ = "favorites"
+    __table_args__ = (
+        UniqueConstraint("user_id", "place_id", name="uq_favorite_user_place"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+
+    # Foreign Keys
+    user_id: Mapped[int] = mapped_column(ForeignKey("user.id"), nullable=False)
+    place_id: Mapped[int] = mapped_column(ForeignKey("places.id"), nullable=False)
+
+    # Relationship Many to One
+    user: Mapped["User"] = relationship("User", back_populates="favorite_places")
+    place: Mapped["Place"] = relationship("Place", back_populates="favorites")
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "place_id": self.place_id
+        }
+            
+            
+
+
