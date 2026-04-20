@@ -2,10 +2,11 @@
 This module takes care of starting the API Server, Loading the DB and Adding the endpoints
 """
 from flask import Flask, request, jsonify, url_for, Blueprint
-from api.models import db, User, Place, EstablishmentType, Location, AdminUser, Review
+from api.models import db, User, Place, EstablishmentType, AdminUser, Review, City
 from api.utils import generate_sitemap, APIException
 from flask_cors import CORS
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from werkzeug.security import generate_password_hash
 
 
@@ -115,7 +116,10 @@ def delete_user(user_id):
 
 @api.route("/places", methods=["GET"])
 def get_places():
-    places = db.session.execute(select(Place).order_by(Place.id.desc())).scalars().all()
+    places = db.session.execute(select(Place).order_by(Place.id.desc())).scalars().all() or None
+    if places is None:
+        return jsonify(response="No places found"), 404
+
     response = [place.serialize() for place in places]
     return jsonify(response), 200
 
@@ -126,11 +130,23 @@ def add_place():
     password = data.get("password")
     name = data.get("name")
     establishment_type = data.get("establishment_type")
-    locations = data.get("locations")
-    pet_rules = data.get("pet_rules")
+    pet_rules = data.get("pet_rules") 
+    city_id = data.get("city_id")
+
+    if not all([x for x in [email, password, name, establishment_type, city_id]]):
+        return jsonify(response="Email, password, name, establishment type, and city_id are required"), 400
 
     if not all([isinstance(x, str) for x in [email, password, name, establishment_type]]):
         return jsonify(response="Email, password, name, and establishment_type must be strings"), 400
+
+    try:
+        city_id = int(city_id)
+    except (TypeError, ValueError):
+        return jsonify(response="city_id must be a valid integer"), 400
+
+    city = db.session.get(City, city_id)
+    if city is None:
+        return jsonify(response="City not found"), 404
     
     try:
         establishment_type = establishment_type.strip()
@@ -138,19 +154,9 @@ def add_place():
     except ValueError:
         return jsonify(response="Invalid establishment type"), 400
     
-    if not isinstance(locations, list):
-        return jsonify(response="Locations must be a list"), 400
-    
-    if not len(locations):
-        return jsonify(response="Locations cannot be empty"), 400
-    
-    if not all([isinstance(city, str) for city in locations]):
-        return jsonify(response="All locations must be strings"), 400
-    
     email = email.strip()
     password = password.strip()
     name = name.strip()
-    locations = [ city.strip().title() for city in locations ]
 
     if pet_rules is not None:
         pet_rules = str(pet_rules)
@@ -159,45 +165,37 @@ def add_place():
             return jsonify(response="pet_rules cannot exceed 250 characters"), 400
 
     if not all([x for x in [email, password, name]]):
-        return jsonify(response="Email, password, and name cannot be empty"), 400
-    
-    for city in locations:
-        if not city:
-            return jsonify(response="Location entries cannot be empty"), 400
+        return jsonify(response="Email, password, city, and name cannot be empty"), 400
     
     email_exists = db.session.execute(select(Place).where(Place.email == email)).scalar_one_or_none()
     if email_exists is not None:
-        return jsonify(response="Unable to create account with the provided information"), 400
+        return jsonify(response="Unable to create an account with the provided information"), 400
     
     hashed_password = generate_password_hash(password)
-    place = Place(name=name, email=email, password=hashed_password, establishment_type=establishment_type, pet_rules=pet_rules or None)
+    place = Place(name=name, email=email, password=hashed_password, city=city, establishment_type=establishment_type, pet_rules=pet_rules or None)
     db.session.add(place)
-    db.session.flush()
-    for city in locations:
-        place.locations.append(Location(city=city))
-    
     db.session.commit()
     
     return jsonify(place.serialize()), 201
 
 @api.route("/places/<int:place_id>", methods=["DELETE"])
 def delete_place(place_id):
-    place_exists = db.get_or_404(Place, place_id, description="Place not found")
+    place_exists = db.get_or_404(Place, place_id)
     db.session.delete(place_exists)
     db.session.commit()
     return jsonify(response="Place deleted"), 200
 
 @api.route("/places/<int:place_id>", methods=["PUT"])
 def update_place(place_id):
-    place = db.get_or_404(Place, place_id, description="Place not found")
+    place = db.get_or_404(Place, place_id)
     data = request.get_json(silent=True) or {}
     email = data.get("email")
     password = data.get("password")
     name = data.get("name")
     establishment_type = data.get("establishment_type")
-    locations = data.get("locations")
     pet_rules_provided = "pet_rules" in data
     pet_rules = data.get("pet_rules")
+    city_id = data.get("city_id")
 
     if email is not None:
         if not isinstance(email, str):
@@ -247,21 +245,16 @@ def update_place(place_id):
                 return jsonify(response="pet_rules cannot exceed 250 characters"), 400
             place.pet_rules = pet_rules or None
 
-    if locations is not None:
-        if not isinstance(locations, list):
-            return jsonify(response="Locations must be a list"), 400
-        if not len(locations):
-            return jsonify(response="Locations cannot be empty"), 400
-        if not all(isinstance(city, str) for city in locations):
-            return jsonify(response="All locations must be strings"), 400
+    if city_id is not None:
+        try:
+            city_id = int(city_id)
+        except (TypeError, ValueError):
+            return jsonify(response="city_id must be a valid integer"), 400
 
-        normalized_locations = [city.strip().title() for city in locations]
-        if not all(normalized_locations):
-            return jsonify(response="Location entries cannot be empty"), 400
-
-        place.locations.clear()
-        for city in normalized_locations:
-            place.locations.append(Location(city=city))
+        city = db.session.get(City, city_id)
+        if city is None:
+            return jsonify(response="City not found"), 404
+        place.city = city
 
     db.session.commit()
 
@@ -442,3 +435,65 @@ def delete_review(review_id):
     db.session.commit()
 
     return jsonify({"msg": "Review eliminada correctamente"}), 200
+
+
+@api.route('/cities', methods=['GET'])
+def get_cities():
+    cities = db.session.execute(select(City).order_by(City.city.asc())).scalars().all() or None
+    if cities is None:
+        return jsonify(response="No cities found"), 404
+
+    return jsonify([city.serialize() for city in cities]), 200
+
+@api.route('/cities', methods=['POST'])
+def add_city():
+    data = request.get_json(silent=True) or {}
+    city = data.get("city")
+
+    if city is None:
+        return jsonify(response="City is required"), 400
+    
+    city = city.strip().title()
+    city_exists = db.session.execute(select(City).where(City.city == city)).scalar_one_or_none()
+    if city_exists:
+        return jsonify(response="City already exists"), 400
+
+    try:
+        add_city = City(city=city)
+        db.session.add(add_city)
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        return jsonify(response="City already exists"), 400
+
+    return jsonify(add_city.serialize()), 200
+
+@api.route('cities/<int:city_id>', methods=['DELETE'])
+def delete_city(city_id):
+    city_exists = db.get_or_404(City, city_id)
+    db.session.delete(city_exists)
+    db.session.commit()
+    return jsonify(response="City deleted"), 200
+
+@api.route('cities/<int:city_id>', methods=['PUT'])
+def update_city(city_id):
+    city_exists = db.get_or_404(City, city_id)
+    data = request.get_json(silent=True) or {}
+    city = data.get("city")
+    if city is None:
+        return jsonify(response="City is required"), 400
+    
+    city = city.strip().title()
+    city_with_existing_name = db.session.execute(select(City).where(City.city == city, City.id != city_id)).scalar_one_or_none()
+    if city_with_existing_name:
+        return jsonify(response="City cannot be updated to an existing city name"), 400
+    
+    try:
+        city_exists.city = city
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        return jsonify(response="City cannot be updated to an existing city name"), 400
+    
+    return jsonify(city_exists.serialize()), 200
+

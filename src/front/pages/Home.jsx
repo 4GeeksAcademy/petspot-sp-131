@@ -58,6 +58,9 @@ export const Home = () => {
 				<Link to="/places" className="btn btn-primary">
 					Places
 				</Link>
+				<Link to="/cities" className="btn btn-primary">
+					Cities
+				</Link>
 			</div>
 		</div>
 	);

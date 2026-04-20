@@ -17,12 +17,18 @@ import Places from "./pages/Places/Places";
 import AddPlace from "./pages/Places/AddPlace";
 import EditPlace from "./pages/Places/EditPlace";
 import DeletePlace from "./pages/Places/DeletePlace";
+import PlaceDetail from "./pages/Places/PlaceDetail";
 import { Admin } from "./pages/Admin";
 import { AdminList, AdminCreate, AdminEdit, AdminDelete, AdminDetail } from "./pages/Admin";
 import { Reviews } from "./pages/Reviews/Reviews.jsx";
 import { ReviewDetail } from "./pages/Reviews/ReviewDetail.jsx";
 import { ReviewCreate } from "./pages/Reviews/ReviewCreate.jsx";
 import { ReviewEdit } from "./pages/Reviews/ReviewEdit.jsx";
+import Cities from "./pages/Cities/Cities";
+import AddCity from "./pages/Cities/AddCity";
+import EditCity from "./pages/Cities/EditCity";
+import DeleteCity from "./pages/Cities/DeleteCity";
+import CityDetail from "./pages/Cities/CityDetail";
 
 export const router = createBrowserRouter(
   createRoutesFromElements(
@@ -47,12 +53,20 @@ export const router = createBrowserRouter(
       <Route path="places/add" element={<AddPlace />} />
       <Route path="places/edit/:id" element={<EditPlace />} />
       <Route path="places/delete/:id" element={<DeletePlace />} />
+      <Route path="places/view/:id" element={<PlaceDetail />} />
+
+      <Route path="cities" element={<Cities />} />
+      <Route path="cities/add" element={<AddCity />} />
+      <Route path="cities/edit/:id" element={<EditCity />} />
+      <Route path="cities/delete/:id" element={<DeleteCity />} />
+      <Route path="cities/view/:id" element={<CityDetail />} />
+
       <Route path="*" element={<h1>Not found!</h1>} />
 
-      <Route path="/reviews" element={<Reviews />} />
-      <Route path="/reviews/detail/:id" element={<ReviewDetail />} />
-      <Route path="/reviews/create" element={<ReviewCreate />} />
-      <Route path="/reviews/edit/:id" element={<ReviewEdit />} />
+      <Route path="reviews" element={<Reviews />} />
+      <Route path="reviews/detail/:id" element={<ReviewDetail />} />
+      <Route path="reviews/create" element={<ReviewCreate />} />
+      <Route path="reviews/edit/:id" element={<ReviewEdit />} />
     </Route>
   )
 );

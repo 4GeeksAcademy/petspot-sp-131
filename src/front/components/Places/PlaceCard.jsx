@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 
 function PlaceCard({ placeObj }) {
-    const { name, pet_rules, locations, establishment_type, id } = placeObj
+    const { name, pet_rules, city, establishment_type, id } = placeObj
 
     const establishmentTypeEmoji = {
         bar: "\u{1F37A}",
@@ -18,16 +18,13 @@ function PlaceCard({ placeObj }) {
                         {establishmentTypeEmoji[establishment_type]}
                         <span className="fst-italic">{establishment_type.toUpperCase()}</span>
                     </h6>
-                    <div className="mb-3 d-flex flex-wrap gap-2">
-                        {locations.map((location, i) => (
-                            <span className="fw-bold" key={`${location.city}-${i}`}>
-                                {"\u{1F4CC}"}{location.city}
-                            </span>
-                        ))}
+                    <div className="mb-3 d-flex flex-wrap gap-2 fw-bold">
+                        {"\u{1F4CC}"}{city.city}
                     </div>
                     <div className="d-flex flex-column gap-3">
                         <p className="card-text m-0">{pet_rules}</p>
                         <div className="d-grid d-sm-flex gap-2 justify-content-sm-end">
+                            <Link to={`/places/view/${id}`} className="btn btn-outline-primary">View</Link>
                             <Link to={`/places/edit/${id}`} className="btn btn-outline-warning">Edit</Link>
                             <Link to={`/places/delete/${id}`} className="btn btn-outline-danger">Delete</Link>
                         </div>

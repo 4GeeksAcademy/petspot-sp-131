@@ -71,42 +71,38 @@ export const AdminList = () => {
         + Crear Admin
       </Link>
 
-      <table className="table table-striped">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Nombre</th>
-            <th>Email</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {admins.length === 0 ? (
-            <tr>
-              <td colSpan="4" className="text-center">No hay admins registrados</td>
-            </tr>
-          ) : (
-            admins.map((admin) => (
-              <tr key={admin.id}>
-                <td>{admin.id}</td>
-                <td>{admin.name}</td>
-                <td>{admin.email}</td>
-                <td>
-                  <Link to={`/usuario/admin/detalle/${admin.id}`} className="btn btn-info me-2 text-white">
+      <div className="row">
+        {admins.length === 0 ? (
+          <div className="col-12 text-center mt-3">
+            <p className="lead">No hay admins registrados</p>
+          </div>
+        ) : (
+          admins.map((admin) => (
+            <div className="col-md-4 mb-4" key={admin.id}>
+              <div className="card shadow-sm h-100">
+                <div className="card-header bg-dark text-white">
+                  <h5 className="card-title mb-0">Admin #{admin.id}</h5>
+                </div>
+                <div className="card-body">
+                  <p className="card-text mb-2"><strong>Nombre:</strong> {admin.name}</p>
+                  <p className="card-text"><strong>Email:</strong> {admin.email}</p>
+                </div>
+                <div className="card-footer bg-transparent d-flex justify-content-between align-items-center">
+                  <Link to={`/usuario/admin/detalle/${admin.id}`} className="btn btn-info btn-sm text-white">
                     Ver perfil
                   </Link>
-                  <Link to={`/usuario/admin/editar/${admin.id}`} className="btn btn-primary me-2">
+                  <Link to={`/usuario/admin/editar/${admin.id}`} className="btn btn-primary btn-sm">
                     Editar
                   </Link>
-                  <Link to={`/usuario/admin/eliminar/${admin.id}`} className="btn btn-danger">
+                  <Link to={`/usuario/admin/eliminar/${admin.id}`} className="btn btn-danger btn-sm">
                     Eliminar
                   </Link>
-                </td>
-              </tr>
-            ))
-          )}
-        </tbody>
-      </table>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
     </div>
   );
 };
