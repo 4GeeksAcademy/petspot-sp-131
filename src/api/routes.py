@@ -444,3 +444,10 @@ def add_favorite():
 
     return jsonify(new_favorite.serialize()), 200
 
+@api.route('/favorites/<int:favorite_id>', methods=["DELETE"])
+def delete_favorite(favorite_id):
+    favorite_exists = db.get_or_404(Favorite, favorite_id)
+    db.session.delete(favorite_exists)
+    db.session.commit()
+    return jsonify(response="Favorite deleted"), 200
+
