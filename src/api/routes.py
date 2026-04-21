@@ -116,10 +116,7 @@ def delete_user(user_id):
 
 @api.route("/places", methods=["GET"])
 def get_places():
-    places = db.session.execute(select(Place).order_by(Place.id.desc())).scalars().all() or None
-    if places is None:
-        return jsonify(response="No places found"), 404
-
+    places = db.session.execute(select(Place).order_by(Place.id.desc())).scalars().all()
     response = [place.serialize() for place in places]
     return jsonify(response), 200
 
@@ -355,10 +352,7 @@ def delete_admin(id):
 
 @api.route('/cities', methods=['GET'])
 def get_cities():
-    cities = db.session.execute(select(City).order_by(City.city.asc())).scalars().all() or None
-    if cities is None:
-        return jsonify(response="No cities found"), 404
-
+    cities = db.session.execute(select(City).order_by(City.city.asc())).scalars().all()
     return jsonify([city.serialize() for city in cities]), 200
 
 @api.route('/cities', methods=['POST'])
