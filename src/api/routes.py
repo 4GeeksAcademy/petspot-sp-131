@@ -2,7 +2,7 @@
 This module takes care of starting the API Server, Loading the DB and Adding the endpoints
 """
 from flask import Flask, request, jsonify, url_for, Blueprint
-from api.models import db, User, Place, EstablishmentType, AdminUser, City
+from api.models import db, User, Place, EstablishmentType, AdminUser, City, Favorite
 from api.utils import generate_sitemap, APIException
 from flask_cors import CORS
 from sqlalchemy import select
@@ -412,4 +412,9 @@ def update_city(city_id):
         return jsonify(response="City cannot be updated to an existing city name"), 400
     
     return jsonify(city_exists.serialize()), 200
+
+@api.route('favorites', methods=['GET'])
+def get_favorites():
+    favorites = db.session.execute(select(Favorite)).scalars().all()
+    return jsonify([favorite.serialize() for favorite in favorites]), 200
 
