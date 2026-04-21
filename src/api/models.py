@@ -1,5 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import String, Boolean, Text, ForeignKey, Date, Time
+from sqlalchemy import String, Boolean, Text, ForeignKey, Date, Time,UniqueConstraint
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from enum import Enum
@@ -128,6 +128,19 @@ class Reservation(db.Model):
         nullable=False,
         default=ReservationStatus.PENDING
     )
+    def serialize(self):
+        return {
+            "id": self.id,
+            "user_id ": self.user_id,
+            "place_id": self.place_id,
+            "reservation_date": str(self.reservation_date),
+            "reservation_time": str(self.reservation_time),
+            "people_count": self.people_count,
+            "pet_count": self.pet_count,
+            "zone_preference": self.zone_preference,
+            "notes": self.notes,
+            "status": self.status.value
+            }
 
     # Relationships
     user: Mapped["User"] = relationship("User", back_populates="reservations")
@@ -164,7 +177,6 @@ class Favorite(db.Model):
             "status": self.status.value if self.status else None
         }
 
-            "place_id": self.place_id
-        }
+
 
 
