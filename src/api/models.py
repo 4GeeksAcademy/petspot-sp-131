@@ -144,9 +144,11 @@ class Chat(db.Model):
         return {
             "id": self.id,
             "user_id": self.user_id,
+            "user_name": self.user.name,
             "place_id": self.place_id,
+            "place_name": self.place.name,
             "message": self.message,
             "sender": self.sender
-        }
+    }
 
  

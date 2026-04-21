@@ -25,6 +25,9 @@ import AddCity from "./pages/Cities/AddCity";
 import EditCity from "./pages/Cities/EditCity";
 import DeleteCity from "./pages/Cities/DeleteCity";
 import CityDetail from "./pages/Cities/CityDetail";
+import Chat from "./pages/Chat/Chat";
+import AddChat from "./pages/Chat/AddChat";
+import EditChat from "./pages/Chat/EditChat";
 
 export const router = createBrowserRouter(
   createRoutesFromElements(
@@ -56,6 +59,10 @@ export const router = createBrowserRouter(
       <Route path="cities/edit/:id" element={<EditCity />} />
       <Route path="cities/delete/:id" element={<DeleteCity />} />
       <Route path="cities/view/:id" element={<CityDetail />} />
+
+      <Route path="chat" element={<Chat />} />
+      <Route path="chat/add" element={<AddChat />} />
+      <Route path="chat/edit/:id" element={<EditChat />} />
 
       <Route path="*" element={<h1>Not found!</h1>} />
     </Route>
