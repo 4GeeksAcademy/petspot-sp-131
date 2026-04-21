@@ -25,6 +25,8 @@ import AddCity from "./pages/Cities/AddCity";
 import EditCity from "./pages/Cities/EditCity";
 import DeleteCity from "./pages/Cities/DeleteCity";
 import CityDetail from "./pages/Cities/CityDetail";
+import { LoginUser } from "./pages/LoginUser";
+import { SignupUser } from "./pages/SignupUser";
 
 export const router = createBrowserRouter(
   createRoutesFromElements(
@@ -32,6 +34,9 @@ export const router = createBrowserRouter(
       <Route index element={<Home />} />
       <Route path="demo" element={<Demo />} />
       <Route path="single/:theId" element={<Single />} />
+
+      <Route path="login/user" element={<LoginUser />} />
+      <Route path="signup/user" element={<SignupUser />} />
 
       <Route path="user" element={<User />} />
       <Route path="user/create" element={<UserCreate />} />

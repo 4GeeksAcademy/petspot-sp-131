@@ -8,6 +8,7 @@ from flask_cors import CORS
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from werkzeug.security import generate_password_hash
+from flask_jwt_extended import create_access_token
 
 
 api = Blueprint('api', __name__)
@@ -406,4 +407,56 @@ def update_city(city_id):
         return jsonify(response="City cannot be updated to an existing city name"), 400
     
     return jsonify(city_exists.serialize()), 200
+
+# LOGIN & SIGNUP #
+# USER #
+
+@api.route("/login/user", methods=["POST"])
+def login_user():
+    email = request.json.get("email", None)
+    password = request.json.get("password", None)
+
+    user = db.session.execute(
+        db.select(User).filter_by(email=email)
+    ).scalar_one_or_none()
+
+    if user is None:
+        return jsonify({"msg": "Bad email or password"}), 401
+
+    if password != user.password:
+        return jsonify({"msg": "Bad email or password"}), 401
+
+    access_token = create_access_token(identity=email)
+    return jsonify(access_token=access_token), 200
+
+
+@api.route("/signup/user", methods=["POST"])
+def signup_user():
+    body = request.get_json()
+
+    name = body.get("name", None)
+    email = body.get("email", None)
+    password = body.get("password", None)
+
+    if not name or not email or not password:
+        return jsonify({"msg": "All fields are required"}), 400
+
+    user = db.session.execute(
+        db.select(User).filter_by(email=email)
+    ).scalar_one_or_none()
+
+    if user:
+        return jsonify({"msg": "Ya se encuentra un usuario con ese email"}), 409
+
+    new_user = User(
+        name=name,
+        email=email,
+        password=password,
+        is_active=True
+    )
+
+    db.session.add(new_user)
+    db.session.commit()
+
+    return jsonify({"msg": "Usuario creado exitosamente"}), 201
 

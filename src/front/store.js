@@ -14,7 +14,8 @@ export const initialStore = () => {
       }
     ],
     places: [],
-    cities: []
+    cities: [],
+    authUser: false
   }
 }
 
@@ -81,6 +82,12 @@ export default function storeReducer(store, action = {}) {
       return {
         ...store,
         cities: store.cities.filter((city) => city.id !== action.payload)
+      }
+
+    case 'set_auth_user':
+      return {
+        ...store,
+        authUser: action.payload
       }
 
     default:

@@ -124,4 +124,3 @@ class Favorite(db.Model):
             "place_id": self.place_id
         }
 
-
