@@ -378,14 +378,14 @@ def add_city():
 
     return jsonify(add_city.serialize()), 200
 
-@api.route('cities/<int:city_id>', methods=['DELETE'])
+@api.route('/cities/<int:city_id>', methods=['DELETE'])
 def delete_city(city_id):
     city_exists = db.get_or_404(City, city_id)
     db.session.delete(city_exists)
     db.session.commit()
     return jsonify(response="City deleted"), 200
 
-@api.route('cities/<int:city_id>', methods=['PUT'])
+@api.route('/cities/<int:city_id>', methods=['PUT'])
 def update_city(city_id):
     city_exists = db.get_or_404(City, city_id)
     data = request.get_json(silent=True) or {}
@@ -407,8 +407,40 @@ def update_city(city_id):
     
     return jsonify(city_exists.serialize()), 200
 
-@api.route('favorites', methods=['GET'])
+@api.route('/favorites', methods=['GET'])
 def get_favorites():
     favorites = db.session.execute(select(Favorite)).scalars().all()
     return jsonify([favorite.serialize() for favorite in favorites]), 200
+
+@api.route('/favorites', methods=['POST'])
+def add_favorite():
+    data = request.get_json(silent=True) or {}
+    user = data.get("user")
+    place = data.get("place")
+    
+    if any([x is None for x in [user, place]]):
+        return jsonify(response="User and place are required"), 400
+    
+    if not all([isinstance(x, str) for x in [user, place]]):
+        return jsonify(response="User and place need to be strings"), 400
+    
+    user = user.strip()
+    place = place.strip()
+
+    if any([len(x) == 0 for x in [user, place]]):
+        return jsonify(response="User or place cannot be empty"), 400
+    
+    user_exists = db.session.execute(select(User).where(User.name == user)).scalar_one_or_none()
+    if user_exists is None:
+        return jsonify(response="User not found"), 404
+    
+    place_exists = db.session.execute(select(Place).where(Place.name == place)).scalar_one_or_none()
+    if place_exists is None:
+        return jsonify(response="Place not found"), 404
+    
+    new_favorite = Favorite(user_id=user_exists.id, place_id=place_exists.id)
+    db.session.add(new_favorite)
+    db.session.commit()
+
+    return jsonify(new_favorite.serialize()), 200
 
