@@ -1,7 +1,7 @@
 
 import click, random
 from api.cities import cities
-from api.models import db, User, Place, EstablishmentType, City
+from api.models import db, User, Place, EstablishmentType, City, Favorite
 from werkzeug.security import generate_password_hash
 from sqlalchemy import select
 
@@ -74,6 +74,24 @@ def setup_commands(app):
             db.session.commit()
         
         print("All cities deleted")
+    
+    @app.cli.command('insert-test-favorites')
+    @click.argument("count") # argument of out command
+    def insert_favorites(count):
+        users = db.session.execute(select(User)).scalars().all() or None
+        places = db.session.execute(select(Place)).scalars().all() or None
+        if users is None or places is None:
+            return print('Unable to insert test favorites. Make sure users and places exist in the database')
+        
+        for x in range(1, int(count) + 1):
+            user_id = random.choice(users).id
+            place_id = random.choice(places).id
+            new_favorite = Favorite(user_id=user_id, place_id=place_id)
+            db.session.add(new_favorite)
+            db.session.commit()
+            print(f"Favorite {x} added")
+
+        return print("All test favorites added")
 
 
     @app.cli.command("insert-test-data")
