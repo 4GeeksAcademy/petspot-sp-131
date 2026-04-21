@@ -451,3 +451,34 @@ def delete_favorite(favorite_id):
     db.session.commit()
     return jsonify(response="Favorite deleted"), 200
 
+@api.route('/favorites/<int:favorite_id>', methods=["PUT"])
+def update_favorite(favorite_id):
+    favorite_exists = db.session.execute(select(Favorite).where(Favorite.id == favorite_id)).scalar_one_or_none()
+    if favorite_exists is None:
+        return jsonify(response="Favorite not found"), 404
+
+    data = request.get_json(silent=True) or {}
+    place = data.get("place")
+    if place is None:
+        return jsonify(response="Place is required"), 400
+    
+    if not isinstance(place, str):
+        return jsonify(response="Place must be a string"), 400
+    
+    place = place.strip()
+
+    if len(place) == 0:
+        return jsonify(response="Place cannot be empty"), 400
+    
+    place_exists = db.session.execute(select(Place).where(Place.name == place)).scalar_one_or_none()
+    if place_exists is None: 
+        return jsonify(response="Place not found"), 404
+    
+    favorite_relation_exists = db.session.execute(select(Favorite).where(Favorite.user_id == favorite_exists.user_id, Favorite.place_id == place_exists.id)).scalar_one_or_none()
+    if favorite_relation_exists is not None:
+        return jsonify(response="Favorite relation already exists"), 400
+    
+    favorite_exists.place_id = place_exists.id
+    db.session.commit()
+    
+    return jsonify(favorite_exists.serialize()), 200
