@@ -3,6 +3,7 @@ from sqlalchemy import String, Boolean, Text, ForeignKey, UniqueConstraint
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from enum import Enum
+from datetime import datetime
 
 db = SQLAlchemy()
 
@@ -16,6 +17,7 @@ class User(db.Model):
 
     # Relationship Many - Many
     favorite_places: Mapped[list["Favorite"]] = relationship("Favorite", back_populates="user")
+    chats: Mapped[list["Chat"]] = relationship("Chat", back_populates="user")
 
     def serialize(self):
         return {
@@ -49,6 +51,7 @@ class Place(db.Model):
     city: Mapped["City"] = relationship("City", back_populates="places")
     # Relationship Many - Many
     favorites: Mapped[list["Favorite"]] = relationship("Favorite", back_populates = "place")
+    chats: Mapped[list["Chat"]] = relationship("Chat", back_populates="place")
 
     def __str__(self):
         return self.name
@@ -125,3 +128,25 @@ class Favorite(db.Model):
         }
 
 
+class Chat(db.Model):
+    __tablename__ = "chat"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("user.id"), nullable=False)
+    place_id: Mapped[int] = mapped_column(ForeignKey("places.id"), nullable=False)
+    message: Mapped[str] = mapped_column(Text, nullable=False)
+    sender: Mapped[str] = mapped_column(String(20), nullable=False)
+
+    user: Mapped["User"] = relationship("User", back_populates="chats")
+    place: Mapped["Place"] = relationship("Place", back_populates="chats")
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "place_id": self.place_id,
+            "message": self.message,
+            "sender": self.sender
+        }
+
+ 
