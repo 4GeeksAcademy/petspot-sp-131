@@ -27,6 +27,12 @@ import EditCity from "./pages/Cities/EditCity";
 import DeleteCity from "./pages/Cities/DeleteCity";
 import CityDetail from "./pages/Cities/CityDetail";
 
+import News from "./pages/News/News";
+import AddNews from "./pages/News/AddNews";
+import EditNews from "./pages/News/EditNews";
+import DeleteNews from "./pages/News/DeleteNews";
+import NewsDetail from "./pages/News/NewsDetail";
+
 import Reservations from "./pages/Reservations/Reservations";
 import AddReservation from "./pages/Reservations/AddReservation";
 import Favorites from "./pages/Favorites/Favorites";
@@ -47,14 +53,15 @@ export const router = createBrowserRouter(
       <Route path="user/edit/:id" element={<UserEdit />} />
       <Route path="user/detail/:id" element={<UserDetail />} />
 
-<Route path="usuario/admin" element={<Admin />}>
-  <Route index element={<AdminList />} />
-  <Route path="crear" element={<AdminCreate />} />
-  <Route path="editar/:id" element={<AdminEdit />} />
-  <Route path="eliminar/:id" element={<AdminDelete />} />
-  <Route path="detalle/:id" element={<AdminDetail />} />
-  <Route path="login" element={<AdminLogin />} />
-</Route>
+      <Route path="usuario/admin" element={<Admin />}>
+        <Route index element={<AdminList />} />
+        <Route path="crear" element={<AdminCreate />} />
+        <Route path="editar/:id" element={<AdminEdit />} />
+        <Route path="eliminar/:id" element={<AdminDelete />} />
+        <Route path="detalle/:id" element={<AdminDetail />} />
+        <Route path="login" element={<AdminLogin />} />
+      </Route>
+
       <Route path="places" element={<Places />} />
       <Route path="places/add" element={<AddPlace />} />
       <Route path="places/edit/:id" element={<EditPlace />} />
@@ -67,6 +74,12 @@ export const router = createBrowserRouter(
       <Route path="cities/delete/:id" element={<DeleteCity />} />
       <Route path="cities/view/:id" element={<CityDetail />} />
 
+      <Route path="news" element={<News />} />
+      <Route path="news/add" element={<AddNews />} />
+      <Route path="news/edit/:id" element={<EditNews />} />
+      <Route path="news/delete/:id" element={<DeleteNews />} />
+      <Route path="news/view/:id" element={<NewsDetail />} />
+
       <Route path="reservations" element={<Reservations />} />
       <Route path="reservations/form" element={<AddReservation />} />
 
@@ -75,6 +88,7 @@ export const router = createBrowserRouter(
       <Route path="favorites/edit/:id" element={<EditFavorite />} />
       <Route path="favorites/delete/:id" element={<DeleteFavorite />} />
       <Route path="favorites/view/:id" element={<FavoriteDetail />} />
+
       <Route path="*" element={<h1>Not found!</h1>} />
     </Route>
   )

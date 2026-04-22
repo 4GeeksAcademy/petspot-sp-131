@@ -16,7 +16,8 @@ export const initialStore = () => {
     places: [],
     cities: [],
     reservations: [],
-    favorites: []
+    favorites: [],
+    news: []
   }
 }
 
@@ -29,7 +30,6 @@ export default function storeReducer(store, action = {}) {
       };
 
     case 'add_task':
-
       const { id, color } = action.payload
 
       return {
@@ -114,6 +114,19 @@ export default function storeReducer(store, action = {}) {
         ...store,
         favorites: store.favorites.filter((favorite) => favorite.id !== action.payload)
       }
+
+    case 'GET_NEWS':
+      return {
+        ...store,
+        news: action.payload
+      }
+
+    case 'ADD_NEWS':
+      return {
+        ...store,
+        news: [action.payload, ...store.news]
+      }
+
     default:
       throw Error('Unknown action.');
   }
