@@ -2,13 +2,15 @@
 This module takes care of starting the API Server, Loading the DB and Adding the endpoints
 """
 from flask import Flask, request, jsonify, url_for, Blueprint
-from api.models import db, User, Place, EstablishmentType, AdminUser, City
+from api.models import db, User, Place, EstablishmentType, AdminUser, City, Chat, Reservation, ReservationStatus, Favorite
+from datetime import datetime
 from api.utils import generate_sitemap, APIException
 from flask_cors import CORS
 from sqlalchemy import select
+from sqlalchemy.orm import joinedload
 from sqlalchemy.exc import IntegrityError
-from werkzeug.security import generate_password_hash
-from flask_jwt_extended import create_access_token
+from werkzeug.security import generate_password_hash, check_password_hash
+from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 
 
 api = Blueprint('api', __name__)
@@ -23,6 +25,7 @@ def handle_hello():
         "message": "Hello! I'm a message that came from the backend, check the network tab on the google inspector and you will see the GET request"
     }
     return jsonify(response_body), 200
+
 
 @api.route('/users', methods=['GET'])
 def get_users():
@@ -60,6 +63,7 @@ def create_user():
 
     return jsonify(new_user.serialize()), 201
 
+
 @api.route('/users/<int:user_id>', methods=['GET'])
 def get_user(user_id):
     user = db.session.execute(
@@ -70,6 +74,7 @@ def get_user(user_id):
         return jsonify({"msg": "User not found"}), 404
 
     return jsonify(user.serialize()), 200
+
 
 @api.route("/users/<int:user_id>", methods=["PUT"])
 def update_user(user_id):
@@ -102,6 +107,7 @@ def update_user(user_id):
 
     return jsonify(user.serialize()), 200
 
+
 @api.route("/users/<int:user_id>", methods=["DELETE"])
 def delete_user(user_id):
     user = db.session.get(User, user_id)
@@ -117,9 +123,11 @@ def delete_user(user_id):
 
 @api.route("/places", methods=["GET"])
 def get_places():
-    places = db.session.execute(select(Place).order_by(Place.id.desc())).scalars().all()
+    places = db.session.execute(
+        select(Place).order_by(Place.id.desc())).scalars().all()
     response = [place.serialize() for place in places]
     return jsonify(response), 200
+
 
 @api.route("/places", methods=["POST"])
 def add_place():
@@ -128,7 +136,7 @@ def add_place():
     password = data.get("password")
     name = data.get("name")
     establishment_type = data.get("establishment_type")
-    pet_rules = data.get("pet_rules") 
+    pet_rules = data.get("pet_rules")
     city_id = data.get("city_id")
 
     if not all([x for x in [email, password, name, establishment_type, city_id]]):
@@ -145,13 +153,13 @@ def add_place():
     city = db.session.get(City, city_id)
     if city is None:
         return jsonify(response="City not found"), 404
-    
+
     try:
         establishment_type = establishment_type.strip()
         establishment_type = EstablishmentType(establishment_type)
     except ValueError:
         return jsonify(response="Invalid establishment type"), 400
-    
+
     email = email.strip()
     password = password.strip()
     name = name.strip()
@@ -164,17 +172,20 @@ def add_place():
 
     if not all([x for x in [email, password, name]]):
         return jsonify(response="Email, password, city, and name cannot be empty"), 400
-    
-    email_exists = db.session.execute(select(Place).where(Place.email == email)).scalar_one_or_none()
+
+    email_exists = db.session.execute(select(Place).where(
+        Place.email == email)).scalar_one_or_none()
     if email_exists is not None:
         return jsonify(response="Unable to create an account with the provided information"), 400
-    
+
     hashed_password = generate_password_hash(password)
-    place = Place(name=name, email=email, password=hashed_password, city=city, establishment_type=establishment_type, pet_rules=pet_rules or None)
+    place = Place(name=name, email=email, password=hashed_password, city=city,
+                  establishment_type=establishment_type, pet_rules=pet_rules or None)
     db.session.add(place)
     db.session.commit()
-    
+
     return jsonify(place.serialize()), 201
+
 
 @api.route("/places/<int:place_id>", methods=["DELETE"])
 def delete_place(place_id):
@@ -182,6 +193,7 @@ def delete_place(place_id):
     db.session.delete(place_exists)
     db.session.commit()
     return jsonify(response="Place deleted"), 200
+
 
 @api.route("/places/<int:place_id>", methods=["PUT"])
 def update_place(place_id):
@@ -230,7 +242,8 @@ def update_place(place_id):
         if not isinstance(establishment_type, str):
             return jsonify(response="Establishment type must be a string"), 400
         try:
-            place.establishment_type = EstablishmentType(establishment_type.strip())
+            place.establishment_type = EstablishmentType(
+                establishment_type.strip())
         except ValueError:
             return jsonify(response="Invalid establishment type"), 400
 
@@ -257,7 +270,6 @@ def update_place(place_id):
     db.session.commit()
 
     return jsonify(place.serialize()), 200
-
 
 
 @api.route('/admin', methods=['GET'])
@@ -351,10 +363,13 @@ def delete_admin(id):
 
     return jsonify({"message": "Admin deleted"}), 200
 
+
 @api.route('/cities', methods=['GET'])
 def get_cities():
-    cities = db.session.execute(select(City).order_by(City.city.asc())).scalars().all()
+    cities = db.session.execute(
+        select(City).order_by(City.city.asc())).scalars().all()
     return jsonify([city.serialize() for city in cities]), 200
+
 
 @api.route('/cities', methods=['POST'])
 def add_city():
@@ -363,9 +378,10 @@ def add_city():
 
     if city is None:
         return jsonify(response="City is required"), 400
-    
+
     city = city.strip().title()
-    city_exists = db.session.execute(select(City).where(City.city == city)).scalar_one_or_none()
+    city_exists = db.session.execute(select(City).where(
+        City.city == city)).scalar_one_or_none()
     if city_exists:
         return jsonify(response="City already exists"), 400
 
@@ -379,26 +395,27 @@ def add_city():
 
     return jsonify(add_city.serialize()), 200
 
-@api.route('cities/<int:city_id>', methods=['DELETE'])
+@api.route('/cities/<int:city_id>', methods=['DELETE'])
 def delete_city(city_id):
     city_exists = db.get_or_404(City, city_id)
     db.session.delete(city_exists)
     db.session.commit()
     return jsonify(response="City deleted"), 200
 
-@api.route('cities/<int:city_id>', methods=['PUT'])
+@api.route('/cities/<int:city_id>', methods=['PUT'])
 def update_city(city_id):
     city_exists = db.get_or_404(City, city_id)
     data = request.get_json(silent=True) or {}
     city = data.get("city")
     if city is None:
         return jsonify(response="City is required"), 400
-    
+
     city = city.strip().title()
-    city_with_existing_name = db.session.execute(select(City).where(City.city == city, City.id != city_id)).scalar_one_or_none()
+    city_with_existing_name = db.session.execute(select(City).where(
+        City.city == city, City.id != city_id)).scalar_one_or_none()
     if city_with_existing_name:
         return jsonify(response="City cannot be updated to an existing city name"), 400
-    
+
     try:
         city_exists.city = city
         db.session.commit()
@@ -428,7 +445,6 @@ def login_user():
 
     access_token = create_access_token(identity=email)
     return jsonify(access_token=access_token), 200
-
 
 @api.route("/signup/user", methods=["POST"])
 def signup_user():
@@ -460,3 +476,305 @@ def signup_user():
 
     return jsonify({"msg": "Usuario creado exitosamente"}), 201
 
+@api.route('/chat', methods=['GET'])
+def get_chats():
+    chats = db.session.execute(select(Chat)).scalars().all()
+    return jsonify([chat.serialize() for chat in chats]), 200
+
+
+@api.route('/chat/<int:chat_id>', methods=['GET'])
+def get_chat(chat_id):
+    chat = db.session.get(Chat, chat_id)
+    if chat is None:
+        return jsonify({"msg": "Chat not found"}), 404
+    return jsonify(chat.serialize()), 200
+
+
+@api.route('/chat', methods=['POST'])
+def create_chat():
+    data = request.json
+
+    new_chat = Chat(
+        user_id=data.get("user_id"),
+        place_id=data.get("place_id"),
+        message=data.get("message"),
+        sender=data.get("sender")
+    )
+
+    db.session.add(new_chat)
+    db.session.commit()
+
+    return jsonify(new_chat.serialize()), 201
+
+
+@api.route('/chat/<int:chat_id>', methods=['PUT'])
+def update_chat(chat_id):
+    chat = db.session.get(Chat, chat_id)
+    if chat is None:
+        return jsonify({"msg": "Chat not found"}), 404
+
+    data = request.json
+
+    chat.message = data.get("message", chat.message)
+    chat.sender = data.get("sender", chat.sender)
+
+    db.session.commit()
+
+    return jsonify(chat.serialize()), 200
+
+
+@api.route('/chat/<int:chat_id>', methods=['DELETE'])
+def delete_chat(chat_id):
+    chat = db.session.get(Chat, chat_id)
+    if chat is None:
+        return jsonify({"msg": "Chat not found"}), 404
+
+    db.session.delete(chat)
+    db.session.commit()
+
+    return jsonify({"msg": "Chat deleted"}), 200
+
+@api.route('/reservations', methods=['GET'])
+def get_reservations():
+    reservations = db.session.execute(select(Reservation).options(joinedload(Reservation.user), joinedload(Reservation.place)).order_by(Reservation.id.desc())).scalars().all() or None
+    if not reservations:
+        return jsonify(response="No reservations found"), 404
+    return jsonify([res.serialize() for res in reservations]), 200
+
+@api.route('/reservations/<int:id>', methods=['GET'])
+def get_reservation(id):
+    reservation = db.session.get(Reservation, id)
+    if not reservation:
+        return jsonify({"msg": "Reservation not found"}), 404
+    return jsonify(reservation.serialize()), 200
+
+@api.route('/reservations', methods=['POST'])
+def add_reservation():
+    data = request.get_json(silent=True) or {}
+    user_id = data.get("user_id")
+    place_id = data.get("place_id")
+    reservation_date_str = data.get("reservation_date")
+    reservation_time_str = data.get("reservation_time")
+    people_count = data.get("people_count")
+    pet_count = data.get("pet_count")
+    zone_preference = data.get("zone_preference")
+    notes = data.get("notes")
+
+    if not all([user_id, place_id, reservation_date_str, reservation_time_str, people_count is not None, pet_count is not None]):
+        return jsonify(response="Missing required fields"), 400
+
+    user = db.session.get(User, user_id)
+    if not user:
+        return jsonify(response="User not found"), 404
+
+    place = db.session.get(Place, place_id)
+    if not place:
+        return jsonify(response="Place not found"), 404
+
+    try:
+        res_date = datetime.strptime(reservation_date_str, '%Y-%m-%d').date()
+        res_time = datetime.strptime(reservation_time_str, '%H:%M').time()
+    except ValueError:
+        return jsonify(response="Invalid date or time format. Use YYYY-MM-DD and HH:MM"), 400
+
+    new_reservation = Reservation(
+        user_id=user_id,
+        place_id=place_id,
+        reservation_date=res_date,
+        reservation_time=res_time,
+        people_count=int(people_count),
+        pet_count=int(pet_count),
+        zone_preference=zone_preference,
+        notes=notes,
+        status=ReservationStatus.PENDING
+    )
+
+    db.session.add(new_reservation)
+    db.session.commit()
+
+    return jsonify(new_reservation.serialize()), 201
+
+@api.route('/reservations/<int:id>', methods=['PUT'])
+def update_reservation(id):
+    reservation = db.session.get(Reservation, id)
+    if not reservation:
+        return jsonify({"msg": "Reservation not found"}), 404
+
+    data = request.get_json(silent=True) or {}
+
+    reservation_date_str = data.get("reservation_date")
+    reservation_time_str = data.get("reservation_time")
+    if reservation_date_str:
+        try:
+            reservation.reservation_date = datetime.strptime(reservation_date_str, '%Y-%m-%d').date()
+        except ValueError:
+            return jsonify(response="Invalid date format"), 400
+    if reservation_time_str:
+        try:
+            reservation.reservation_time = datetime.strptime(reservation_time_str, '%H:%M').time()
+        except ValueError:
+            return jsonify(response="Invalid time format"), 400
+
+    if 'people_count' in data:
+        reservation.people_count = int(data['people_count'])
+    if 'pet_count' in data:
+        reservation.pet_count = int(data['pet_count'])
+    if 'zone_preference' in data:
+        reservation.zone_preference = data['zone_preference']
+    if 'notes' in data:
+        reservation.notes = data['notes']
+    if 'status' in data:
+        try:
+            reservation.status = ReservationStatus(data['status'])
+        except ValueError:
+            return jsonify(response="Invalid status"), 400
+
+    db.session.commit()
+    return jsonify(reservation.serialize()), 200
+
+@api.route('/reservations/<int:id>', methods=['DELETE'])
+def delete_reservation(id):
+    reservation = db.session.get(Reservation, id)
+    if not reservation:
+        return jsonify({"msg": "Reservation not found"}), 404
+
+    db.session.delete(reservation)
+    db.session.commit()
+
+    return jsonify({"msg": "Reservation deleted"}), 200
+
+@api.route('/users/<int:user_id>/reservations', methods=['GET'])
+def get_user_reservations(user_id):
+    user = db.session.get(User, user_id)
+    if not user:
+        return jsonify(response="User not found"), 404
+    reservations = db.session.execute(select(Reservation).where(Reservation.user_id == user_id)).scalars().all()
+    if not reservations:
+        return jsonify(response="No reservations found for this user"), 404
+    return jsonify([res.serialize() for res in reservations]), 200
+
+@api.route('/places/<int:place_id>/reservations', methods=['GET'])
+def get_place_reservations(place_id):
+    place = db.session.get(Place, place_id)
+    if not place:
+        return jsonify(response="Place not found"), 404
+    reservations = db.session.execute(select(Reservation).where(Reservation.place_id == place_id)).scalars().all()
+    if not reservations:
+        return jsonify(response="No reservations found for this place"), 404
+    return jsonify([res.serialize() for res in reservations]), 200
+
+@api.route('/favorites', methods=['GET'])
+def get_favorites():
+    favorites = db.session.execute(select(Favorite)).scalars().all()
+    return jsonify([favorite.serialize() for favorite in favorites]), 200
+
+@api.route('/favorites', methods=['POST'])
+def add_favorite():
+    data = request.get_json(silent=True) or {}
+    user = data.get("user")
+    place = data.get("place")
+    
+    if any([x is None for x in [user, place]]):
+        return jsonify(response="User and place are required"), 400
+    
+    if not all([isinstance(x, str) for x in [user, place]]):
+        return jsonify(response="User and place need to be strings"), 400
+    
+    user = user.strip()
+    place = place.strip()
+
+    if any([len(x) == 0 for x in [user, place]]):
+        return jsonify(response="User or place cannot be empty"), 400
+    
+    user_exists = db.session.execute(select(User).where(User.name == user)).scalar_one_or_none()
+    if user_exists is None:
+        return jsonify(response="User not found"), 404
+    
+    place_exists = db.session.execute(select(Place).where(Place.name == place)).scalar_one_or_none()
+    if place_exists is None:
+        return jsonify(response="Place not found"), 404
+    
+    new_favorite = Favorite(user_id=user_exists.id, place_id=place_exists.id)
+    db.session.add(new_favorite)
+    db.session.commit()
+
+    return jsonify(new_favorite.serialize()), 200
+
+@api.route('/favorites/<int:favorite_id>', methods=["DELETE"])
+def delete_favorite(favorite_id):
+    favorite_exists = db.get_or_404(Favorite, favorite_id)
+    db.session.delete(favorite_exists)
+    db.session.commit()
+    return jsonify(response="Favorite deleted"), 200
+
+@api.route('/favorites/<int:favorite_id>', methods=["PUT"])
+def update_favorite(favorite_id):
+    favorite_exists = db.session.execute(select(Favorite).where(Favorite.id == favorite_id)).scalar_one_or_none()
+    if favorite_exists is None:
+        return jsonify(response="Favorite not found"), 404
+
+    data = request.get_json(silent=True) or {}
+    place = data.get("place")
+    if place is None:
+        return jsonify(response="Place is required"), 400
+    
+    if not isinstance(place, str):
+        return jsonify(response="Place must be a string"), 400
+    
+    place = place.strip()
+
+    if len(place) == 0:
+        return jsonify(response="Place cannot be empty"), 400
+    
+    place_exists = db.session.execute(select(Place).where(Place.name == place)).scalar_one_or_none()
+    if place_exists is None: 
+        return jsonify(response="Place not found"), 404
+    
+    favorite_relation_exists = db.session.execute(select(Favorite).where(Favorite.user_id == favorite_exists.user_id, Favorite.place_id == place_exists.id)).scalar_one_or_none()
+    if favorite_relation_exists is not None:
+        return jsonify(response="Favorite relation already exists"), 400
+    
+    favorite_exists.place_id = place_exists.id
+    db.session.commit()
+    
+    return jsonify(favorite_exists.serialize()), 200
+
+@api.route("/places/login", methods=["POST"])
+def login_place():
+    data = request.get_json(silent=True) or {}
+    email = data.get("email")
+    password = data.get("password")
+
+    if any([x is None for x in [email, password]]):
+        return jsonify(response="Email and Password are required"), 400
+    
+    if not all([isinstance(x, str) for x in [email, password]]):
+        return jsonify(response="Email and Password must be strings"), 400
+    
+    email = email.strip()
+    password = password.strip()
+
+    if any([len(x) == 0 for x in [email, password]]):
+        return jsonify(response="Email or password cannot be empty"), 400
+    
+    place_exists = db.session.execute(select(Place).where(Place.email == email)).scalar_one_or_none()
+    if place_exists is None:
+        return jsonify(response="Incorrect email or password"), 400
+    
+    place_password = place_exists.password
+    if not check_password_hash(place_password, password):
+        return jsonify(response="Incorrect email or password"), 400
+    
+    access_token = create_access_token(identity=str(place_exists.id))
+
+    return jsonify(access_token_place=access_token), 200
+
+@api.route("/places/private", methods=["GET"])
+@jwt_required()
+def private_place():
+    place_id = int(get_jwt_identity())
+    place_exists = db.session.execute(select(Place).where(Place.id == place_id)).scalar_one_or_none()
+    if place_exists is None:
+        return jsonify(response="Place not found")
+    
+    return jsonify(place_exists.serialize()), 200
