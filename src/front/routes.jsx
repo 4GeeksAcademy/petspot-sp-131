@@ -28,11 +28,11 @@ import CityDetail from "./pages/Cities/CityDetail";
 
 import Reservations from "./pages/Reservations/Reservations";
 import AddReservation from "./pages/Reservations/AddReservation";
-import News from "./pages/News/News";
-import AddNews from "./pages/News/AddNews";
-import EditNews from "./pages/News/EditNews";
-import DeleteNews from "./pages/News/DeleteNews";
-import NewsDetail from "./pages/News/NewsDetail";
+import Favorites from "./pages/Favorites/Favorites";
+import AddFavorite from "./pages/Favorites/AddFavorite";
+import EditFavorite from "./pages/Favorites/EditFavorite";
+import DeleteFavorite from "./pages/Favorites/DeleteFavorite";
+import FavoriteDetail from "./pages/Favorites/FavoriteDetail";
 
 export const router = createBrowserRouter(
   createRoutesFromElements(
@@ -68,12 +68,11 @@ export const router = createBrowserRouter(
       <Route path="reservations" element={<Reservations />} />
       <Route path="reservations/form" element={<AddReservation />} />
 
-      <Route path="news" element={<News />} />
-      <Route path="news/add" element={<AddNews />} />
-      <Route path="news/edit/:id" element={<EditNews />} />
-      <Route path="news/delete/:id" element={<DeleteNews />} />
-      <Route path="news/view/:id" element={<NewsDetail />} />
-
+      <Route path="favorites" element={<Favorites />} />
+      <Route path="favorites/add" element={<AddFavorite />} />
+      <Route path="favorites/edit/:id" element={<EditFavorite />} />
+      <Route path="favorites/delete/:id" element={<DeleteFavorite />} />
+      <Route path="favorites/view/:id" element={<FavoriteDetail />} />
       <Route path="*" element={<h1>Not found!</h1>} />
     </Route>
   )

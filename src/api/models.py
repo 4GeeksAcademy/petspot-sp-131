@@ -18,7 +18,10 @@ class User(db.Model):
     # Relationship One - Many
     reservations: Mapped[list["Reservation"]] = relationship("Reservation", back_populates="user")
     # Relationship Many - Many
-    favorite_places: Mapped[list["Favorite"]] = relationship("Favorite", back_populates="user")
+    favorite_places: Mapped[list["Favorite"]] = relationship("Favorite", back_populates="user", cascade="all, delete-orphan")
+
+    def __repr__(self):
+        return self.name
 
     def serialize(self):
         return {
@@ -60,7 +63,7 @@ class Place(db.Model):
     # Relationship Many - One
     city: Mapped["City"] = relationship("City", back_populates="places")
     # Relationship Many - Many
-    favorites: Mapped[list["Favorite"]] = relationship("Favorite", back_populates="place")
+    favorites: Mapped[list["Favorite"]] = relationship("Favorite", back_populates = "place", cascade="all, delete-orphan")
 
     # Relationship One - Many
     reservations: Mapped[list["Reservation"]] = relationship("Reservation", back_populates="place")
@@ -185,9 +188,9 @@ class Favorite(db.Model):
         return {
             "id": self.id,
             "user_id": self.user_id,
-            "user_name": self.user.name if self.user else None,
+            "user_name": self.user.name,
             "place_id": self.place_id,
-            "place_name": self.place.name if self.place else None,
+            "place_name": self.place.name
         }
 
 
