@@ -29,6 +29,7 @@ import DeleteCity from "./pages/Cities/DeleteCity";
 import CityDetail from "./pages/Cities/CityDetail";
 import { LoginUser } from "./pages/LoginUser";
 import { SignupUser } from "./pages/SignupUser";
+import PrivateUser from "./pages/PrivateUser";
 import Chat from "./pages/Chat/Chat";
 import AddChat from "./pages/Chat/AddChat";
 import EditChat from "./pages/Chat/EditChat";
@@ -49,6 +50,7 @@ export const router = createBrowserRouter(
 
       <Route path="login/user" element={<LoginUser />} />
       <Route path="signup/user" element={<SignupUser />} />
+      <Route path="private/user" element={<PrivateUser />} />
 
       <Route path="user" element={<User />} />
       <Route path="user/create" element={<UserCreate />} />

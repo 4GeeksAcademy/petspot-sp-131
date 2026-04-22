@@ -8,9 +8,17 @@ export const Navbar = () => {
 				<Link to="/">
 					<span className="navbar-brand mb-0 h1">React Boilerplate</span>
 				</Link>
-				<div className="ml-auto">
+				<div className="d-flex gap-2">
 					<Link to="/reservations">
 						<button className="btn btn-primary">Reservations</button>
+					</Link>
+
+					<Link to="/login/user">
+						<button className="btn btn-outline-primary">Login</button>
+					</Link>
+
+					<Link to="/signup/user">
+						<button className="btn btn-success">Signup</button>
 					</Link>
 				</div>
 			</div>
