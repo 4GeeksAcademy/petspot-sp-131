@@ -23,6 +23,10 @@ import PrivatePlace from "./pages/Places/PrivatePlace";
 import { Admin } from "./pages/Admin";
 import { AdminList, AdminCreate, AdminEdit, AdminDelete, AdminDetail } from "./pages/Admin";
 import AdminLogin from "./pages/AdminLogin";
+import { Reviews } from "./pages/Reviews/Reviews.jsx";
+import { ReviewDetail } from "./pages/Reviews/ReviewDetail.jsx";
+import { ReviewCreate } from "./pages/Reviews/ReviewCreate.jsx";
+import { ReviewEdit } from "./pages/Reviews/ReviewEdit.jsx";
 import Cities from "./pages/Cities/Cities";
 import AddCity from "./pages/Cities/AddCity";
 import EditCity from "./pages/Cities/EditCity";
@@ -100,6 +104,11 @@ export const router = createBrowserRouter(
       <Route path="favorites/view/:id" element={<FavoriteDetail />} />
 
       <Route path="*" element={<h1>Not found!</h1>} />
+
+      <Route path="reviews" element={<Reviews />} />
+      <Route path="reviews/detail/:id" element={<ReviewDetail />} />
+      <Route path="reviews/create" element={<ReviewCreate />} />
+      <Route path="reviews/edit/:id" element={<ReviewEdit />} />
     </Route>
   )
 );
