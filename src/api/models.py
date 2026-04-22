@@ -19,6 +19,12 @@ class User(db.Model):
 
     reservations: Mapped[list["Reservation"]] = relationship(
         "Reservation", back_populates="user")
+    reviews: Mapped[list["Review"]] = relationship("Review", back_populates="user")
+    
+        
+
+    def __str__(self):
+        return self.name
     chats: Mapped[list["Chat"]] = relationship("Chat", back_populates="user")
     favorite_places: Mapped[list["Favorite"]] = relationship(
         "Favorite", back_populates="user", cascade="all, delete-orphan")
@@ -33,6 +39,7 @@ class User(db.Model):
             "email": self.email,
             "favorite_places": [favorite.place_id for favorite in self.favorite_places],
         }
+
 
 
 class EstablishmentType(Enum):
@@ -88,6 +95,7 @@ class Place(db.Model):
         }
 
 
+
 class AdminUser(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(120), nullable=False)
@@ -109,6 +117,34 @@ class AdminUser(db.Model):
         }
 
 
+class Review(db.Model):
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("user.id"), nullable=False)
+    reservation_id: Mapped[int] = mapped_column(
+        ForeignKey("reservations.id"), nullable=False)
+    rating: Mapped[int] = mapped_column(nullable=False)
+    title: Mapped[str] = mapped_column(String(120), nullable=False)
+    content: Mapped[str] = mapped_column(String(500), nullable=False)
+    created_at: Mapped[str] = mapped_column(String(50), nullable=False)
+    is_active: Mapped[bool] = mapped_column(
+        Boolean(), nullable=False, default=True)
+
+    user: Mapped["User"] = relationship("User", back_populates="reviews")
+    reservation: Mapped["Reservation"] = relationship(
+        "Reservation", back_populates="reviews")
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "reservation_id": self.reservation_id,
+            "rating": self.rating,
+            "title": self.title,
+            "content": self.content,
+            "created_at": self.created_at,
+            "is_active": self.is_active
+        }
+
 class City(db.Model):
     __tablename__ = "cities"
 
@@ -116,6 +152,7 @@ class City(db.Model):
     city: Mapped[str] = mapped_column(String(120), unique=True, nullable=False)
 
     places: Mapped[list["Place"]] = relationship(
+        
         "Place", back_populates="city")
 
     def __repr__(self):
@@ -154,6 +191,7 @@ class Reservation(db.Model):
 
     user: Mapped["User"] = relationship("User", back_populates="reservations")
     place: Mapped["Place"] = relationship("Place", back_populates="reservations")
+    reviews: Mapped[list["Review"]] = relationship("Review", back_populates="reservation")
 
     def serialize(self):
         return {
@@ -168,7 +206,7 @@ class Reservation(db.Model):
             "notes": self.notes,
             "status": self.status.value
         }
-
+    
 
 class Favorite(db.Model):
     __tablename__ = "favorites"

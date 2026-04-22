@@ -2,6 +2,7 @@
 This module takes care of starting the API Server, Loading the DB and Adding the endpoints
 """
 from flask import Flask, request, jsonify, url_for, Blueprint
+<<<<<<< HEAD
 from api.models import (
     db,
     User,
@@ -16,6 +17,9 @@ from api.models import (
     News,
     PostType,
 )
+=======
+from api.models import db, User, Place, EstablishmentType, AdminUser, Review, City, Chat, Reservation, ReservationStatus, Favorite,News, PostType
+>>>>>>> aba43ff5c7d5bd78cc9729db97f286c4e5a3fe31
 from datetime import datetime
 from api.utils import generate_sitemap, APIException
 from flask_cors import CORS
@@ -24,6 +28,7 @@ from sqlalchemy.orm import joinedload
 from sqlalchemy.exc import IntegrityError
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
+from sqlalchemy.orm import joinedload
 
 
 api = Blueprint('api', __name__)
@@ -66,6 +71,7 @@ def handle_hello():
         "message": "Hello! I'm a message that came from the backend, check the network tab on the google inspector and you will see the GET request"
     }
     return jsonify(response_body), 200
+
 
 
 @api.route('/users', methods=['GET'])
@@ -405,6 +411,91 @@ def delete_admin(id):
     db.session.commit()
 
     return jsonify({"message": "Admin deleted"}), 200
+
+
+
+@api.route('/reviews', methods=['GET'])
+def get_reviews():
+    reviews = db.session.execute(db.select(Review)).scalars().all()
+    return jsonify([review.serialize() for review in reviews]), 200
+
+
+@api.route('/reviews/<int:review_id>', methods=['GET'])
+def get_review(review_id):
+    review = db.session.execute(
+        db.select(Review).filter_by(id=review_id)
+    ).scalar_one_or_none()
+
+    if review is None:
+        return jsonify({"msg": "Review no encontrada"}), 404
+
+    return jsonify(review.serialize()), 200
+
+
+@api.route('/reviews', methods=['POST'])
+def create_review():
+    body = request.get_json()
+
+    required_fields = ["user_id", "reservation_id",
+                       "rating", "title", "content", "created_at"]
+
+    for field in required_fields:
+        if field not in body or body[field] == "":
+            return jsonify({"msg": f"El campo {field} es obligatorio"}), 400
+
+    review = Review(
+        user_id=body["user_id"],
+        reservation_id=body["reservation_id"],
+        rating=body["rating"],
+        title=body["title"],
+        content=body["content"],
+        created_at=body["created_at"],
+        is_active=body.get("is_active", True)
+    )
+
+    db.session.add(review)
+    db.session.commit()
+
+    return jsonify(review.serialize()), 201
+
+
+@api.route('/reviews/<int:review_id>', methods=['PUT'])
+def update_review(review_id):
+    review = db.session.execute(
+        db.select(Review).filter_by(id=review_id)
+    ).scalar_one_or_none()
+
+    if review is None:
+        return jsonify({"msg": "Review no encontrada"}), 404
+
+    body = request.get_json()
+
+    review.user_id = body.get("user_id", review.user_id)
+    review.reservation_id = body.get("reservation_id", review.reservation_id)
+    review.rating = body.get("rating", review.rating)
+    review.title = body.get("title", review.title)
+    review.content = body.get("content", review.content)
+    review.created_at = body.get("created_at", review.created_at)
+    review.is_active = body.get("is_active", review.is_active)
+
+    db.session.commit()
+
+    return jsonify(review.serialize()), 200
+
+
+@api.route('/reviews/<int:review_id>', methods=['DELETE'])
+def delete_review(review_id):
+    review = db.session.execute(
+        db.select(Review).filter_by(id=review_id)
+    ).scalar_one_or_none()
+
+    if review is None:
+        return jsonify({"msg": "Review no encontrada"}), 404
+
+    db.session.delete(review)
+    db.session.commit()
+
+    return jsonify({"msg": "Review eliminada correctamente"}), 200
 
 
 @api.route('/cities', methods=['GET'])
