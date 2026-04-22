@@ -16,7 +16,7 @@ export const initialStore = () => {
     places: [],
     cities: [],
     reservations: [],
-    news: []
+    favorites: []
   }
 }
 
@@ -91,30 +91,29 @@ export default function storeReducer(store, action = {}) {
         reservations: action.payload
       }
 
-    case 'GET_NEWS':
+    case 'GET_FAVORITES':
       return {
         ...store,
-        news: action.payload
+        favorites: action.payload
       }
 
-    case 'ADD_NEWS':
+    case 'ADD_FAVORITE':
       return {
         ...store,
-        news: [action.payload, ...store.news]
+        favorites: [action.payload, ...store.favorites]
       }
 
-    case 'UPDATE_NEWS':
+    case 'UPDATE_FAVORITE':
       return {
         ...store,
-        news: store.news.map((news) => news.id === action.payload.id ? action.payload : news)
+        favorites: store.favorites.map((favorite) => favorite.id === action.payload.id ? action.payload : favorite)
       }
 
-    case 'DELETE_NEWS':
+    case 'DELETE_FAVORITE':
       return {
         ...store,
-        news: store.news.filter((news) => news.id !== action.payload)
+        favorites: store.favorites.filter((favorite) => favorite.id !== action.payload)
       }
-
     default:
       throw Error('Unknown action.');
   }
