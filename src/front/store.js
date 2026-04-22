@@ -15,7 +15,8 @@ export const initialStore = () => {
     ],
     places: [],
     cities: [],
-    reservations: []
+    reservations: [],
+    news: []
   }
 }
 
@@ -88,6 +89,30 @@ export default function storeReducer(store, action = {}) {
       return {
         ...store,
         reservations: action.payload
+      }
+
+    case 'GET_NEWS':
+      return {
+        ...store,
+        news: action.payload
+      }
+
+    case 'ADD_NEWS':
+      return {
+        ...store,
+        news: [action.payload, ...store.news]
+      }
+
+    case 'UPDATE_NEWS':
+      return {
+        ...store,
+        news: store.news.map((news) => news.id === action.payload.id ? action.payload : news)
+      }
+
+    case 'DELETE_NEWS':
+      return {
+        ...store,
+        news: store.news.filter((news) => news.id !== action.payload)
       }
 
     default:

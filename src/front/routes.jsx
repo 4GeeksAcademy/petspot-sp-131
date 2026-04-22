@@ -28,6 +28,11 @@ import CityDetail from "./pages/Cities/CityDetail";
 
 import Reservations from "./pages/Reservations/Reservations";
 import AddReservation from "./pages/Reservations/AddReservation";
+import News from "./pages/News/News";
+import AddNews from "./pages/News/AddNews";
+import EditNews from "./pages/News/EditNews";
+import DeleteNews from "./pages/News/DeleteNews";
+import NewsDetail from "./pages/News/NewsDetail";
 
 export const router = createBrowserRouter(
   createRoutesFromElements(
@@ -62,6 +67,12 @@ export const router = createBrowserRouter(
 
       <Route path="reservations" element={<Reservations />} />
       <Route path="reservations/form" element={<AddReservation />} />
+
+      <Route path="news" element={<News />} />
+      <Route path="news/add" element={<AddNews />} />
+      <Route path="news/edit/:id" element={<EditNews />} />
+      <Route path="news/delete/:id" element={<DeleteNews />} />
+      <Route path="news/view/:id" element={<NewsDetail />} />
 
       <Route path="*" element={<h1>Not found!</h1>} />
     </Route>
