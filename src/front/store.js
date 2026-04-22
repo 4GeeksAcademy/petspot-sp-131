@@ -14,6 +14,7 @@ export const initialStore = () => {
       }
     ],
     places: [],
+    privatePlace: {},
     cities: [],
     reservations: [],
     favorites: [],
@@ -63,6 +64,12 @@ export default function storeReducer(store, action = {}) {
       return {
         ...store,
         places: store.places.filter((place) => place.id !== action.payload)
+      }
+
+    case 'GET_PRIVATE_PLACE':
+      return {
+        ...store,
+        privatePlace: action.payload
       }
 
     case 'GET_CITIES':

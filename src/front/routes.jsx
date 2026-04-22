@@ -18,6 +18,8 @@ import AddPlace from "./pages/Places/AddPlace";
 import EditPlace from "./pages/Places/EditPlace";
 import DeletePlace from "./pages/Places/DeletePlace";
 import PlaceDetail from "./pages/Places/PlaceDetail";
+import LoginPlace from "./pages/Places/LoginPlace";
+import PrivatePlace from "./pages/Places/PrivatePlace";
 import { Admin } from "./pages/Admin";
 import { AdminList, AdminCreate, AdminEdit, AdminDelete, AdminDetail } from "./pages/Admin";
 import AdminLogin from "./pages/AdminLogin";
@@ -33,6 +35,9 @@ import EditNews from "./pages/News/EditNews";
 import DeleteNews from "./pages/News/DeleteNews";
 import NewsDetail from "./pages/News/NewsDetail";
 
+import Chat from "./pages/Chat/Chat";
+import AddChat from "./pages/Chat/AddChat";
+import EditChat from "./pages/Chat/EditChat";
 import Reservations from "./pages/Reservations/Reservations";
 import AddReservation from "./pages/Reservations/AddReservation";
 import Favorites from "./pages/Favorites/Favorites";
@@ -67,6 +72,8 @@ export const router = createBrowserRouter(
       <Route path="places/edit/:id" element={<EditPlace />} />
       <Route path="places/delete/:id" element={<DeletePlace />} />
       <Route path="places/view/:id" element={<PlaceDetail />} />
+      <Route path="places/login" element={<LoginPlace />} />
+      <Route path="places/private" element={<PrivatePlace />} />
 
       <Route path="cities" element={<Cities />} />
       <Route path="cities/add" element={<AddCity />} />
@@ -80,6 +87,9 @@ export const router = createBrowserRouter(
       <Route path="news/delete/:id" element={<DeleteNews />} />
       <Route path="news/view/:id" element={<NewsDetail />} />
 
+      <Route path="chat" element={<Chat />} />
+      <Route path="chat/add" element={<AddChat />} />
+      <Route path="chat/edit/:id" element={<EditChat />} />
       <Route path="reservations" element={<Reservations />} />
       <Route path="reservations/form" element={<AddReservation />} />
 

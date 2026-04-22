@@ -2,7 +2,7 @@
 This module takes care of starting the API Server, Loading the DB and Adding the endpoints
 """
 from flask import Flask, request, jsonify, url_for, Blueprint
-from api.models import db, User, Place, EstablishmentType, AdminUser, City, Reservation, ReservationStatus, Favorite, News, PostType
+from api.models import db, User, Place, EstablishmentType, AdminUser, City, Chat, Reservation, ReservationStatus, Favorite,News, PostType
 from datetime import datetime
 from api.utils import generate_sitemap, APIException
 from flask_cors import CORS
@@ -10,6 +10,8 @@ from sqlalchemy import select
 from sqlalchemy.orm import joinedload
 from sqlalchemy.exc import IntegrityError
 from werkzeug.security import generate_password_hash, check_password_hash
+from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
+
 
 api = Blueprint('api', __name__)
 
@@ -146,7 +148,8 @@ def delete_user(user_id):
 
 @api.route("/places", methods=["GET"])
 def get_places():
-    places = db.session.execute(select(Place).order_by(Place.id.desc())).scalars().all()
+    places = db.session.execute(
+        select(Place).order_by(Place.id.desc())).scalars().all()
     response = [place.serialize() for place in places]
     return jsonify(response), 200
 
@@ -200,7 +203,8 @@ def add_place():
         return jsonify(response="Unable to create an account with the provided information"), 400
 
     hashed_password = generate_password_hash(password)
-    place = Place(name=name, email=email, password=hashed_password, city=city, establishment_type=establishment_type, pet_rules=pet_rules or None)
+    place = Place(name=name, email=email, password=hashed_password, city=city,
+                  establishment_type=establishment_type, pet_rules=pet_rules or None)
     db.session.add(place)
     db.session.commit()
 
@@ -262,7 +266,8 @@ def update_place(place_id):
         if not isinstance(establishment_type, str):
             return jsonify(response="Establishment type must be a string"), 400
         try:
-            place.establishment_type = EstablishmentType(establishment_type.strip())
+            place.establishment_type = EstablishmentType(
+                establishment_type.strip())
         except ValueError:
             return jsonify(response="Invalid establishment type"), 400
 
@@ -384,7 +389,8 @@ def delete_admin(id):
 
 @api.route('/cities', methods=['GET'])
 def get_cities():
-    cities = db.session.execute(select(City).order_by(City.city.asc())).scalars().all()
+    cities = db.session.execute(
+        select(City).order_by(City.city.asc())).scalars().all()
     return jsonify([city.serialize() for city in cities]), 200
 
 
@@ -397,7 +403,8 @@ def add_city():
         return jsonify(response="City is required"), 400
 
     city = city.strip().title()
-    city_exists = db.session.execute(select(City).where(City.city == city)).scalar_one_or_none()
+    city_exists = db.session.execute(select(City).where(
+        City.city == city)).scalar_one_or_none()
     if city_exists:
         return jsonify(response="City already exists"), 400
 
@@ -429,7 +436,8 @@ def update_city(city_id):
         return jsonify(response="City is required"), 400
 
     city = city.strip().title()
-    city_with_existing_name = db.session.execute(select(City).where(City.city == city, City.id != city_id)).scalar_one_or_none()
+    city_with_existing_name = db.session.execute(select(City).where(
+        City.city == city, City.id != city_id)).scalar_one_or_none()
     if city_with_existing_name:
         return jsonify(response="City cannot be updated to an existing city name"), 400
 
@@ -439,124 +447,67 @@ def update_city(city_id):
     except IntegrityError:
         db.session.rollback()
         return jsonify(response="City cannot be updated to an existing city name"), 400
-
+    
     return jsonify(city_exists.serialize()), 200
 
 
-@api.route('/news', methods=['GET'])
-def get_news():
-    news_list = db.session.execute(
-        select(News).order_by(News.post_date.desc(), News.id.desc())
-    ).scalars().all()
-    return jsonify([news.serialize() for news in news_list]), 200
+@api.route('/chat', methods=['GET'])
+def get_chats():
+    chats = db.session.execute(select(Chat)).scalars().all()
+    return jsonify([chat.serialize() for chat in chats]), 200
 
 
-@api.route('/news/<int:news_id>', methods=['GET'])
-def get_single_news(news_id):
-    news = db.session.get(News, news_id)
-
-    if news is None:
-        return jsonify({"msg": "News not found"}), 404
-
-    return jsonify(news.serialize()), 200
+@api.route('/chat/<int:chat_id>', methods=['GET'])
+def get_chat(chat_id):
+    chat = db.session.get(Chat, chat_id)
+    if chat is None:
+        return jsonify({"msg": "Chat not found"}), 404
+    return jsonify(chat.serialize()), 200
 
 
-@api.route('/news', methods=['POST'])
-def create_news():
-    data = request.get_json(silent=True) or {}
+@api.route('/chat', methods=['POST'])
+def create_chat():
+    data = request.json
 
-    id_admin = data.get("id_admin")
-    title = data.get("title")
-    content = data.get("content")
-    post_date = data.get("post_date")
-    post_type = data.get("post_type")
-
-    if not all([id_admin, title, content, post_date, post_type]):
-        return jsonify({"msg": "id_admin, title, content, post_date and post_type are required"}), 400
-
-    admin = db.session.get(AdminUser, id_admin)
-    if admin is None:
-        return jsonify({"msg": "Admin not found"}), 404
-
-    try:
-        parsed_date = datetime.strptime(post_date, "%Y-%m-%d").date()
-    except ValueError:
-        return jsonify({"msg": "post_date must be in YYYY-MM-DD format"}), 400
-
-    try:
-        parsed_type = PostType(post_type)
-    except ValueError:
-        return jsonify({"msg": "Invalid post_type"}), 400
-
-    new_news = News(
-        id_admin=id_admin,
-        title=title.strip(),
-        content=content.strip(),
-        post_date=parsed_date,
-        post_type=parsed_type
+    new_chat = Chat(
+        user_id=data.get("user_id"),
+        place_id=data.get("place_id"),
+        message=data.get("message"),
+        sender=data.get("sender")
     )
 
-    db.session.add(new_news)
+    db.session.add(new_chat)
     db.session.commit()
 
-    return jsonify(new_news.serialize()), 201
+    return jsonify(new_chat.serialize()), 201
 
 
-@api.route('/news/<int:news_id>', methods=['PUT'])
-def update_news(news_id):
-    news = db.session.get(News, news_id)
+@api.route('/chat/<int:chat_id>', methods=['PUT'])
+def update_chat(chat_id):
+    chat = db.session.get(Chat, chat_id)
+    if chat is None:
+        return jsonify({"msg": "Chat not found"}), 404
 
-    if news is None:
-        return jsonify({"msg": "News not found"}), 404
+    data = request.json
 
-    data = request.get_json(silent=True) or {}
-
-    if 'id_admin' in data:
-        admin = db.session.get(AdminUser, data['id_admin'])
-        if admin is None:
-            return jsonify({"msg": "Admin not found"}), 404
-        news.id_admin = data['id_admin']
-
-    if 'title' in data:
-        title = str(data['title']).strip()
-        if not title:
-            return jsonify({"msg": "Title cannot be empty"}), 400
-        news.title = title
-
-    if 'content' in data:
-        content = str(data['content']).strip()
-        if not content:
-            return jsonify({"msg": "Content cannot be empty"}), 400
-        news.content = content
-
-    if 'post_date' in data:
-        try:
-            news.post_date = datetime.strptime(data['post_date'], "%Y-%m-%d").date()
-        except ValueError:
-            return jsonify({"msg": "post_date must be in YYYY-MM-DD format"}), 400
-
-    if 'post_type' in data:
-        try:
-            news.post_type = PostType(data['post_type'])
-        except ValueError:
-            return jsonify({"msg": "Invalid post_type"}), 400
+    chat.message = data.get("message", chat.message)
+    chat.sender = data.get("sender", chat.sender)
 
     db.session.commit()
-    return jsonify(news.serialize()), 200
+
+    return jsonify(chat.serialize()), 200
 
 
-@api.route('/news/<int:news_id>', methods=['DELETE'])
-def delete_news(news_id):
-    news = db.session.get(News, news_id)
+@api.route('/chat/<int:chat_id>', methods=['DELETE'])
+def delete_chat(chat_id):
+    chat = db.session.get(Chat, chat_id)
+    if chat is None:
+        return jsonify({"msg": "Chat not found"}), 404
 
-    if news is None:
-        return jsonify({"msg": "News not found"}), 404
-
-    db.session.delete(news)
+    db.session.delete(chat)
     db.session.commit()
 
-    return jsonify({"msg": "News deleted successfully"}), 200
-
+    return jsonify({"msg": "Chat deleted"}), 200
 
 @api.route('/reservations', methods=['GET'])
 def get_reservations():
@@ -771,4 +722,42 @@ def update_favorite(favorite_id):
     favorite_exists.place_id = place_exists.id
     db.session.commit()
 
-    return jsonify(favorite_exists.serialize()), 200
+@api.route("/places/login", methods=["POST"])
+def login_place():
+    data = request.get_json(silent=True) or {}
+    email = data.get("email")
+    password = data.get("password")
+
+    if any([x is None for x in [email, password]]):
+        return jsonify(response="Email and Password are required"), 400
+    
+    if not all([isinstance(x, str) for x in [email, password]]):
+        return jsonify(response="Email and Password must be strings"), 400
+    
+    email = email.strip()
+    password = password.strip()
+
+    if any([len(x) == 0 for x in [email, password]]):
+        return jsonify(response="Email or password cannot be empty"), 400
+    
+    place_exists = db.session.execute(select(Place).where(Place.email == email)).scalar_one_or_none()
+    if place_exists is None:
+        return jsonify(response="Incorrect email or password"), 400
+    
+    place_password = place_exists.password
+    if not check_password_hash(place_password, password):
+        return jsonify(response="Incorrect email or password"), 400
+    
+    access_token = create_access_token(identity=str(place_exists.id))
+
+    return jsonify(access_token_place=access_token), 200
+
+@api.route("/places/private", methods=["GET"])
+@jwt_required()
+def private_place():
+    place_id = int(get_jwt_identity())
+    place_exists = db.session.execute(select(Place).where(Place.id == place_id)).scalar_one_or_none()
+    if place_exists is None:
+        return jsonify(response="Place not found")
+    
+    return jsonify(place_exists.serialize()), 200
