@@ -1,26 +1,79 @@
-import React, { useState, useEffect } from "react";
-import { Link, useParams, useNavigate, Outlet } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 
-// ========= COMPONENTE: LISTADO DE ADMINS =========
+export const Admin = () => {
+  const [isLogged, setIsLogged] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const token = localStorage.getItem("Admin token");
+    setIsLogged(token === "Admin token");
+
+    const loginMessage = sessionStorage.getItem("adminLoginSuccess");
+    if (loginMessage) {
+      setSuccessMessage(loginMessage);
+      sessionStorage.removeItem("adminLoginSuccess");
+
+      setTimeout(() => {
+        setSuccessMessage("");
+      }, 3000);
+    }
+  }, [location.pathname]);
+
+  const handleLogout = () => {
+    localStorage.removeItem("Admin token");
+    setIsLogged(false);
+    navigate("/usuario/admin");
+  };
+
+  return (
+    <div className="container py-4">
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h1>Admins</h1>
+
+        {!isLogged ? (
+          <Link to="/usuario/admin/login" className="btn btn-success">
+            Login
+          </Link>
+        ) : (
+          <button className="btn btn-danger" onClick={handleLogout}>
+            Logout
+          </button>
+        )}
+      </div>
+
+      {successMessage && (
+        <div className="alert alert-success">{successMessage}</div>
+      )}
+
+      <Outlet />
+    </div>
+  );
+};
 export const AdminList = () => {
   const [admins, setAdmins] = useState([]);
-  const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
+  const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    fetchAdmins();
+  }, []);
 
   const fetchAdmins = async () => {
-    setLoading(true);
     try {
       const backendUrl = import.meta.env.VITE_BACKEND_URL;
       const response = await fetch(`${backendUrl}/api/admin`, {
         method: "GET",
         headers: { "Content-Type": "application/json" }
       });
+      const data = await response.json();
       if (response.ok) {
-        const data = await response.json();
         setAdmins(data);
+        setMessage("");
       } else {
-        const errorData = await response.json();
-        setMessage(errorData.msg || "Error al cargar los admins");
+        setMessage(data.msg || "Error al cargar admins");
       }
     } catch (error) {
       console.error("Error al cargar admins:", error);
@@ -29,10 +82,6 @@ export const AdminList = () => {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    fetchAdmins();
-  }, []);
 
   const handleDelete = async (id) => {
     setLoading(true);
@@ -485,7 +534,4 @@ export const AdminDetail = () => {
   );
 };
 
-// ========= COMPONENTE PRINCIPAL: ADMIN (CONTENEDOR DE RUTAS) =========
-export const Admin = () => {
-  return <Outlet />;
-};
+
