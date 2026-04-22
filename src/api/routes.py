@@ -9,7 +9,7 @@ from flask_cors import CORS
 from sqlalchemy import select
 from sqlalchemy.orm import joinedload
 from sqlalchemy.exc import IntegrityError
-from werkzeug.security import generate_password_hash
+from werkzeug.security import generate_password_hash, check_password_hash
 from flask_jwt_extended import create_access_token
 
 
@@ -616,3 +616,32 @@ def update_favorite(favorite_id):
     
     return jsonify(favorite_exists.serialize()), 200
 
+@api.route("/places/login", methods=["POST"])
+def login_place():
+    data = request.get_json(silent=True) or {}
+    email = data.get("email")
+    password = data.get("password")
+
+    if any([x is None for x in [email, password]]):
+        return jsonify(response="Email and Password are required"), 400
+    
+    if not all([isinstance(x, str) for x in [email, password]]):
+        return jsonify(response="Email and Password must be strings"), 400
+    
+    email = email.strip()
+    password = password.strip()
+
+    if any([len(x) == 0 for x in [email, password]]):
+        return jsonify(response="Email or password cannot be empty"), 400
+    
+    place_exists = db.session.execute(select(Place).where(Place.email == email)).scalar_one_or_none()
+    if place_exists is None:
+        return jsonify(response="Incorrect email or password"), 400
+    
+    place_password = place_exists.password
+    if not check_password_hash(place_password, password):
+        return jsonify(response="Incorrect email or password"), 400
+    
+    access_token = create_access_token(identity=str(place_exists.id))
+
+    return jsonify(access_token_place=access_token), 200
