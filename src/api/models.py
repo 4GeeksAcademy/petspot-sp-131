@@ -1,8 +1,9 @@
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import String, Boolean, Text, ForeignKey, Date, Time,UniqueConstraint
+from sqlalchemy import String, Boolean, Text, ForeignKey, Date, Time, UniqueConstraint
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from enum import Enum
+from datetime import datetime
 
 db = SQLAlchemy()
 
@@ -16,7 +17,8 @@ class User(db.Model):
     is_active: Mapped[bool] = mapped_column(Boolean(), default=True)
 
     # Relationship One - Many
-    reservations: Mapped[list["Reservation"]] = relationship("Reservation", back_populates="user")
+    reservations: Mapped[list["Reservation"]] = relationship(
+        "Reservation", back_populates="user")
     reviews: Mapped[list["Review"]] = relationship("Review", back_populates="user")
     
         
@@ -24,7 +26,9 @@ class User(db.Model):
     def __str__(self):
         return self.name
     # Relationship Many - Many
-    favorite_places: Mapped[list["Favorite"]] = relationship("Favorite", back_populates="user", cascade="all, delete-orphan")
+    chats: Mapped[list["Chat"]] = relationship("Chat", back_populates="user")
+    favorite_places: Mapped[list["Favorite"]] = relationship(
+        "Favorite", back_populates="user", cascade="all, delete-orphan")
 
     def __repr__(self):
         return self.name
@@ -39,10 +43,12 @@ class User(db.Model):
         }
 
 
+
 class EstablishmentType(Enum):
     BAR = "bar"
     RESTAURANT = "restaurant"
     CAFE = "cafe"
+
 
 
 class Place(db.Model):
@@ -67,7 +73,8 @@ class Place(db.Model):
     reservations: Mapped[list["Reservation"]] = relationship("Reservation", back_populates="place")
     
     # Relationship Many - Many
-    favorites: Mapped[list["Favorite"]] = relationship("Favorite", back_populates = "place", cascade="all, delete-orphan")
+    favorites: Mapped[list["Favorite"]] = relationship("Favorite", back_populates="place", cascade="all, delete-orphan")
+    chats: Mapped[list["Chat"]] = relationship("Chat", back_populates="place")
 
     # Relationship One - Many
     reservations: Mapped[list["Reservation"]] = relationship("Reservation", back_populates="place")
@@ -89,6 +96,7 @@ class Place(db.Model):
         }
 
 
+
 class AdminUser(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(120), nullable=False)
@@ -105,6 +113,8 @@ class AdminUser(db.Model):
             "email": self.email,
             # do not serialize the password, its a security breach
         }
+
+
 
 
 class Review(db.Model):
@@ -144,6 +154,7 @@ class City(db.Model):
 
     # Relationship One - Many
     places: Mapped[list["Place"]] = relationship(
+        
         "Place", back_populates="city")
 
     def __repr__(self):
@@ -155,17 +166,20 @@ class City(db.Model):
             "city": self.city
         }
 
+
 class ReservationStatus(Enum):
     CONFIRMED = "confirmed"
     PENDING = "pending"
     CANCELLED = "cancelled"
+
 
 class Reservation(db.Model):
     __tablename__ = "reservations"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("user.id"), nullable=False)
-    place_id: Mapped[int] = mapped_column(ForeignKey("places.id"), nullable=False)
+    place_id: Mapped[int] = mapped_column(
+        ForeignKey("places.id"), nullable=False)
     reservation_date: Mapped["Date"] = mapped_column(Date, nullable=False)
     reservation_time: Mapped["Time"] = mapped_column(Time, nullable=False)
     people_count: Mapped[int] = mapped_column(nullable=False)
@@ -177,6 +191,7 @@ class Reservation(db.Model):
         nullable=False,
         default=ReservationStatus.PENDING
     )
+
     def serialize(self):
         return {
             "id": self.id,
@@ -189,7 +204,7 @@ class Reservation(db.Model):
             "zone_preference": self.zone_preference,
             "notes": self.notes,
             "status": self.status.value
-            }
+        }
 
     # Relationships
     user: Mapped["User"] = relationship("User", back_populates="reservations")
@@ -222,10 +237,12 @@ class Favorite(db.Model):
 
     # Foreign Keys
     user_id: Mapped[int] = mapped_column(ForeignKey("user.id"), nullable=False)
-    place_id: Mapped[int] = mapped_column(ForeignKey("places.id"), nullable=False)
+    place_id: Mapped[int] = mapped_column(
+        ForeignKey("places.id"), nullable=False)
 
     # Relationship Many to One
-    user: Mapped["User"] = relationship("User", back_populates="favorite_places")
+    user: Mapped["User"] = relationship(
+        "User", back_populates="favorite_places")
     place: Mapped["Place"] = relationship("Place", back_populates="favorites")
 
     def serialize(self):
@@ -236,9 +253,30 @@ class Favorite(db.Model):
             "place_id": self.place_id,
             "place_name": self.place.name
         }
-            
-        
 
 
+class Chat(db.Model):
+    __tablename__ = "chat"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("user.id"), nullable=False)
+    place_id: Mapped[int] = mapped_column(
+        ForeignKey("places.id"), nullable=False)
+    message: Mapped[str] = mapped_column(Text, nullable=False)
+    sender: Mapped[str] = mapped_column(String(20), nullable=False)
+
+    user: Mapped["User"] = relationship("User", back_populates="chats")
+    place: Mapped["Place"] = relationship("Place", back_populates="chats")
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "user_name": self.user.name,
+            "place_id": self.place_id,
+            "place_name": self.place.name,
+            "message": self.message,
+            "sender": self.sender
+    }
 
 

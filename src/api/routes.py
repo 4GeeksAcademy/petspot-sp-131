@@ -2,7 +2,7 @@
 This module takes care of starting the API Server, Loading the DB and Adding the endpoints
 """
 from flask import Flask, request, jsonify, url_for, Blueprint
-from api.models import db, User, Place, EstablishmentType, AdminUser, Review, City, Reservation, ReservationStatus, Favorite
+from api.models import db, User, Place, EstablishmentType, AdminUser, Review, City, Chat, Reservation, ReservationStatus, Favorite
 from datetime import datetime
 from api.utils import generate_sitemap, APIException
 from flask_cors import CORS
@@ -26,6 +26,7 @@ def handle_hello():
         "message": "Hello! I'm a message that came from the backend, check the network tab on the google inspector and you will see the GET request"
     }
     return jsonify(response_body), 200
+
 
 
 @api.route('/users', methods=['GET'])
@@ -124,7 +125,8 @@ def delete_user(user_id):
 
 @api.route("/places", methods=["GET"])
 def get_places():
-    places = db.session.execute(select(Place).order_by(Place.id.desc())).scalars().all()
+    places = db.session.execute(
+        select(Place).order_by(Place.id.desc())).scalars().all()
     response = [place.serialize() for place in places]
     return jsonify(response), 200
 
@@ -364,6 +366,7 @@ def delete_admin(id):
     return jsonify({"message": "Admin deleted"}), 200
 
 
+
 @api.route('/reviews', methods=['GET'])
 def get_reviews():
     reviews = db.session.execute(db.select(Review)).scalars().all()
@@ -450,7 +453,8 @@ def delete_review(review_id):
 
 @api.route('/cities', methods=['GET'])
 def get_cities():
-    cities = db.session.execute(select(City).order_by(City.city.asc())).scalars().all()
+    cities = db.session.execute(
+        select(City).order_by(City.city.asc())).scalars().all()
     return jsonify([city.serialize() for city in cities]), 200
 
 
@@ -506,8 +510,66 @@ def update_city(city_id):
         db.session.rollback()
         return jsonify(response="City cannot be updated to an existing city name"), 400
     
-    
     return jsonify(city_exists.serialize()), 200
+
+
+@api.route('/chat', methods=['GET'])
+def get_chats():
+    chats = db.session.execute(select(Chat)).scalars().all()
+    return jsonify([chat.serialize() for chat in chats]), 200
+
+
+@api.route('/chat/<int:chat_id>', methods=['GET'])
+def get_chat(chat_id):
+    chat = db.session.get(Chat, chat_id)
+    if chat is None:
+        return jsonify({"msg": "Chat not found"}), 404
+    return jsonify(chat.serialize()), 200
+
+
+@api.route('/chat', methods=['POST'])
+def create_chat():
+    data = request.json
+
+    new_chat = Chat(
+        user_id=data.get("user_id"),
+        place_id=data.get("place_id"),
+        message=data.get("message"),
+        sender=data.get("sender")
+    )
+
+    db.session.add(new_chat)
+    db.session.commit()
+
+    return jsonify(new_chat.serialize()), 201
+
+
+@api.route('/chat/<int:chat_id>', methods=['PUT'])
+def update_chat(chat_id):
+    chat = db.session.get(Chat, chat_id)
+    if chat is None:
+        return jsonify({"msg": "Chat not found"}), 404
+
+    data = request.json
+
+    chat.message = data.get("message", chat.message)
+    chat.sender = data.get("sender", chat.sender)
+
+    db.session.commit()
+
+    return jsonify(chat.serialize()), 200
+
+
+@api.route('/chat/<int:chat_id>', methods=['DELETE'])
+def delete_chat(chat_id):
+    chat = db.session.get(Chat, chat_id)
+    if chat is None:
+        return jsonify({"msg": "Chat not found"}), 404
+
+    db.session.delete(chat)
+    db.session.commit()
+
+    return jsonify({"msg": "Chat deleted"}), 200
 
 @api.route('/reservations', methods=['GET'])
 def get_reservations():

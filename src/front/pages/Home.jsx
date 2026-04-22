@@ -61,9 +61,12 @@ export const Home = () => {
 				<Link to="/cities" className="btn btn-primary">
 					Cities
 				</Link>
+				<Link to="/chat" className="btn btn-primary">
+					Chat
+				</Link>
 				<Link to="/favorites" className="btn btn-primary">
 					Favorites
-				</Link>
+				</Link>	
 				<Link to="/reviews" className="btn btn-primary">Reviews</Link>
 			</div>
 		</div>
