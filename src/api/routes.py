@@ -10,7 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import joinedload
 from sqlalchemy.exc import IntegrityError
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask_jwt_extended import create_access_token
+from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 
 
 api = Blueprint('api', __name__)
@@ -645,3 +645,13 @@ def login_place():
     access_token = create_access_token(identity=str(place_exists.id))
 
     return jsonify(access_token_place=access_token), 200
+
+@api.route("/places/private", methods=["GET"])
+@jwt_required()
+def private_place():
+    place_id = int(get_jwt_identity())
+    place_exists = db.session.execute(select(Place).where(Place.id == place_id)).scalar_one_or_none()
+    if place_exists is None:
+        return jsonify(response="Place not found")
+    
+    return jsonify([place_exists.serialize()]), 200
