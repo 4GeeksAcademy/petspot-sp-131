@@ -1,7 +1,7 @@
+import React from "react";
 import { Link } from "react-router-dom";
 
 export const Navbar = () => {
-
 	return (
 		<nav className="navbar navbar-light bg-light">
 			<div className="container">
@@ -12,6 +12,10 @@ export const Navbar = () => {
 					<Link to="/reservations">
 						<button className="btn btn-primary">Reservations</button>
 					</Link>
+
+					<Link to="/news">
+                        <button className="btn btn-primary">News</button>
+                    </Link>
 
 					<Link to="/login/user">
 						<button className="btn btn-outline-primary">Login</button>

@@ -17,6 +17,7 @@ export const initialStore = () => {
     cities: [],
     privatePlace: {},
     reservations: [],
+    news: [],
     favorites: [],
     authUser: false
   }
@@ -31,12 +32,13 @@ export default function storeReducer(store, action = {}) {
       };
 
     case 'add_task':
-
       const { id, color } = action.payload
 
       return {
         ...store,
-        todos: store.todos.map((todo) => (todo.id === id ? { ...todo, background: color } : todo))
+        todos: store.todos.map((todo) =>
+          todo.id === id ? { ...todo, background: color } : todo
+        )
       };
 
     case 'GET_PLACES':
@@ -54,7 +56,9 @@ export default function storeReducer(store, action = {}) {
     case 'UPDATE_PLACE':
       return {
         ...store,
-        places: store.places.map((place) => place.id === action.payload.id ? action.payload : place)
+        places: store.places.map((place) =>
+          place.id === action.payload.id ? action.payload : place
+        )
       }
 
     case 'DELETE_PLACE':
@@ -84,7 +88,9 @@ export default function storeReducer(store, action = {}) {
     case 'UPDATE_CITY':
       return {
         ...store,
-        cities: store.cities.map((city) => city.id === action.payload.id ? action.payload : city).sort((a, b) => a.city.localeCompare(b.city))
+        cities: store.cities
+          .map((city) => city.id === action.payload.id ? action.payload : city)
+          .sort((a, b) => a.city.localeCompare(b.city))
       }
 
     case 'DELETE_CITY':
@@ -120,13 +126,41 @@ export default function storeReducer(store, action = {}) {
     case 'UPDATE_FAVORITE':
       return {
         ...store,
-        favorites: store.favorites.map((favorite) => favorite.id === action.payload.id ? action.payload : favorite)
+        favorites: store.favorites.map((favorite) =>
+          favorite.id === action.payload.id ? action.payload : favorite
+        )
       }
 
     case 'DELETE_FAVORITE':
       return {
         ...store,
         favorites: store.favorites.filter((favorite) => favorite.id !== action.payload)
+      }
+
+    case 'GET_NEWS':
+      return {
+        ...store,
+        news: action.payload
+      }
+
+    case 'ADD_NEWS':
+      return {
+        ...store,
+        news: [action.payload, ...store.news]
+      }
+
+    case 'UPDATE_NEWS':
+      return {
+        ...store,
+        news: store.news.map((newsItem) =>
+          newsItem.id === action.payload.id ? action.payload : newsItem
+        )
+      }
+
+    case 'DELETE_NEWS':
+      return {
+        ...store,
+        news: store.news.filter((newsItem) => newsItem.id !== action.payload)
       }
 
     default:

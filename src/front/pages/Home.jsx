@@ -67,6 +67,7 @@ export const Home = () => {
 				<Link to="/favorites" className="btn btn-primary">
 					Favorites
 				</Link>	
+				<Link to="/reviews" className="btn btn-primary">Reviews</Link>
 			</div>
 		</div>
 	);
