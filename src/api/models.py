@@ -167,14 +167,7 @@ class Favorite(db.Model):
             "user_id": self.user_id,
             "user_name": self.user.name if self.user else None,
             "place_id": self.place_id,
-            "place_name": self.place.name if self.place else None,
-            "reservation_date": str(self.reservation_date) if self.reservation_date else None,
-            "reservation_time": str(self.reservation_time) if self.reservation_time else None,
-            "people_count": self.people_count,
-            "pet_count": self.pet_count,
-            "zone_preference": self.zone_preference,
-            "notes": self.notes,
-            "status": self.status.value if self.status else None
+            "place_name": self.place.name if self.place else None
         }
 
 
