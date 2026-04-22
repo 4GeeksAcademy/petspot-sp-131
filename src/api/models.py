@@ -73,7 +73,6 @@ class Place(db.Model):
         ForeignKey("cities.id"), nullable=False)
 
     city: Mapped["City"] = relationship("City", back_populates="places")
-    reservations: Mapped[list["Reservation"]] = relationship("Reservation", back_populates="place")
     favorites: Mapped[list["Favorite"]] = relationship(
         "Favorite", back_populates="place", cascade="all, delete-orphan")
     chats: Mapped[list["Chat"]] = relationship("Chat", back_populates="place")
