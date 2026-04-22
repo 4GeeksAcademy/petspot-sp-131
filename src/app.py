@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 from api.routes import api
 from api.admin import setup_admin
 from api.commands import setup_commands
+
 load_dotenv()
 
 # from models import Person
@@ -22,34 +23,34 @@ app = Flask(__name__)
 app.url_map.strict_slashes = False
 
 # database configuration
-db_url = "sqlite:///petspot.db"
-app.config['SQLALCHEMY_DATABASE_URI'] = db_url
+db_url = os.getenv("DATABASE_URL")
+if db_url is None:
+    db_url = "sqlite:///local.db"
 
+if db_url.startswith("postgres://"):
+    db_url = db_url.replace("postgres://", "postgresql://", 1)
+
+app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 MIGRATE = Migrate(app, db, compare_type=True)
-
 
 db.init_app(app)
 
 # add the admin
 setup_admin(app)
 
-# add the admin
+# add commands
 setup_commands(app)
 
 # Add all endpoints form the API with a "api" prefix
 app.register_blueprint(api, url_prefix='/api')
 
 # Handle/serialize errors like a JSON object
-
-
 @app.errorhandler(APIException)
 def handle_invalid_usage(error):
     return jsonify(error.to_dict()), error.status_code
 
 # generate sitemap with all your endpoints
-
-
 @app.route('/')
 def sitemap():
     if ENV == "development":
@@ -57,16 +58,12 @@ def sitemap():
     return send_from_directory(static_file_dir, 'index.html')
 
 # any other endpoint will try to serve it like a static file
-
-
 @app.errorhandler(404)
 def serve_any_other_file(error):
-    # Check if the requested path is an API endpoint
     path = request.path.lstrip('/')
     if path.startswith('api/'):
         return jsonify({"error": "Not found"}), 404
     return send_from_directory(static_file_dir, 'index.html')
-
 
 # this only runs if `$ python src/main.py` is executed
 if __name__ == '__main__':
