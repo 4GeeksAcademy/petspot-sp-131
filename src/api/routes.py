@@ -654,4 +654,4 @@ def private_place():
     if place_exists is None:
         return jsonify(response="Place not found")
     
-    return jsonify([place_exists.serialize()]), 200
+    return jsonify(place_exists.serialize()), 200
