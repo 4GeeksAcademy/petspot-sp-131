@@ -10,6 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import joinedload
 from sqlalchemy.exc import IntegrityError
 from werkzeug.security import generate_password_hash
+from flask_jwt_extended import create_access_token
 
 
 api = Blueprint('api', __name__)
