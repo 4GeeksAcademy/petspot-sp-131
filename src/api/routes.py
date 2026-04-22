@@ -614,3 +614,4 @@ def update_favorite(favorite_id):
     db.session.commit()
     
     return jsonify(favorite_exists.serialize()), 200
+

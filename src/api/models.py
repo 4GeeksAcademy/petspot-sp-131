@@ -58,6 +58,9 @@ class Place(db.Model):
     # Relationship One - Many
     reservations: Mapped[list["Reservation"]] = relationship("Reservation", back_populates="place")
 
+    # Relationship One - Many
+    reservations: Mapped[list["Reservation"]] = relationship("Reservation", back_populates="place")
+
     def __str__(self):
         return self.name
 
@@ -172,5 +175,7 @@ class Favorite(db.Model):
             "place_id": self.place_id,
             "place_name": self.place.name
         }
+
+
 
 

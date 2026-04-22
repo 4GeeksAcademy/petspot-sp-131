@@ -114,7 +114,6 @@ export default function storeReducer(store, action = {}) {
         ...store,
         favorites: store.favorites.filter((favorite) => favorite.id !== action.payload)
       }
-
     default:
       throw Error('Unknown action.');
   }

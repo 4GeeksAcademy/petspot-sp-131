@@ -73,7 +73,6 @@ export const router = createBrowserRouter(
       <Route path="favorites/edit/:id" element={<EditFavorite />} />
       <Route path="favorites/delete/:id" element={<DeleteFavorite />} />
       <Route path="favorites/view/:id" element={<FavoriteDetail />} />
-
       <Route path="*" element={<h1>Not found!</h1>} />
     </Route>
   )
