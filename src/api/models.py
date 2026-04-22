@@ -148,6 +148,7 @@ class Reservation(db.Model):
     # Relationships
     user: Mapped["User"] = relationship("User", back_populates="reservations")
     place: Mapped["Place"] = relationship("Place", back_populates="reservations")
+    
 class Favorite(db.Model):
     __tablename__ = "favorites"
     __table_args__ = (
