@@ -18,6 +18,8 @@ import AddPlace from "./pages/Places/AddPlace";
 import EditPlace from "./pages/Places/EditPlace";
 import DeletePlace from "./pages/Places/DeletePlace";
 import PlaceDetail from "./pages/Places/PlaceDetail";
+import LoginPlace from "./pages/Places/LoginPlace";
+import PrivatePlace from "./pages/Places/PrivatePlace";
 import { Admin } from "./pages/Admin";
 import { AdminList, AdminCreate, AdminEdit, AdminDelete, AdminDetail } from "./pages/Admin";
 import Cities from "./pages/Cities/Cities";
@@ -25,9 +27,19 @@ import AddCity from "./pages/Cities/AddCity";
 import EditCity from "./pages/Cities/EditCity";
 import DeleteCity from "./pages/Cities/DeleteCity";
 import CityDetail from "./pages/Cities/CityDetail";
+<<<<<<< HEAD
 import Chat from "./pages/Chat/Chat";
 import AddChat from "./pages/Chat/AddChat";
 import EditChat from "./pages/Chat/EditChat";
+=======
+import Reservations from "./pages/Reservations/Reservations";
+import AddReservation from "./pages/Reservations/AddReservation";
+import Favorites from "./pages/Favorites/Favorites";
+import AddFavorite from "./pages/Favorites/AddFavorite";
+import EditFavorite from "./pages/Favorites/EditFavorite";
+import DeleteFavorite from "./pages/Favorites/DeleteFavorite";
+import FavoriteDetail from "./pages/Favorites/FavoriteDetail";
+>>>>>>> develop
 
 export const router = createBrowserRouter(
   createRoutesFromElements(
@@ -48,11 +60,14 @@ export const router = createBrowserRouter(
         <Route path="eliminar/:id" element={<AdminDelete />} />
         <Route path="detalle/:id" element={<AdminDetail />} />
       </Route>
+
       <Route path="places" element={<Places />} />
       <Route path="places/add" element={<AddPlace />} />
       <Route path="places/edit/:id" element={<EditPlace />} />
       <Route path="places/delete/:id" element={<DeletePlace />} />
       <Route path="places/view/:id" element={<PlaceDetail />} />
+      <Route path="places/login" element={<LoginPlace />} />
+      <Route path="places/private" element={<PrivatePlace />} />
 
       <Route path="cities" element={<Cities />} />
       <Route path="cities/add" element={<AddCity />} />
@@ -60,9 +75,20 @@ export const router = createBrowserRouter(
       <Route path="cities/delete/:id" element={<DeleteCity />} />
       <Route path="cities/view/:id" element={<CityDetail />} />
 
+<<<<<<< HEAD
       <Route path="chat" element={<Chat />} />
       <Route path="chat/add" element={<AddChat />} />
       <Route path="chat/edit/:id" element={<EditChat />} />
+=======
+      <Route path="reservations" element={<Reservations />} />
+      <Route path="reservations/form" element={<AddReservation />} />
+
+      <Route path="favorites" element={<Favorites />} />
+      <Route path="favorites/add" element={<AddFavorite />} />
+      <Route path="favorites/edit/:id" element={<EditFavorite />} />
+      <Route path="favorites/delete/:id" element={<DeleteFavorite />} />
+      <Route path="favorites/view/:id" element={<FavoriteDetail />} />
+>>>>>>> develop
 
       <Route path="*" element={<h1>Not found!</h1>} />
     </Route>
