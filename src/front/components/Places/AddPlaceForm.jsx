@@ -149,7 +149,8 @@ function AddPlaceForm() {
                 </div>
                 <div className="mb-3">
                     <label htmlFor="placeCity" className="form-label">City *</label>
-                    <select class="form-select" id="placeCity" onChange={(event) => setCity(event.target.value)} value={city} aria-label="selectCity" required>
+                    <select className="form-select" id="placeCity" onChange={(event) => setCity(event.target.value)} value={city} aria-label="selectCity" required>
+                        <option selected>Select a city </option>
                         {store.cities.map((city, i) => {
                             return (
                                 <option value={city.id} key={`${city.city}-${i}`}>{city.city}</option>
