@@ -1,5 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import String, Boolean, Text, ForeignKey, UniqueConstraint
+from sqlalchemy import String, Boolean, Text, ForeignKey, Date, Time,UniqueConstraint
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from enum import Enum
@@ -14,6 +14,8 @@ class User(db.Model):
     password: Mapped[str] = mapped_column(String(255), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean(), default=True)
 
+    # Relationship One - Many
+    reservations: Mapped[list["Reservation"]] = relationship("Reservation", back_populates="user")
     # Relationship Many - Many
     favorite_places: Mapped[list["Favorite"]] = relationship("Favorite", back_populates="user", cascade="all, delete-orphan")
 
@@ -52,6 +54,9 @@ class Place(db.Model):
     city: Mapped["City"] = relationship("City", back_populates="places")
     # Relationship Many - Many
     favorites: Mapped[list["Favorite"]] = relationship("Favorite", back_populates = "place", cascade="all, delete-orphan")
+
+    # Relationship One - Many
+    reservations: Mapped[list["Reservation"]] = relationship("Reservation", back_populates="place")
 
     def __str__(self):
         return self.name
@@ -104,6 +109,45 @@ class City(db.Model):
             "city": self.city
         }
 
+class ReservationStatus(Enum):
+    CONFIRMED = "confirmed"
+    PENDING = "pending"
+    CANCELLED = "cancelled"
+
+class Reservation(db.Model):
+    __tablename__ = "reservations"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("user.id"), nullable=False)
+    place_id: Mapped[int] = mapped_column(ForeignKey("places.id"), nullable=False)
+    reservation_date: Mapped["Date"] = mapped_column(Date, nullable=False)
+    reservation_time: Mapped["Time"] = mapped_column(Time, nullable=False)
+    people_count: Mapped[int] = mapped_column(nullable=False)
+    pet_count: Mapped[int] = mapped_column(nullable=False)
+    zone_preference: Mapped[str] = mapped_column(String(100), nullable=True)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    status: Mapped[ReservationStatus] = mapped_column(
+        SQLEnum(ReservationStatus, name="reservation_status"),
+        nullable=False,
+        default=ReservationStatus.PENDING
+    )
+    def serialize(self):
+        return {
+            "id": self.id,
+            "user_id ": self.user_id,
+            "place_id": self.place_id,
+            "reservation_date": str(self.reservation_date),
+            "reservation_time": str(self.reservation_time),
+            "people_count": self.people_count,
+            "pet_count": self.pet_count,
+            "zone_preference": self.zone_preference,
+            "notes": self.notes,
+            "status": self.status.value
+            }
+
+    # Relationships
+    user: Mapped["User"] = relationship("User", back_populates="reservations")
+    place: Mapped["Place"] = relationship("Place", back_populates="reservations")
 class Favorite(db.Model):
     __tablename__ = "favorites"
     __table_args__ = (

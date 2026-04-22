@@ -25,6 +25,9 @@ import AddCity from "./pages/Cities/AddCity";
 import EditCity from "./pages/Cities/EditCity";
 import DeleteCity from "./pages/Cities/DeleteCity";
 import CityDetail from "./pages/Cities/CityDetail";
+
+import Reservations from "./pages/Reservations/Reservations";
+import AddReservation from "./pages/Reservations/AddReservation";
 import Favorites from "./pages/Favorites/Favorites";
 import AddFavorite from "./pages/Favorites/AddFavorite";
 import EditFavorite from "./pages/Favorites/EditFavorite";
@@ -61,6 +64,9 @@ export const router = createBrowserRouter(
       <Route path="cities/edit/:id" element={<EditCity />} />
       <Route path="cities/delete/:id" element={<DeleteCity />} />
       <Route path="cities/view/:id" element={<CityDetail />} />
+
+      <Route path="reservations" element={<Reservations />} />
+      <Route path="reservations/form" element={<AddReservation />} />
 
       <Route path="favorites" element={<Favorites />} />
       <Route path="favorites/add" element={<AddFavorite />} />
