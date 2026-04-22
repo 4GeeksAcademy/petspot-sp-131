@@ -13,6 +13,7 @@ import { User } from "./pages/User";
 import { UserCreate } from "./pages/UserCreate";
 import { UserEdit } from "./pages/UserEdit";
 import { UserDetail } from "./pages/UserDetail";
+
 import Places from "./pages/Places/Places";
 import AddPlace from "./pages/Places/AddPlace";
 import EditPlace from "./pages/Places/EditPlace";
@@ -20,14 +21,22 @@ import DeletePlace from "./pages/Places/DeletePlace";
 import PlaceDetail from "./pages/Places/PlaceDetail";
 import LoginPlace from "./pages/Places/LoginPlace";
 import PrivatePlace from "./pages/Places/PrivatePlace";
+
 import { Admin } from "./pages/Admin";
 import { AdminList, AdminCreate, AdminEdit, AdminDelete, AdminDetail } from "./pages/Admin";
 import AdminLogin from "./pages/AdminLogin";
+
 import Cities from "./pages/Cities/Cities";
 import AddCity from "./pages/Cities/AddCity";
 import EditCity from "./pages/Cities/EditCity";
 import DeleteCity from "./pages/Cities/DeleteCity";
 import CityDetail from "./pages/Cities/CityDetail";
+
+import Reservations from "./pages/Reservations/Reservations";
+import AddReservation from "./pages/Reservations/AddReservation";
+import EditReservation from "./pages/Reservations/EditReservation";
+import DeleteReservation from "./pages/Reservations/DeleteReservation";
+import ReservationDetail from "./pages/Reservations/ReservationDetail";
 
 import News from "./pages/News/News";
 import AddNews from "./pages/News/AddNews";
@@ -38,8 +47,7 @@ import NewsDetail from "./pages/News/NewsDetail";
 import Chat from "./pages/Chat/Chat";
 import AddChat from "./pages/Chat/AddChat";
 import EditChat from "./pages/Chat/EditChat";
-import Reservations from "./pages/Reservations/Reservations";
-import AddReservation from "./pages/Reservations/AddReservation";
+
 import Favorites from "./pages/Favorites/Favorites";
 import AddFavorite from "./pages/Favorites/AddFavorite";
 import EditFavorite from "./pages/Favorites/EditFavorite";
@@ -90,8 +98,12 @@ export const router = createBrowserRouter(
       <Route path="chat" element={<Chat />} />
       <Route path="chat/add" element={<AddChat />} />
       <Route path="chat/edit/:id" element={<EditChat />} />
+
       <Route path="reservations" element={<Reservations />} />
       <Route path="reservations/form" element={<AddReservation />} />
+      <Route path="reservations/edit/:id" element={<EditReservation />} />
+      <Route path="reservations/delete/:id" element={<DeleteReservation />} />
+      <Route path="reservations/view/:id" element={<ReservationDetail />} />
 
       <Route path="favorites" element={<Favorites />} />
       <Route path="favorites/add" element={<AddFavorite />} />
