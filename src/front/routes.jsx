@@ -25,6 +25,11 @@ import AddCity from "./pages/Cities/AddCity";
 import EditCity from "./pages/Cities/EditCity";
 import DeleteCity from "./pages/Cities/DeleteCity";
 import CityDetail from "./pages/Cities/CityDetail";
+import Favorites from "./pages/Favorites/Favorites";
+import AddFavorite from "./pages/Favorites/AddFavorite";
+import EditFavorite from "./pages/Favorites/EditFavorite";
+import DeleteFavorite from "./pages/Favorites/DeleteFavorite";
+import FavoriteDetail from "./pages/Favorites/FavoriteDetail";
 
 export const router = createBrowserRouter(
   createRoutesFromElements(
@@ -56,6 +61,12 @@ export const router = createBrowserRouter(
       <Route path="cities/edit/:id" element={<EditCity />} />
       <Route path="cities/delete/:id" element={<DeleteCity />} />
       <Route path="cities/view/:id" element={<CityDetail />} />
+
+      <Route path="favorites" element={<Favorites />} />
+      <Route path="favorites/add" element={<AddFavorite />} />
+      <Route path="favorites/edit/:id" element={<EditFavorite />} />
+      <Route path="favorites/delete/:id" element={<DeleteFavorite />} />
+      <Route path="favorites/view/:id" element={<FavoriteDetail />} />
 
       <Route path="*" element={<h1>Not found!</h1>} />
     </Route>
