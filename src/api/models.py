@@ -165,9 +165,9 @@ class Favorite(db.Model):
         return {
             "id": self.id,
             "user_id": self.user_id,
-            "user_name": self.user.name if self.user else None,
+            "user_name": self.user.name,
             "place_id": self.place_id,
-            "place_name": self.place.name if self.place else None
+            "place_name": self.place.name
         }
 
 
