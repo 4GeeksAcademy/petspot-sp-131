@@ -9,7 +9,7 @@ from flask_cors import CORS
 from sqlalchemy import select
 from sqlalchemy.orm import joinedload
 from sqlalchemy.exc import IntegrityError
-from werkzeug.security import generate_password_hash
+from werkzeug.security import generate_password_hash, check_password_hash
 
 
 api = Blueprint('api', __name__)
@@ -17,6 +17,33 @@ api = Blueprint('api', __name__)
 # Allow CORS requests to this API
 CORS(api)
 
+@api.route('/admin/login', methods=['POST'])
+def admin_login():
+    body = request.get_json(silent=True)
+
+    if not body:
+        return jsonify({"msg": "Missing request body"}), 400
+
+    email = body.get("email", "").strip()
+    password = body.get("password", "")
+
+    if not email or not password:
+        return jsonify({"msg": "Email and password are required"}), 400
+
+    admin = AdminUser.query.filter_by(email=email).first()
+    if not admin or not check_password_hash(admin.password, password):
+        return jsonify({"msg": "Invalid credentials"}), 401
+
+
+    return jsonify({
+        "msg": "Login successful",
+        "token": "Admin token",
+        "admin": {
+            "id": admin.id,
+            "name": admin.name,
+            "email": admin.email
+        }
+    }), 200
 
 @api.route('/hello', methods=['GET'])
 def handle_hello():
@@ -275,6 +302,8 @@ def update_place(place_id):
 def get_admins():
     admins = AdminUser.query.all()
     return jsonify([admin.serialize() for admin in admins]), 200
+
+
 
 
 @api.route('/admin/<int:id>', methods=['GET'])
