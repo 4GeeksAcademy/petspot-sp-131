@@ -2,7 +2,7 @@
 This module takes care of starting the API Server, Loading the DB and Adding the endpoints
 """
 from flask import Flask, request, jsonify, url_for, Blueprint
-from api.models import db, User, Place, EstablishmentType, AdminUser, City, Reservation, ReservationStatus
+from api.models import db, User, Place, EstablishmentType, AdminUser, City, Reservation, ReservationStatus, Favorite
 from datetime import datetime
 from api.utils import generate_sitemap, APIException
 from flask_cors import CORS
@@ -380,14 +380,14 @@ def add_city():
 
     return jsonify(add_city.serialize()), 200
 
-@api.route('cities/<int:city_id>', methods=['DELETE'])
+@api.route('/cities/<int:city_id>', methods=['DELETE'])
 def delete_city(city_id):
     city_exists = db.get_or_404(City, city_id)
     db.session.delete(city_exists)
     db.session.commit()
     return jsonify(response="City deleted"), 200
 
-@api.route('cities/<int:city_id>', methods=['PUT'])
+@api.route('/cities/<int:city_id>', methods=['PUT'])
 def update_city(city_id):
     city_exists = db.get_or_404(City, city_id)
     data = request.get_json(silent=True) or {}
@@ -538,3 +538,80 @@ def get_place_reservations(place_id):
     if not reservations:
         return jsonify(response="No reservations found for this place"), 404
     return jsonify([res.serialize() for res in reservations]), 200
+
+@api.route('/favorites', methods=['GET'])
+def get_favorites():
+    favorites = db.session.execute(select(Favorite)).scalars().all()
+    return jsonify([favorite.serialize() for favorite in favorites]), 200
+
+@api.route('/favorites', methods=['POST'])
+def add_favorite():
+    data = request.get_json(silent=True) or {}
+    user = data.get("user")
+    place = data.get("place")
+    
+    if any([x is None for x in [user, place]]):
+        return jsonify(response="User and place are required"), 400
+    
+    if not all([isinstance(x, str) for x in [user, place]]):
+        return jsonify(response="User and place need to be strings"), 400
+    
+    user = user.strip()
+    place = place.strip()
+
+    if any([len(x) == 0 for x in [user, place]]):
+        return jsonify(response="User or place cannot be empty"), 400
+    
+    user_exists = db.session.execute(select(User).where(User.name == user)).scalar_one_or_none()
+    if user_exists is None:
+        return jsonify(response="User not found"), 404
+    
+    place_exists = db.session.execute(select(Place).where(Place.name == place)).scalar_one_or_none()
+    if place_exists is None:
+        return jsonify(response="Place not found"), 404
+    
+    new_favorite = Favorite(user_id=user_exists.id, place_id=place_exists.id)
+    db.session.add(new_favorite)
+    db.session.commit()
+
+    return jsonify(new_favorite.serialize()), 200
+
+@api.route('/favorites/<int:favorite_id>', methods=["DELETE"])
+def delete_favorite(favorite_id):
+    favorite_exists = db.get_or_404(Favorite, favorite_id)
+    db.session.delete(favorite_exists)
+    db.session.commit()
+    return jsonify(response="Favorite deleted"), 200
+
+@api.route('/favorites/<int:favorite_id>', methods=["PUT"])
+def update_favorite(favorite_id):
+    favorite_exists = db.session.execute(select(Favorite).where(Favorite.id == favorite_id)).scalar_one_or_none()
+    if favorite_exists is None:
+        return jsonify(response="Favorite not found"), 404
+
+    data = request.get_json(silent=True) or {}
+    place = data.get("place")
+    if place is None:
+        return jsonify(response="Place is required"), 400
+    
+    if not isinstance(place, str):
+        return jsonify(response="Place must be a string"), 400
+    
+    place = place.strip()
+
+    if len(place) == 0:
+        return jsonify(response="Place cannot be empty"), 400
+    
+    place_exists = db.session.execute(select(Place).where(Place.name == place)).scalar_one_or_none()
+    if place_exists is None: 
+        return jsonify(response="Place not found"), 404
+    
+    favorite_relation_exists = db.session.execute(select(Favorite).where(Favorite.user_id == favorite_exists.user_id, Favorite.place_id == place_exists.id)).scalar_one_or_none()
+    if favorite_relation_exists is not None:
+        return jsonify(response="Favorite relation already exists"), 400
+    
+    favorite_exists.place_id = place_exists.id
+    db.session.commit()
+    
+    return jsonify(favorite_exists.serialize()), 200
+
