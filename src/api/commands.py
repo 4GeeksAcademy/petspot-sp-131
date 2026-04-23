@@ -1,7 +1,8 @@
 
 import click, random
 from api.cities import cities
-from api.models import db, User, Place, EstablishmentType, City, Favorite
+from datetime import datetime
+from api.models import db, User, Place, EstablishmentType, City, Favorite, AdminUser, Review, Reservation, ReservationStatus, Chat, News, PostType
 from werkzeug.security import generate_password_hash
 from sqlalchemy import select
 
@@ -26,7 +27,7 @@ def setup_commands(app):
             user.email = "test_user" + str(x) + "@test.com"
             user.password = "123456"
             user.is_active = True
-            user.name = "Name_" + str(x)
+            user.name = "Name_User_" + str(x)
             db.session.add(user)
             db.session.commit()
             print("User: ", user.email, " created.")
@@ -44,7 +45,7 @@ def setup_commands(app):
             place = Place()
             place.email = "test_place" + str(x) + "@test.com"
             place.password = generate_password_hash("123456")
-            place.name = "Place_" + str(x)
+            place.name = "Name_Place_" + str(x)
             place.establishment_type = random.choice(list(EstablishmentType))
             place.city = random.choice(existing_cities)
             place.pet_rules = "Pets allowed under supervision"
@@ -54,6 +55,24 @@ def setup_commands(app):
 
         print("All test places created")
 
+
+    @app.cli.command("insert-test-admins")
+    @click.argument("count") # argument of out command
+    def insert_test_admins(count):
+        print("Creating test admins")
+        for x in range(1, int(count) + 1):
+            admin = AdminUser()
+            admin.email = "test_admin" + str(x) + "@test.com"
+            admin.password = "123456"
+            admin.is_active = True
+            admin.name = "Name_Admin_" + str(x)
+            db.session.add(admin)
+            db.session.commit()
+            print("Admin: ", admin.email, " created.")
+
+        print("All test admins created")
+
+
     @app.cli.command("insert-cities") # name of our command
     def insert_cities():
         for city in cities:
@@ -62,7 +81,7 @@ def setup_commands(app):
                 add_city = City(city=city)
                 db.session.add(add_city)
                 db.session.commit()
-            print(f"{city} already exists")
+                print(f"{city} added")
         
         print("All cities created")
     
@@ -92,8 +111,169 @@ def setup_commands(app):
             print(f"Favorite {x} added")
 
         return print("All test favorites added")
+    
+    @app.cli.command('insert-test-reservations')
+    @click.argument("count") # argument of out command
+    def insert_reservations(count):
+        users = db.session.execute(select(User)).scalars().all() or None
+        places = db.session.execute(select(Place)).scalars().all() or None
 
+        if users is None or places is None:
+            return print('Unable to insert test reservations. Make sure users and places exist in the database')
 
+        zone_preferences = ["terrace", "indoor", "window", "quiet area"]
+
+        for x in range(1, int(count) + 1):
+            user = random.choice(users)
+            place = random.choice(places)
+
+            new_reservation = Reservation(
+                user_id=user.id,
+                place_id=place.id,
+                reservation_date=datetime.now().date(),
+                reservation_time=datetime.now().time().replace(second=0, microsecond=0),
+                people_count=random.randint(1, 6),
+                pet_count=random.randint(0, 3),
+                zone_preference=random.choice(zone_preferences),
+                notes="Test reservation created from CLI command",
+                status=ReservationStatus.CONFIRMED
+            )
+
+            db.session.add(new_reservation)
+            db.session.commit()
+            print(f"Reservation {x} added")
+
+        return print("All test reservations added")
+    
+    @app.cli.command('insert-test-reviews')
+    @click.argument("count") # argument of out command
+    def insert_reviews(count):
+        reservations = db.session.execute(select(Reservation)).scalars().all() or None
+
+        if reservations is None:
+            return print('Unable to insert test reviews. Make sure reservations exist in the database')
+
+        review_titles = [
+            "Great experience",
+            "Pretty good",
+            "Could be better",
+            "Loved it",
+            "Not bad"
+        ]
+
+        review_contents = [
+            "The service was friendly and everything went smoothly.",
+            "Nice place and good attention overall.",
+            "The reservation was fine, but there is room for improvement.",
+            "Very good experience, I would definitely come back.",
+            "Everything was correct and the atmosphere was pleasant."
+        ]
+
+        for x in range(1, int(count) + 1):
+            reservation = random.choice(reservations)
+
+            new_review = Review(
+                user_id=reservation.user_id,
+                reservation_id=reservation.id,
+                rating=random.randint(1, 5),
+                title=random.choice(review_titles),
+                content=random.choice(review_contents),
+                created_at=datetime.now().isoformat(),
+                is_active=True
+            )
+
+            db.session.add(new_review)
+            db.session.commit()
+            print(f"Review {x} added")
+
+        return print("All test reviews added")
+
+    @app.cli.command('insert-test-chat')
+    @click.argument("count") # argument of out command
+    def insert_chat(count):
+        users = db.session.execute(select(User)).scalars().all() or None
+        places = db.session.execute(select(Place)).scalars().all() or None
+
+        if users is None or places is None:
+            return print('Unable to insert test chat messages. Make sure users and places exist in the database')
+
+        user_messages = [
+            "Hi, do you have tables available for tonight?",
+            "Can I bring two dogs with the reservation?",
+            "Is the terrace open this evening?",
+            "Do I need to book in advance for the weekend?",
+            "What time do you close today?"
+        ]
+
+        place_messages = [
+            "Yes, we still have availability.",
+            "Of course, pets are welcome here.",
+            "Yes, the terrace is open if the weather stays good.",
+            "We recommend booking in advance for weekends.",
+            "We close at 11 PM today."
+        ]
+
+        for x in range(1, int(count) + 1):
+            user = random.choice(users)
+            place = random.choice(places)
+            sender = random.choice(["user", "place"])
+            message = random.choice(user_messages if sender == "user" else place_messages)
+
+            new_chat = Chat(
+                user_id=user.id,
+                place_id=place.id,
+                message=message,
+                sender=sender
+            )
+
+            db.session.add(new_chat)
+            db.session.commit()
+            print(f"Chat message {x} added")
+
+        return print("All test chat messages added")
+
+    @app.cli.command('insert-test-news')
+    @click.argument("count") # argument of out command
+    def insert_news(count):
+        admins = db.session.execute(select(AdminUser)).scalars().all() or None
+
+        if admins is None:
+            return print('Unable to insert test news. Make sure admins exist in the database')
+
+        news_titles = [
+            "Updated Pet Policy for Indoor Areas",
+            "New Terrace Rules for Pets",
+            "Weekend Guidelines for Pet Owners",
+            "Important Update on Vaccination Requirements",
+            "Pet-Friendly Space Improvements"
+        ]
+
+        news_contents = [
+            "We have updated our indoor pet policy to improve comfort and safety for all guests. Please keep pets close to your table and under supervision at all times.",
+            "Pets are welcome on the terrace. We kindly ask owners to keep walkways clear and make sure pets remain calm around other guests.",
+            "For busy weekends, we recommend arriving on time and indicating the number of pets included in your booking so our staff can prepare your table properly.",
+            "To ensure a safe environment, we may request that pets are up to date on their basic vaccinations before entering shared dining areas.",
+            "We are introducing small improvements in our pet-friendly spaces, including water stations and clearer seating guidelines for guests visiting with animals."
+        ]
+
+        for x in range(1, int(count) + 1):
+            admin = random.choice(admins)
+
+            new_post = News(
+                id_admin=admin.id,
+                title=random.choice(news_titles),
+                content=random.choice(news_contents),
+                post_date=datetime.now().date(),
+                post_type=random.choice(list(PostType))
+            )
+
+            db.session.add(new_post)
+            db.session.commit()
+            print(f"News post {x} added")
+
+        return print("All test news posts added")
+
+    
     @app.cli.command("insert-test-data")
     def insert_test_data():
         pass

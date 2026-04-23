@@ -8,26 +8,30 @@ from datetime import datetime
 
 db = SQLAlchemy()
 
+class EstablishmentType(Enum):
+    BAR = "bar"
+    RESTAURANT = "restaurant"
+    CAFE = "cafe"
+
+class PostType(Enum):
+    NORMATIVE = "normative"
+    NEWS = "news"
+    EVENT = "event"
 
 class User(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(120), nullable=False)
-    email: Mapped[str] = mapped_column(
-        String(120), unique=True, nullable=False)
+    email: Mapped[str] = mapped_column(String(120), unique=True, nullable=False)
     password: Mapped[str] = mapped_column(String(255), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean(), default=True)
 
-    reservations: Mapped[list["Reservation"]] = relationship(
-        "Reservation", back_populates="user")
-    reviews: Mapped[list["Review"]] = relationship("Review", back_populates="user")
+    reservations: Mapped[list["Reservation"]] = relationship("Reservation", back_populates="user", cascade="all, delete-orphan")
+    reviews: Mapped[list["Review"]] = relationship("Review", back_populates="user", cascade="all, delete-orphan")
+    chats: Mapped[list["Chat"]] = relationship("Chat", back_populates="user", cascade="all, delete-orphan")
+    favorite_places: Mapped[list["Favorite"]] = relationship("Favorite", back_populates="user", cascade="all, delete-orphan")
     
-        
-
     def __str__(self):
         return self.name
-    chats: Mapped[list["Chat"]] = relationship("Chat", back_populates="user")
-    favorite_places: Mapped[list["Favorite"]] = relationship(
-        "Favorite", back_populates="user", cascade="all, delete-orphan")
 
     def __repr__(self):
         return self.name
@@ -38,21 +42,8 @@ class User(db.Model):
             "name": self.name,
             "email": self.email,
             "favorite_places": [favorite.place_id for favorite in self.favorite_places],
+            "reservations": [reservation.place_id for reservation in self.reservations]
         }
-
-
-
-class EstablishmentType(Enum):
-    BAR = "bar"
-    RESTAURANT = "restaurant"
-    CAFE = "cafe"
-
-
-class PostType(Enum):
-    NORMATIVE = "normative"
-    NEWS = "news"
-    EVENT = "event"
-
 
 class Place(db.Model):
     __tablename__ = "places"
@@ -73,11 +64,9 @@ class Place(db.Model):
         ForeignKey("cities.id"), nullable=False)
 
     city: Mapped["City"] = relationship("City", back_populates="places")
-    favorites: Mapped[list["Favorite"]] = relationship(
-        "Favorite", back_populates="place", cascade="all, delete-orphan")
-    chats: Mapped[list["Chat"]] = relationship("Chat", back_populates="place")
-    reservations: Mapped[list["Reservation"]] = relationship(
-        "Reservation", back_populates="place")
+    favorites: Mapped[list["Favorite"]] = relationship("Favorite", back_populates="place", cascade="all, delete-orphan")
+    chats: Mapped[list["Chat"]] = relationship("Chat", back_populates="place", cascade="all, delete-orphan")
+    reservations: Mapped[list["Reservation"]] = relationship("Reservation", back_populates="place", cascade="all, delete-orphan")
 
     def __str__(self):
         return self.name
@@ -94,9 +83,27 @@ class Place(db.Model):
             "favorited_by_users": [favorite.user_id for favorite in self.favorites]
         }
 
+class City(db.Model):
+    __tablename__ = "cities"
 
+    id: Mapped[int] = mapped_column(primary_key=True)
+    city: Mapped[str] = mapped_column(String(120), unique=True, nullable=False)
+
+    places: Mapped[list["Place"]] = relationship("Place", back_populates="city", cascade="all, delete-orphan")
+
+    def __repr__(self):
+        return self.city
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "city": self.city
+        }
+    
 
 class AdminUser(db.Model):
+    __tablename__ = "admin_user"
+
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(120), nullable=False)
     email: Mapped[str] = mapped_column(
@@ -107,7 +114,7 @@ class AdminUser(db.Model):
         Boolean(), nullable=False, default=True
     )
 
-    news: Mapped[list["News"]] = relationship("News", back_populates="admin")
+    news: Mapped[list["News"]] = relationship("News", back_populates="admin", cascade="all, delete-orphan")
 
     def serialize(self):
         return {
@@ -120,8 +127,7 @@ class AdminUser(db.Model):
 class Review(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("user.id"), nullable=False)
-    reservation_id: Mapped[int] = mapped_column(
-        ForeignKey("reservations.id"), nullable=False)
+    reservation_id: Mapped[int] = mapped_column(ForeignKey("reservations.id"), nullable=False)
     rating: Mapped[int] = mapped_column(nullable=False)
     title: Mapped[str] = mapped_column(String(120), nullable=False)
     content: Mapped[str] = mapped_column(String(500), nullable=False)
@@ -145,24 +151,6 @@ class Review(db.Model):
             "is_active": self.is_active
         }
 
-class City(db.Model):
-    __tablename__ = "cities"
-
-    id: Mapped[int] = mapped_column(primary_key=True)
-    city: Mapped[str] = mapped_column(String(120), unique=True, nullable=False)
-
-    places: Mapped[list["Place"]] = relationship(
-        
-        "Place", back_populates="city")
-
-    def __repr__(self):
-        return self.city
-
-    def serialize(self):
-        return {
-            "id": self.id,
-            "city": self.city
-        }
 
 
 class ReservationStatus(Enum):
@@ -191,7 +179,7 @@ class Reservation(db.Model):
 
     user: Mapped["User"] = relationship("User", back_populates="reservations")
     place: Mapped["Place"] = relationship("Place", back_populates="reservations")
-    reviews: Mapped[list["Review"]] = relationship("Review", back_populates="reservation")
+    reviews: Mapped[list["Review"]] = relationship("Review", back_populates="reservation", cascade="all, delete-orphan")
 
     def serialize(self):
         return {
