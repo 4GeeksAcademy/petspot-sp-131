@@ -80,10 +80,11 @@ def create_user():
     if existing_user:
         return jsonify({"msg": "User already exists"}), 409
 
+    hashed_password = generate_password_hash(password)
     new_user = User(
         name=name,
         email=email,
-        password=password,
+        password=hashed_password,
         is_active=True
     )
 
@@ -562,7 +563,7 @@ def login_user():
     if user is None:
         return jsonify({"msg": "Bad email or password"}), 401
 
-    if password != user.password:
+    if not check_password_hash(user.password, password):
         return jsonify({"msg": "Bad email or password"}), 401
 
     access_token = create_access_token(identity=email)
