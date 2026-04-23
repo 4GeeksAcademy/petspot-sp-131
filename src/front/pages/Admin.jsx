@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Link, Outlet, useLocation, useNavigate,useParams } from "react-router-dom";
 
 export const Admin = () => {
   const [isLogged, setIsLogged] = useState(false);
