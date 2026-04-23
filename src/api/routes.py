@@ -1069,3 +1069,82 @@ def private_place():
     if place_exists is None:
         return jsonify(response="Place not found"), 404
     return jsonify(place_exists.serialize()), 200
+
+
+@api.route('/places/private', methods=['PUT'])
+@jwt_required()
+def update_private_place():
+    place_id = int(get_jwt_identity())
+    place = db.session.get(Place, place_id)
+    if not place:
+        return jsonify(response="Place not found"), 404
+        
+    data = request.get_json(silent=True) or {}
+    
+    if 'name' in data:
+        name = str(data['name']).strip()
+        if not name:
+             return jsonify(response="Name cannot be empty"), 400
+        place.name = name
+        
+    if 'establishment_type' in data:
+        try:
+             place.establishment_type = EstablishmentType(data['establishment_type'].strip())
+        except ValueError:
+             return jsonify(response="Invalid establishment type"), 400
+             
+    if 'pet_rules' in data:
+        if data['pet_rules'] is None:
+             place.pet_rules = None
+        else:
+             rules = str(data['pet_rules']).strip()
+             if len(rules) > 250:
+                 return jsonify(response="pet_rules cannot exceed 250 characters"), 400
+             place.pet_rules = rules or None
+             
+    if 'city_id' in data:
+        city_id = data['city_id']
+        city = db.session.get(City, city_id)
+        if not city:
+            return jsonify(response="City not found"), 404
+        place.city_id = city_id
+        
+    db.session.commit()
+    return jsonify(place.serialize()), 200
+
+
+@api.route('/places/private', methods=['DELETE'])
+@jwt_required()
+def delete_private_place():
+    place_id = int(get_jwt_identity())
+    place = db.session.get(Place, place_id)
+    if not place:
+        return jsonify(response="Place not found"), 404
+        
+    db.session.delete(place)
+    db.session.commit()
+    return jsonify(response="Place deleted"), 200
+
+
+@api.route('/places/private/reservations', methods=['GET'])
+@jwt_required()
+def get_private_place_reservations():
+    place_id = int(get_jwt_identity())
+    reservations = db.session.execute(
+        db.select(Reservation).where(Reservation.place_id == place_id)
+    ).scalars().all()
+    if not reservations:
+        return jsonify(response="No reservations found for this place"), 404
+    return jsonify([res.serialize() for res in reservations]), 200
+
+
+@api.route('/places/private/reviews', methods=['GET'])
+@jwt_required()
+def get_private_place_reviews():
+    place_id = int(get_jwt_identity())
+    reviews = db.session.execute(
+        db.select(Review).join(Reservation).where(Reservation.place_id == place_id)
+    ).scalars().all()
+    if not reviews:
+        return jsonify(response="No reviews found for this place"), 404
+    return jsonify([r.serialize() for r in reviews]), 200

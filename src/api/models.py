@@ -197,7 +197,9 @@ class Reservation(db.Model):
         return {
             "id": self.id,
             "user_id": self.user_id,
+            "user_name": self.user.name if self.user else None,
             "place_id": self.place_id,
+            "place_name": self.place.name if self.place else None,
             "reservation_date": str(self.reservation_date),
             "reservation_time": str(self.reservation_time),
             "people_count": self.people_count,
