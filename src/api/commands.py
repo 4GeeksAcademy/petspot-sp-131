@@ -63,7 +63,7 @@ def setup_commands(app):
         for x in range(1, int(count) + 1):
             admin = AdminUser()
             admin.email = "test_admin" + str(x) + "@test.com"
-            admin.password = "123456"
+            admin.password = generate_password_hash("123456")
             admin.is_active = True
             admin.name = "Name_Admin_" + str(x)
             db.session.add(admin)
