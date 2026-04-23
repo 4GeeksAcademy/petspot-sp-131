@@ -36,7 +36,7 @@ export const AdminLogin = () => {
       const data = await response.json();
 
       if (response.ok) {
-        localStorage.setItem("Admin token", "Admin token");
+        localStorage.setItem("tokenAdmin", "tokenAdmin");
         sessionStorage.setItem("adminLoginSuccess", "Login realizado correctamente");
         navigate("/usuario/admin");
       } else {

@@ -19,7 +19,8 @@ export const initialStore = () => {
     reservations: [],
     news: [],
     favorites: [],
-    authUser: false
+    authUser: false,
+    authAdmin: true
   }
 }
 
@@ -103,6 +104,12 @@ export default function storeReducer(store, action = {}) {
       return {
         ...store,
         authUser: action.payload
+      }
+
+    case 'set_auth_admin':
+      return {
+        ...store,
+        authAdmin: action.payload
       }
 
     case 'GET_RESERVATIONS':
