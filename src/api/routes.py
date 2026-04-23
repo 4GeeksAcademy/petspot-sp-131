@@ -869,11 +869,15 @@ def update_reservation(id):
     if reservation_time_str:
         try:
             reservation.reservation_time = datetime.strptime(
-                reservation_time_str, '%H:%M'
+                reservation_time_str[:5], '%H:%M'
             ).time()
         except ValueError:
             return jsonify(response="Invalid time format"), 400
 
+    if 'user_id' in data:
+        reservation.user_id = int(data['user_id'])
+    if 'place_id' in data:
+        reservation.place_id = int(data['place_id'])
     if 'people_count' in data:
         reservation.people_count = int(data['people_count'])
     if 'pet_count' in data:
