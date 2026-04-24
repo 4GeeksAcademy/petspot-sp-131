@@ -66,8 +66,11 @@ export const Home = () => {
 				</Link>
 				<Link to="/favorites" className="btn btn-primary">
 					Favorites
-				</Link>	
+				</Link>
 				<Link to="/reviews" className="btn btn-primary">Reviews</Link>
+			</div>
+			<div className="d-flex justify-content-center gap-3 mt-3">
+				<Link className="btn btn-warning" to="/login/user">Login User</Link>
 			</div>
 		</div>
 	);

@@ -34,7 +34,7 @@ export const LoginUser = () => {
                     dispatch({ type: "set_auth_user", payload: true });
                     localStorage.setItem("tokenUser", data.access_token);
                     setError("");
-                    navigate("/private/user");
+                    navigate("/user/dashboard");
                 } else {
                     setError(data.msg || "Email o contraseña incorrectos");
                 }

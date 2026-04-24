@@ -41,8 +41,8 @@ class User(db.Model):
             "id": self.id,
             "name": self.name,
             "email": self.email,
-            "favorite_places": [favorite.place_id for favorite in self.favorite_places],
-            "reservations": [reservation.place_id for reservation in self.reservations]
+            "favorite_places": [favorite.serialize()["place_name"] for favorite in self.favorite_places],
+            "reservations": [reservation.serialize()["place_name"] for reservation in self.reservations]
         }
 
 class Place(db.Model):
@@ -186,6 +186,7 @@ class Reservation(db.Model):
             "id": self.id,
             "user_id": self.user_id,
             "place_id": self.place_id,
+            "place_name": self.place.serialize()["name"],
             "reservation_date": str(self.reservation_date),
             "reservation_time": str(self.reservation_time),
             "people_count": self.people_count,

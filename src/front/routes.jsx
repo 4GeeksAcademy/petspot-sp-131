@@ -65,6 +65,12 @@ import EditFavorite from "./pages/Favorites/EditFavorite";
 import DeleteFavorite from "./pages/Favorites/DeleteFavorite";
 import FavoriteDetail from "./pages/Favorites/FavoriteDetail";
 
+import UserLayout from "./pages/UserPrivate/UserLayout.jsx";
+import UserDashboard from "./pages/UserPrivate/UserDashboard.jsx";
+import RequireUserAuth from "./components/UserPrivate/RequireUserAuth.jsx";
+import UserPlaceCard from "./components/UserPrivate/UserPlaceCard.jsx";
+import UserPlaceDetailCard from "./components/UserPrivate/UserPlaceDetailCard.jsx";
+
 export const router = createBrowserRouter(
   createRoutesFromElements(
     <Route path="/" element={<Layout />} errorElement={<h1>Not found!</h1>}>
@@ -133,6 +139,12 @@ export const router = createBrowserRouter(
       <Route path="reviews/detail/:id" element={<RequireAdmin><ReviewDetail /></RequireAdmin>} />
       <Route path="reviews/create" element={<RequireAdmin><ReviewCreate /></RequireAdmin>} />
       <Route path="reviews/edit/:id" element={<RequireAdmin><ReviewEdit /></RequireAdmin>} />
+
+      <Route path="user/dashboard" element={<RequireUserAuth><UserLayout/></RequireUserAuth>}>
+        <Route index element={<UserDashboard />} />
+        <Route path="places/view/:id" element={<UserPlaceDetailCard />}/>
+      </Route>
+
     </Route>
   )
 );

@@ -20,7 +20,8 @@ export const initialStore = () => {
     news: [],
     favorites: [],
     authUser: false,
-    authAdmin: true
+    authAdmin: true,
+    privateUser: {}
   }
 }
 
@@ -168,6 +169,12 @@ export default function storeReducer(store, action = {}) {
       return {
         ...store,
         news: store.news.filter((newsItem) => newsItem.id !== action.payload)
+      }
+
+    case 'GET_PRIVATE_USER':
+      return {
+        ...store,
+        privateUser: action.payload
       }
 
     default:

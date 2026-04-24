@@ -566,7 +566,7 @@ def login_user():
     if not check_password_hash(user.password, password):
         return jsonify({"msg": "Bad email or password"}), 401
 
-    access_token = create_access_token(identity=email)
+    access_token = create_access_token(identity=str(user.id))
     return jsonify(access_token=access_token), 200
 
 
@@ -1066,3 +1066,13 @@ def private_place():
     if place_exists is None:
         return jsonify(response="Place not found"), 404
     return jsonify(place_exists.serialize()), 200
+
+@api.route("/users/private", methods=['GET'])
+@jwt_required()
+def get_private_user():
+    user_id = get_jwt_identity()
+    user = db.session.execute(select(User).where(User.id == user_id)).scalar_one_or_none()
+    if user is None:
+        return jsonify(response="No user found"), 404
+
+    return jsonify(user.serialize()), 200
