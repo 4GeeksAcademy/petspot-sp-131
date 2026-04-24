@@ -1,6 +1,7 @@
 import useGlobalReducer from "../../../hooks/useGlobalReducer";
 import { useParams } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 function UserPlaceDetailCard() {
 
@@ -15,7 +16,9 @@ function UserPlaceDetailCard() {
     console.log(store.places)
     return (
         <>
-            <button onClick={() => navigate(-1)}>GO BACK</button>
+            <div className="text-center my-5">
+                <button className="btn btn-secondary" onClick={() => navigate(-1)}>GO BACK</button>
+            </div>
             <div className="mx-auto p-5 bg-secondary-subtle border-0 rounded text-start" style={{ maxWidth: 600 }}>
                 <div className="mb-3">
                     <span className="fw-bold">Name: </span>{activePlace.name}
@@ -30,8 +33,12 @@ function UserPlaceDetailCard() {
                     <span className="fw-bold">City: </span>
                     {activePlace.city.city}
                 </div>
-                <div >
+                <div className="mb-3">
                     <span className="fw-bold">Pet rules: </span>{activePlace.pet_rules ? activePlace.pet_rules : "-"}
+                </div>
+                <div className="d-grid d-sm-flex gap-2 justify-content-sm-center mt-5">
+                    <Link to="#" className="btn btn-success">Make a reservation</Link>
+                    <Link to="#" className="btn btn-warning">Add to Favorites</Link>
                 </div>
             </div>
         </>

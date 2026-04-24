@@ -9,7 +9,6 @@ function UserPlacesList() {
     const { store, dispatch } = useGlobalReducer();
 
     useEffect(() => {
-        if (store.places.length === 0) {
         async function getPlaces() {
             try {
                 const response = await fetch(`${backendUrl}/api/places`)
@@ -27,7 +26,6 @@ function UserPlacesList() {
             }
         }
         getPlaces()
-    }
     }, [])
 
 

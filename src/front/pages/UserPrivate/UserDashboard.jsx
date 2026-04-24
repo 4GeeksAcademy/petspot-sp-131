@@ -1,36 +1,36 @@
 import { useEffect } from "react";
 import useGlobalReducer from "../../hooks/useGlobalReducer";
 import UserPlacesList from "../../components/UserPrivate/UserPlaces/UserPlacesList";
+import { Navigate, useNavigate } from "react-router-dom";
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL
 
 function UserDashboard() {
 
     const { store, dispatch } = useGlobalReducer();
-    console.log(store.privateUser)
+    const navigate = useNavigate()
 
     useEffect(() => {
         async function getPrivateUser() {
             try {
                 const userToken = localStorage.getItem("tokenUser")
-
                 const response = await fetch(`${backendUrl}/api/users/private`, {
                     headers: {
                         Authorization: `Bearer ${userToken}`
                     }
                 })
-                if (!response.ok) {
-                    throw new Error(`Request failed with status ${response.status}`)
+                if (response.status === 401) {
+                    navigate('/')
                 }
                 const responseJSON = await response.json()
-                console.log(responseJSON)
+
                 dispatch({
                     type: "GET_PRIVATE_USER",
                     payload: responseJSON
                 })
 
             } catch (error) {
-                alert("Unable to load places right now. Please try again.")
+                alert("Unable to reach the server right now. Please try again.")
             }
         }
         getPrivateUser()
@@ -39,7 +39,7 @@ function UserDashboard() {
 
     return (
         <>
-            <h1>Hello {store.privateUser.name}</h1>
+            <h1 className="display-5 text-center my-5">Hello {store.privateUser.name} 👤</h1>
             <UserPlacesList />
         </>
     )
