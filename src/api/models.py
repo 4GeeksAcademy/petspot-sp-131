@@ -185,7 +185,9 @@ class Reservation(db.Model):
         return {
             "id": self.id,
             "user_id": self.user_id,
+            "user_name": self.user.name,
             "place_id": self.place_id,
+            "place_name": self.place.name,
             "reservation_date": str(self.reservation_date),
             "reservation_time": str(self.reservation_time),
             "people_count": self.people_count,
@@ -238,7 +240,7 @@ class News(db.Model):
         return {
             "id": self.id,
             "id_admin": self.id_admin,
-            "admin_name": self.admin.name if self.admin else None,
+            "admin_name": self.admin.name,
             "title": self.title,
             "content": self.content,
             "post_date": str(self.post_date),
