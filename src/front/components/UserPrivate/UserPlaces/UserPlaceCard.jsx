@@ -24,9 +24,9 @@ function UserPlaceCard({ placeObj }) {
                     <div className="d-flex flex-column gap-3">
                         <p className="card-text m-0">{pet_rules}</p>
                         <div className="d-grid d-sm-flex gap-2 justify-content-sm-end">
-                            <Link to={`places/view/${id}`} className="btn btn-primary">View</Link>
-                            <Link to="#" className="btn btn-success">Make a reservation</Link>
-                            <Link to="#" className="btn btn-warning">Add to Favorites</Link>
+                            <Link to={`places/view/${id}`} className="btn btn-outline-primary">View</Link>
+                            <Link to="#" className="btn btn-outline-success">Make a reservation</Link>
+                            <Link to="#" className="btn btn-outline-warning">Add to Favorites</Link>
                         </div>
                     </div>
                 </div>
