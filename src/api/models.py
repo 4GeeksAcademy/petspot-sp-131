@@ -298,7 +298,7 @@ class Pet(db.Model):
     name: Mapped[str] = mapped_column(String(120), nullable=False)
     user_id: Mapped[int] = mapped_column(ForeignKey("user.id"), nullable=False)
     animal_type: Mapped[str] = mapped_column(String(120), nullable=False)
-    race_id: Mapped[int] = mapped_column(ForeignKey("races.id"), nullable=False)
+    race_id: Mapped[int | None] = mapped_column(ForeignKey("races.id"), nullable=True)
     size: Mapped[str] = mapped_column(String(120), nullable=False)
     url: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
@@ -312,7 +312,7 @@ class Pet(db.Model):
             "user_id": self.user_id,
             "animal_type": self.animal_type,
             "race_id": self.race_id,
-            "race_name": self.race.name,
+            "race_name": self.race.name if self.race else None,
             "size": self.size,
             "url": self.url
         }

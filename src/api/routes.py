@@ -1271,20 +1271,32 @@ def create_pet():
     if not body:
         return jsonify({"msg": "Missing JSON in request"}), 400
     
-    required_fields = ["name", "animal_type", "race_id", "size"]
+    required_fields = ["name", "animal_type", "size"]
     for field in required_fields:
         if field not in body:
             return jsonify({"msg": f"Missing '{field}' in request"}), 400
     
-    race = db.session.execute(db.select(Race).where(Race.id == body['race_id'])).scalars().first()
-    if not race:
-        return jsonify({"msg": "Race not found"}), 404
+    animal_type = body['animal_type'].strip().lower()
+    race_id = None
+    
+    if animal_type in ["perro", "gato", "dog", "cat"]:
+        if "race_id" not in body or not body["race_id"]:
+            return jsonify({"msg": "Missing 'race_id' in request for Dog or Cat"}), 400
+        
+        race = db.session.execute(db.select(Race).where(Race.id == body['race_id'])).scalars().first()
+        if not race:
+            return jsonify({"msg": "Race not found"}), 404
+        race_id = race.id
+    elif "race_id" in body and body["race_id"]:
+        race = db.session.execute(db.select(Race).where(Race.id == body['race_id'])).scalars().first()
+        if race:
+            race_id = race.id
 
     new_pet = Pet(
         name=body['name'],
         user_id=user.id,
         animal_type=body['animal_type'],
-        race_id=race.id,
+        race_id=race_id,
         size=body['size'],
         url=body.get('url')
     )
@@ -1320,10 +1332,13 @@ def update_pet(pet_id):
     if "animal_type" in body:
         pet.animal_type = body["animal_type"]
     if "race_id" in body:
-        race = db.session.execute(db.select(Race).where(Race.id == body['race_id'])).scalars().first()
-        if not race:
-            return jsonify({"msg": "Race not found"}), 404
-        pet.race_id = race.id
+        if body["race_id"] is None or body["race_id"] == "":
+            pet.race_id = None
+        else:
+            race = db.session.execute(db.select(Race).where(Race.id == body['race_id'])).scalars().first()
+            if not race:
+                return jsonify({"msg": "Race not found"}), 404
+            pet.race_id = race.id
     if "size" in body:
         pet.size = body["size"]
     if "url" in body:
