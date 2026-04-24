@@ -19,9 +19,10 @@ export const initialStore = () => {
     reservations: [],
     news: [],
     favorites: [],
-    authUser: false,
     authAdmin: true,
-    privateUser: {}
+    authUser: false,
+    privateUser: {},
+    userToken: ""
   }
 }
 
@@ -175,6 +176,23 @@ export default function storeReducer(store, action = {}) {
       return {
         ...store,
         privateUser: action.payload
+      }
+
+    case "USER_LOGOUT":
+
+      return {
+        ...store,
+        authUser: false,
+        privateUser: {},
+        userToken: ""
+      }
+
+    case "SET_USER_TOKEN":
+
+      return {
+        ...store,
+        authUser: true,
+        userToken: action.payload
       }
 
     default:

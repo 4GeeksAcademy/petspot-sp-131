@@ -1,4 +1,4 @@
-import useGlobalReducer from "../../hooks/useGlobalReducer";
+import useGlobalReducer from "../../../hooks/useGlobalReducer";
 import { useParams } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 

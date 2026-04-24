@@ -41,7 +41,6 @@ import CityDetail from "./pages/Cities/CityDetail";
 
 import { LoginUser } from "./pages/LoginUser";
 import { SignupUser } from "./pages/SignupUser";
-import PrivateUser from "./pages/PrivateUser";
 
 import Reservations from "./pages/Reservations/Reservations";
 import AddReservation from "./pages/Reservations/AddReservation";
@@ -67,9 +66,12 @@ import FavoriteDetail from "./pages/Favorites/FavoriteDetail";
 
 import UserLayout from "./pages/UserPrivate/UserLayout.jsx";
 import UserDashboard from "./pages/UserPrivate/UserDashboard.jsx";
+import UserChats from "./pages/UserPrivate/UserChats/UserChats.jsx";
+import UserFavorites from "./pages/UserPrivate/UserFavorites/UserFavorites.jsx";
+import UserProfile from "./pages/UserPrivate/UserProfile/UserProfile.jsx";
+import UserReservations from "./pages/UserPrivate/UserReservations/UserReservations.jsx";
 import RequireUserAuth from "./components/UserPrivate/RequireUserAuth.jsx";
-import UserPlaceCard from "./components/UserPrivate/UserPlaceCard.jsx";
-import UserPlaceDetailCard from "./components/UserPrivate/UserPlaceDetailCard.jsx";
+import UserPlaceDetailCard from "./components/UserPrivate/UserPlaces/UserPlaceDetailCard.jsx";
 
 export const router = createBrowserRouter(
   createRoutesFromElements(
@@ -80,7 +82,18 @@ export const router = createBrowserRouter(
 
       <Route path="login/user" element={<LoginUser />} />
       <Route path="signup/user" element={<SignupUser />} />
-      <Route path="private/user" element={<PrivateUser />} />
+      {/* <Route path="private/user" element={<PrivateUser />} /> */}
+      
+      <Route element={<RequireUserAuth/>}>
+        <Route path="private/user" element={<UserLayout />}>
+          <Route index element={<UserDashboard />} />
+          <Route path="chats" element={<UserChats />} />
+          <Route path="profile" element={<UserProfile />} />
+          <Route path="favorites" element={<UserFavorites />} />
+          <Route path="reservations" element={<UserReservations />} />
+          <Route path="places/view/:id" element={<UserPlaceDetailCard />} />
+        </Route>
+      </Route>
 
       <Route path="user" element={<RequireAdmin><User /></RequireAdmin>} />
       <Route path="user/create" element={<RequireAdmin><UserCreate /></RequireAdmin>} />
@@ -140,10 +153,6 @@ export const router = createBrowserRouter(
       <Route path="reviews/create" element={<RequireAdmin><ReviewCreate /></RequireAdmin>} />
       <Route path="reviews/edit/:id" element={<RequireAdmin><ReviewEdit /></RequireAdmin>} />
 
-      <Route path="user/dashboard" element={<RequireUserAuth><UserLayout/></RequireUserAuth>}>
-        <Route index element={<UserDashboard />} />
-        <Route path="places/view/:id" element={<UserPlaceDetailCard />}/>
-      </Route>
 
     </Route>
   )

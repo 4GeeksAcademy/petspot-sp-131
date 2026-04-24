@@ -1,5 +1,5 @@
 import UserPlaceCard from "./UserPlaceCard"
-import useGlobalReducer from "../../hooks/useGlobalReducer";
+import useGlobalReducer from "../../../hooks/useGlobalReducer";
 import { useEffect } from "react";
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL

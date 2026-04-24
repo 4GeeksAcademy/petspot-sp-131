@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import useGlobalReducer from "../../hooks/useGlobalReducer";
-import UserPlacesList from "../../components/UserPrivate/UserPlacesList";
+import UserPlacesList from "../../components/UserPrivate/UserPlaces/UserPlacesList";
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL
 
