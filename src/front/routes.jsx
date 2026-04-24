@@ -21,6 +21,9 @@ import DeletePlace from "./pages/Places/DeletePlace";
 import PlaceDetail from "./pages/Places/PlaceDetail";
 import LoginPlace from "./pages/Places/LoginPlace";
 import PrivatePlace from "./pages/Places/PrivatePlace";
+import SignupPlace from "./pages/Places/SignupPlace";
+import EditPrivatePlace from "./pages/Places/EditPrivatePlace";
+import RequirePlace from "./components/RequirePlace";
 
 import { Admin } from "./pages/Admin";
 import { AdminList, AdminCreate, AdminEdit, AdminDelete, AdminDetail } from "./pages/Admin";
@@ -116,7 +119,9 @@ export const router = createBrowserRouter(
       <Route path="places/delete/:id" element={<RequireAdmin><DeletePlace /></RequireAdmin>} />
       <Route path="places/view/:id" element={<RequireAdmin><PlaceDetail /></RequireAdmin>} />
       <Route path="places/login" element={<LoginPlace />} />
-      <Route path="places/private" element={<PrivatePlace />} />
+      <Route path="places/signup" element={<SignupPlace />} />
+      <Route path="places/private" element={<RequirePlace><PrivatePlace /></RequirePlace>} />
+      <Route path="places/private/edit" element={<RequirePlace><EditPrivatePlace /></RequirePlace>} />
 
       <Route path="cities" element={<RequireAdmin><Cities /></RequireAdmin>} />
       <Route path="cities/add" element={<RequireAdmin><AddCity /></RequireAdmin>} />
