@@ -101,14 +101,34 @@ def setup_commands(app):
         places = db.session.execute(select(Place)).scalars().all() or None
         if users is None or places is None:
             return print('Unable to insert test favorites. Make sure users and places exist in the database')
-        
-        for x in range(1, int(count) + 1):
+
+        existing_pairs = {
+            (favorite.user_id, favorite.place_id)
+            for favorite in db.session.execute(select(Favorite)).scalars().all()
+        }
+
+        added_count = 0
+        max_attempts = int(count) * 10
+        attempts = 0
+
+        while added_count < int(count) and attempts < max_attempts:
+            attempts += 1
             user_id = random.choice(users).id
             place_id = random.choice(places).id
+            pair = (user_id, place_id)
+
+            if pair in existing_pairs:
+                continue
+
             new_favorite = Favorite(user_id=user_id, place_id=place_id)
             db.session.add(new_favorite)
             db.session.commit()
-            print(f"Favorite {x} added")
+            existing_pairs.add(pair)
+            added_count += 1
+            print(f"Favorite {added_count} added")
+
+        if added_count < int(count):
+            print(f"Only {added_count} unique favorites could be added with the available users and places.")
 
         return print("All test favorites added")
     
