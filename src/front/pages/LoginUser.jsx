@@ -48,6 +48,7 @@ export const LoginUser = () => {
                 if (status === 200 && data.access_token) {
                     dispatch({ type: "SET_USER_TOKEN", payload: data.access_token });
                     localStorage.setItem("tokenUser", data.access_token);
+                    window.dispatchEvent(new Event("tokenTest"))
                     setError("");
                     navigate("/private/user", { replace: true });
                 } else {

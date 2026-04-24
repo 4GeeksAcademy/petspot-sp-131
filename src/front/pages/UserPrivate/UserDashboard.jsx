@@ -9,7 +9,7 @@ function UserDashboard() {
 
     const { store, dispatch } = useGlobalReducer();
     const navigate = useNavigate()
-
+    console.log(store.privateUser)
     useEffect(() => {
         async function getPrivateUser() {
             try {

@@ -22,7 +22,7 @@ export const initialStore = () => {
     authAdmin: true,
     authUser: false,
     privateUser: {},
-    userToken: ""
+    userToken: null
   }
 }
 
@@ -184,7 +184,7 @@ export default function storeReducer(store, action = {}) {
         ...store,
         authUser: false,
         privateUser: {},
-        userToken: ""
+        userToken: null
       }
 
     case "SET_USER_TOKEN":
