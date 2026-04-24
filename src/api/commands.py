@@ -22,15 +22,30 @@ def setup_commands(app):
     @click.argument("count") # argument of out command
     def insert_test_users(count):
         print("Creating test users")
-        for x in range(1, int(count) + 1):
+        added_count = 0
+        next_index = 1
+
+        while added_count < int(count):
+            email = "test_user" + str(next_index) + "@test.com"
+            existing_user = db.session.execute(
+                select(User).where(User.email == email)
+            ).scalar_one_or_none()
+
+            if existing_user:
+                print("User: ", email, " already exists. Skipping.")
+                next_index += 1
+                continue
+
             user = User()
-            user.email = "test_user" + str(x) + "@test.com"
+            user.email = email
             user.password = generate_password_hash("123456")
             user.is_active = True
-            user.name = "Name_User_" + str(x)
+            user.name = "Name_User_" + str(next_index)
             db.session.add(user)
             db.session.commit()
             print("User: ", user.email, " created.")
+            added_count += 1
+            next_index += 1
 
         print("All test users created")
 
@@ -41,17 +56,32 @@ def setup_commands(app):
         existing_cities = db.session.execute(select(City)).scalars().all() or None
         if existing_cities is None:
             return print("Unable to add places. Cities must exist first in the database")
-        for x in range(1, int(count) + 1):
+        added_count = 0
+        next_index = 1
+
+        while added_count < int(count):
+            email = "test_place" + str(next_index) + "@test.com"
+            existing_place = db.session.execute(
+                select(Place).where(Place.email == email)
+            ).scalar_one_or_none()
+
+            if existing_place:
+                print("Place: ", email, " already exists. Skipping.")
+                next_index += 1
+                continue
+
             place = Place()
-            place.email = "test_place" + str(x) + "@test.com"
+            place.email = email
             place.password = generate_password_hash("123456")
-            place.name = "Name_Place_" + str(x)
+            place.name = "Name_Place_" + str(next_index)
             place.establishment_type = random.choice(list(EstablishmentType))
             place.city = random.choice(existing_cities)
             place.pet_rules = "Pets allowed under supervision"
             db.session.add(place)
             db.session.commit()
             print("Place: ", place.email, " created.")
+            added_count += 1
+            next_index += 1
 
         print("All test places created")
 
@@ -60,15 +90,30 @@ def setup_commands(app):
     @click.argument("count") # argument of out command
     def insert_test_admins(count):
         print("Creating test admins")
-        for x in range(1, int(count) + 1):
+        added_count = 0
+        next_index = 1
+
+        while added_count < int(count):
+            email = "test_admin" + str(next_index) + "@test.com"
+            existing_admin = db.session.execute(
+                select(AdminUser).where(AdminUser.email == email)
+            ).scalar_one_or_none()
+
+            if existing_admin:
+                print("Admin: ", email, " already exists. Skipping.")
+                next_index += 1
+                continue
+
             admin = AdminUser()
-            admin.email = "test_admin" + str(x) + "@test.com"
+            admin.email = email
             admin.password = generate_password_hash("123456")
             admin.is_active = True
-            admin.name = "Name_Admin_" + str(x)
+            admin.name = "Name_Admin_" + str(next_index)
             db.session.add(admin)
             db.session.commit()
             print("Admin: ", admin.email, " created.")
+            added_count += 1
+            next_index += 1
 
         print("All test admins created")
 
