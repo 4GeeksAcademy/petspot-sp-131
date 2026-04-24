@@ -71,13 +71,14 @@ class Place(db.Model):
     pet_rules: Mapped[str | None] = mapped_column(Text, nullable=True)
     city_id: Mapped[int] = mapped_column(
         ForeignKey("cities.id"), nullable=False)
-
+    image_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     city: Mapped["City"] = relationship("City", back_populates="places")
     favorites: Mapped[list["Favorite"]] = relationship(
         "Favorite", back_populates="place", cascade="all, delete-orphan")
     chats: Mapped[list["Chat"]] = relationship("Chat", back_populates="place")
     reservations: Mapped[list["Reservation"]] = relationship(
         "Reservation", back_populates="place")
+    
 
     def __str__(self):
         return self.name
@@ -91,7 +92,8 @@ class Place(db.Model):
             "establishment_type": self.establishment_type.value,
             "pet_rules": self.pet_rules,
             "city": self.city.serialize(),
-            "favorited_by_users": [favorite.user_id for favorite in self.favorites]
+            "favorited_by_users": [favorite.user_id for favorite in self.favorites],
+            "image_url": self.image_url
         }
 
 

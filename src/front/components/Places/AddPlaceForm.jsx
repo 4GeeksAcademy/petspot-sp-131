@@ -12,6 +12,7 @@ function AddPlaceForm() {
     const [establishmentType, setEstablishmentType] = useState("")
     const [city, setCity] = useState("")
     const [petRules, setPetRules] = useState("")
+    const [selectedFile, setSelectedFile] = useState(null);
 
     const { store, dispatch } = useGlobalReducer();
 
@@ -23,7 +24,29 @@ function AddPlaceForm() {
     }
 
 
-    function handleSubmit(event) {
+    async function uploadToCloudinary(file) {
+        const formData = new FormData()
+        formData.append("file", file)
+        formData.append("upload_preset", import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET)
+
+        const response = await fetch(
+            `https://api.cloudinary.com/v1_1/${import.meta.env.VITE_CLOUDINARY_CLOUD_NAME}/image/upload`,
+            {
+                method: "POST",
+                body: formData
+            }
+        )
+
+        const data = await response.json()
+
+        if (!response.ok) {
+            throw new Error(data.error?.message || "Error uploading image")
+        }
+
+        return data.secure_url
+    }
+
+    async function handleSubmit(event) {
         event.preventDefault()
 
         const trimmedEmail = email.trim()
@@ -42,49 +65,61 @@ function AddPlaceForm() {
             return
         }
 
+        let imageUrl = ""
+
+        if (selectedFile) {
+            try {
+                imageUrl = await uploadToCloudinary(selectedFile)
+                console.log("Cloudinary URL:", imageUrl)
+            } catch (error) {
+                console.error("Cloudinary error:", error)
+                alert("Image upload failed")
+                return
+            }
+        }
+
         const body = {
             email: trimmedEmail,
             password: trimmedPassword,
             name: trimmedPlaceName,
             establishment_type: establishmentType,
             city_id: trimmedCity,
-            pet_rules: trimmedPetRules
+            pet_rules: trimmedPetRules,
+            image_url: imageUrl
         }
 
-        async function addPlace() {
-            try {
-                const response = await fetch(`${backendUrl}/api/places`, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify(body)
-                })
-                if (!response.ok) {
-                    const errorData = await response.json()
-                    const backendMessage = errorData.response || errorData.message || "Unknown backend error"
-                    alert(`Error ${response.status}: ${backendMessage}`)
-                    return
-                }
-                const newPlace = await response.json()
+        try {
+            const response = await fetch(`${backendUrl}/api/places`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(body)
+            })
 
-
-                dispatch({
-                    type: "ADD_PLACE",
-                    payload: newPlace
-                })
-                navigate("/places")
-
-            } catch (error) {
-                alert("Unable to add the place right now. Please try again.")
+            if (!response.ok) {
+                const errorData = await response.json()
+                const backendMessage = errorData.response || errorData.message || "Unknown backend error"
+                alert(`Error ${response.status}: ${backendMessage}`)
+                return
             }
-        }
-        addPlace()
 
+            const newPlace = await response.json()
+
+            dispatch({
+                type: "ADD_PLACE",
+                payload: newPlace
+            })
+
+            navigate("/places")
+
+        } catch (error) {
+            alert("Unable to add the place right now. Please try again.")
+        }
     }
 
     useEffect(() => {
-        
+
         if (store.cities.length === 0) {
             async function getCities() {
                 try {
@@ -150,7 +185,7 @@ function AddPlaceForm() {
                 <div className="mb-3">
                     <label htmlFor="placeCity" className="form-label">City *</label>
                     <select className="form-select" id="placeCity" onChange={(event) => setCity(event.target.value)} value={city} aria-label="selectCity" required>
-                        <option selected>Select a city </option>
+                        <option selected>Select a city</option>
                         {store.cities.map((city, i) => {
                             return (
                                 <option value={city.id} key={`${city.city}-${i}`}>{city.city}</option>
@@ -162,6 +197,17 @@ function AddPlaceForm() {
                     <label htmlFor="petRules" className="form-label">Pet rules</label>
                     <textarea onChange={(event) => setPetRules(event.target.value)} value={petRules} className="form-control" id="petRules" name="petRules" style={{ maxHeight: 250 }} maxLength="250"></textarea>
                 </div>
+                <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setSelectedFile(e.target.files[0])}
+                />
+
+                {selectedFile && (
+                    <p className="text-body-secondary small mt-2">
+                        Selected file: {selectedFile.name}
+                    </p>
+                )}
                 <p className="text-body-secondary small mb-4">* Required fields</p>
                 <div className="mt-5">
                     <button type="submit" className="btn btn-success d-block mx-auto">Submit</button>
