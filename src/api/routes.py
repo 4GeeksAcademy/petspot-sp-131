@@ -183,7 +183,7 @@ def add_place():
         return jsonify(response="City not found"), 404
 
     try:
-        establishment_type = establishment_type.strip()
+        establishment_type = establishment_type.strip().lower()
         establishment_type = EstablishmentType(establishment_type)
     except ValueError:
         return jsonify(response="Invalid establishment type"), 400
