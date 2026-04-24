@@ -37,9 +37,10 @@ def admin_login():
     if not admin or not check_password_hash(admin.password, password):
         return jsonify({"msg": "Invalid credentials"}), 401
 
+    access_token = create_access_token(identity=str(admin.id))
     return jsonify({
         "msg": "Login successful",
-        "token": "Admin token",
+        "token": access_token,
         "admin": {
             "id": admin.id,
             "name": admin.name,
@@ -307,12 +308,14 @@ def update_place(place_id):
 
 
 @api.route('/admin', methods=['GET'])
+@jwt_required()
 def get_admins():
     admins = AdminUser.query.all()
     return jsonify([admin.serialize() for admin in admins]), 200
 
 
 @api.route('/admin/<int:id>', methods=['GET'])
+@jwt_required()
 def get_admin(id):
     admin = AdminUser.query.get(id)
     if not admin:
@@ -321,6 +324,7 @@ def get_admin(id):
 
 
 @api.route('/admin', methods=['POST'])
+@jwt_required()
 def create_admin():
     data = request.get_json()
 
@@ -353,6 +357,7 @@ def create_admin():
 
 
 @api.route('/admin/<int:id>', methods=['PUT'])
+@jwt_required()
 def update_admin(id):
     admin = AdminUser.query.get(id)
 
@@ -385,6 +390,7 @@ def update_admin(id):
 
 
 @api.route('/admin/<int:id>', methods=['DELETE'])
+@jwt_required()
 def delete_admin(id):
     admin = AdminUser.query.get(id)
 
