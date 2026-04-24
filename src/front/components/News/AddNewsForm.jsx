@@ -20,7 +20,10 @@ function AddNewsForm() {
             try {
                 const response = await fetch(`${backendUrl}/api/admin`, {
                     method: "GET",
-                    headers: { "Content-Type": "application/json" }
+                    headers: { 
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${localStorage.getItem("tokenAdmin")}`
+                    }
                 });
                 if (response.ok) {
                     const data = await response.json();
