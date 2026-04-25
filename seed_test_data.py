@@ -11,7 +11,7 @@ COMMANDS = [
     ["pipenv", "run", "flask", "insert-test-reservations", "5"],
     ["pipenv", "run", "flask", "insert-test-reviews", "5"],
     ["pipenv", "run", "flask", "insert-test-chat", "5"],
-    ["pipenv", "run", "flask", "insert-test-news", "5"],
+    ["pipenv", "run", "flask", "insert-test-news"],
 ]
 
 

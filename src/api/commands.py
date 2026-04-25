@@ -298,45 +298,69 @@ def setup_commands(app):
         return print("All test chat messages added")
 
     @app.cli.command('insert-test-news')
-    @click.argument("count") # argument of out command
-    def insert_news(count):
+    def insert_news():
         admins = db.session.execute(select(AdminUser)).scalars().all() or None
 
         if admins is None:
             return print('Unable to insert test news. Make sure admins exist in the database')
 
-        news_titles = [
-            "Updated Pet Policy for Indoor Areas",
-            "New Terrace Rules for Pets",
-            "Weekend Guidelines for Pet Owners",
-            "Important Update on Vaccination Requirements",
-            "Pet-Friendly Space Improvements"
+        if not admins:
+            return print('Unable to insert test news. Make sure admins exist in the database')
+
+        test_news_posts = [
+            {
+                "title": "Updated Pet Policy for Indoor Areas",
+                "content": "We have updated our indoor pet policy to improve comfort and safety for all guests. Please keep pets close to your table and under supervision at all times.",
+                "post_type": PostType.NORMATIVE
+            },
+            {
+                "title": "New Terrace Rules for Pets",
+                "content": "Pets are welcome on the terrace. We kindly ask owners to keep walkways clear and make sure pets remain calm around other guests.",
+                "post_type": PostType.NORMATIVE
+            },
+            {
+                "title": "Weekend Guidelines for Pet Owners",
+                "content": "For busy weekends, we recommend arriving on time and indicating the number of pets included in your booking so our staff can prepare your table properly.",
+                "post_type": PostType.NEWS
+            },
+            {
+                "title": "Important Update on Vaccination Requirements",
+                "content": "To ensure a safe environment, we may request that pets are up to date on their basic vaccinations before entering shared dining areas.",
+                "post_type": PostType.NORMATIVE
+            },
+            {
+                "title": "Pet-Friendly Space Improvements",
+                "content": "We are introducing small improvements in our pet-friendly spaces, including water stations and clearer seating guidelines for guests visiting with animals.",
+                "post_type": PostType.EVENT
+            }
         ]
 
-        news_contents = [
-            "We have updated our indoor pet policy to improve comfort and safety for all guests. Please keep pets close to your table and under supervision at all times.",
-            "Pets are welcome on the terrace. We kindly ask owners to keep walkways clear and make sure pets remain calm around other guests.",
-            "For busy weekends, we recommend arriving on time and indicating the number of pets included in your booking so our staff can prepare your table properly.",
-            "To ensure a safe environment, we may request that pets are up to date on their basic vaccinations before entering shared dining areas.",
-            "We are introducing small improvements in our pet-friendly spaces, including water stations and clearer seating guidelines for guests visiting with animals."
-        ]
+        existing_titles = {
+            news.title
+            for news in db.session.execute(select(News)).scalars().all()
+        }
 
-        for x in range(1, int(count) + 1):
-            admin = random.choice(admins)
+        created_count = 0
+
+        for news_data in enumerate(test_news_posts):
+            if news_data["title"] in existing_titles:
+                print(f'News post "{news_data["title"]}" already exists. Skipping.')
+                continue
 
             new_post = News(
-                id_admin=admin.id,
-                title=random.choice(news_titles),
-                content=random.choice(news_contents),
+                id_admin=random.choice(admins).id,
+                title=news_data["title"],
+                content=news_data["content"],
                 post_date=datetime.now().date(),
-                post_type=random.choice(list(PostType))
+                post_type=news_data["post_type"]
             )
 
             db.session.add(new_post)
             db.session.commit()
-            print(f"News post {x} added")
+            created_count += 1
+            print(f'News post "{new_post.title}" added')
 
-        return print("All test news posts added")
+        return print(f"Test news sync complete. {created_count} new posts added.")
 
     
     @app.cli.command("insert-test-data")
