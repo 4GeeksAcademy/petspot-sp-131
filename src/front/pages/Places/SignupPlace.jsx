@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import useGlobalReducer from "../../hooks/useGlobalReducer";
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL
 
-function AddPlaceForm() {
+function SignupPlace() {
 
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
@@ -12,41 +12,11 @@ function AddPlaceForm() {
     const [establishmentType, setEstablishmentType] = useState("")
     const [city, setCity] = useState("")
     const [petRules, setPetRules] = useState("")
-    const [selectedFile, setSelectedFile] = useState(null);
 
     const { store, dispatch } = useGlobalReducer();
-
     const navigate = useNavigate();
 
-    function handleCityChange(event) {
-        const digitsOnlyValue = event.target.value.replace(/\D/g, "")
-        setCity(digitsOnlyValue)
-    }
-
-
-    async function uploadToCloudinary(file) {
-        const formData = new FormData()
-        formData.append("file", file)
-        formData.append("upload_preset", import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET)
-
-        const response = await fetch(
-            `https://api.cloudinary.com/v1_1/${import.meta.env.VITE_CLOUDINARY_CLOUD_NAME}/image/upload`,
-            {
-                method: "POST",
-                body: formData
-            }
-        )
-
-        const data = await response.json()
-
-        if (!response.ok) {
-            throw new Error(data.error?.message || "Error uploading image")
-        }
-
-        return data.secure_url
-    }
-
-    async function handleSubmit(event) {
+    function handleSubmit(event) {
         event.preventDefault()
 
         const trimmedEmail = email.trim()
@@ -65,63 +35,41 @@ function AddPlaceForm() {
             return
         }
 
-        let imageUrl = ""
-
-        if (selectedFile) {
-            try {
-                imageUrl = await uploadToCloudinary(selectedFile)
-                console.log("Cloudinary URL:", imageUrl)
-            } catch (error) {
-                console.error("Cloudinary error:", error)
-                alert("Image upload failed")
-                return
-            }
-        }
-
         const body = {
             email: trimmedEmail,
             password: trimmedPassword,
             name: trimmedPlaceName,
             establishment_type: establishmentType,
             city_id: trimmedCity,
-            pet_rules: trimmedPetRules,
-            image_url: imageUrl
+            pet_rules: trimmedPetRules
         }
 
-        console.log("BODY SENT TO BACKEND:", body)
+        async function signupPlace() {
+            try {
+                const response = await fetch(`${backendUrl}/api/places`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(body)
+                })
+                if (!response.ok) {
+                    const errorData = await response.json()
+                    const backendMessage = errorData.response || errorData.message || "Unknown backend error"
+                    alert(`Error ${response.status}: ${backendMessage}`)
+                    return
+                }
+                alert("Place registered successfully! Please log in.");
+                navigate("/places/login")
 
-        try {
-            const response = await fetch(`${backendUrl}/api/places`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify(body)
-            })
-
-            if (!response.ok) {
-                const errorData = await response.json()
-                const backendMessage = errorData.response || errorData.message || "Unknown backend error"
-                alert(`Error ${response.status}: ${backendMessage}`)
-                return
+            } catch (error) {
+                alert("Unable to sign up right now. Please try again.")
             }
-
-            const newPlace = await response.json()
-
-            dispatch({
-                type: "ADD_PLACE",
-                payload: newPlace
-            })
-
-            navigate("/places")
-
-        } catch (error) {
-            alert("Unable to add the place right now. Please try again.")
         }
+        signupPlace()
     }
 
     useEffect(() => {
-
         if (store.cities.length === 0) {
             async function getCities() {
                 try {
@@ -143,17 +91,17 @@ function AddPlaceForm() {
         }
     }, [])
 
-
     return (
-        <>
+        <div className="container mt-5">
+            <h2 className="text-center mb-4">Register your Place</h2>
             <form onSubmit={handleSubmit} className="mx-auto p-5 bg-secondary-subtle border-0 rounded text-start" style={{ maxWidth: 600 }}>
                 <div className="mb-3">
                     <label htmlFor="placeEmail" className="form-label">Email *</label>
-                    <input onChange={(e) => setEmail(e.target.value)} value={email} type="email" className="form-control" id="placeEmail" name="email" required />
+                    <input onChange={(e) => setEmail(e.target.value)} value={email} type="email" className="form-control" id="placeEmail" required />
                 </div>
                 <div className="mb-3">
                     <label htmlFor="placePassword" className="form-label">Password *</label>
-                    <input onChange={(e) => setPassword(e.target.value)} value={password} type="password" className="form-control" id="placePassword" name="password" required />
+                    <input onChange={(e) => setPassword(e.target.value)} value={password} type="password" className="form-control" id="placePassword" required />
                 </div>
                 <hr className="my-4" />
                 <p className="text-body-secondary mb-4 text-center ">
@@ -161,62 +109,44 @@ function AddPlaceForm() {
                 </p>
                 <div className="mb-3">
                     <label htmlFor="placeName" className="form-label">Name *</label>
-                    <input onChange={(event) => setPlaceName(event.target.value)} value={placeName} type="text" className="form-control" id="placeName" name="name" required />
+                    <input onChange={(event) => setPlaceName(event.target.value)} value={placeName} type="text" className="form-control" id="placeName" required />
                 </div>
                 <div className="mb-3">
                     <label className="form-label">Establishment Type *</label>
                     <div className="form-check">
                         <input onChange={(event) => setEstablishmentType(event.target.value)} className="form-check-input" type="radio" name="establishmentType" id="establishmentTypeBar" value="bar" required />
-                        <label className="form-check-label" htmlFor="establishmentTypeBar">
-                            Bar
-                        </label>
+                        <label className="form-check-label" htmlFor="establishmentTypeBar">Bar</label>
                     </div>
                     <div className="form-check">
                         <input onChange={(event) => setEstablishmentType(event.target.value)} className="form-check-input" type="radio" name="establishmentType" id="establishmentTypeCafe" value="cafe" required />
-                        <label className="form-check-label" htmlFor="establishmentTypeCafe">
-                            Cafe
-                        </label>
+                        <label className="form-check-label" htmlFor="establishmentTypeCafe">Cafe</label>
                     </div>
                     <div className="form-check">
                         <input onChange={(event) => setEstablishmentType(event.target.value)} className="form-check-input" type="radio" name="establishmentType" id="establishmentTypeRestaurant" value="restaurant" required />
-                        <label className="form-check-label" htmlFor="establishmentTypeRestaurant">
-                            Restaurant
-                        </label>
+                        <label className="form-check-label" htmlFor="establishmentTypeRestaurant">Restaurant</label>
                     </div>
                 </div>
                 <div className="mb-3">
                     <label htmlFor="placeCity" className="form-label">City *</label>
-                    <select className="form-select" id="placeCity" onChange={(event) => setCity(event.target.value)} value={city} aria-label="selectCity" required>
+                    <select className="form-select" id="placeCity" onChange={(event) => setCity(event.target.value)} value={city} required>
                         <option value="">Select a city</option>
-                        {store.cities.map((city, i) => {
-                            return (
-                                <option value={city.id} key={`${city.city}-${i}`}>{city.city}</option>
-                            )
-                        })}
+                        {store.cities.map((city, i) => (
+                            <option value={city.id} key={`${city.city}-${i}`}>{city.city}</option>
+                        ))}
                     </select>
                 </div>
                 <div className="mb-3">
                     <label htmlFor="petRules" className="form-label">Pet rules</label>
-                    <textarea onChange={(event) => setPetRules(event.target.value)} value={petRules} className="form-control" id="petRules" name="petRules" style={{ maxHeight: 250 }} maxLength="250"></textarea>
+                    <textarea onChange={(event) => setPetRules(event.target.value)} value={petRules} className="form-control" id="petRules" style={{ maxHeight: 250 }} maxLength="250"></textarea>
                 </div>
-                <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => setSelectedFile(e.target.files[0])}
-                />
-
-                {selectedFile && (
-                    <p className="text-body-secondary small mt-2">
-                        Selected file: {selectedFile.name}
-                    </p>
-                )}
                 <p className="text-body-secondary small mb-4">* Required fields</p>
-                <div className="mt-5">
-                    <button type="submit" className="btn btn-success d-block mx-auto">Submit</button>
+                <div className="mt-4 text-center">
+                    <button type="submit" className="btn btn-success">Sign Up</button>
+                    <Link to="/places/login" className="btn btn-outline-secondary ms-3">Already have an account?</Link>
                 </div>
             </form>
-        </>
+        </div>
     )
 }
 
-export default AddPlaceForm;
+export default SignupPlace;

@@ -37,9 +37,10 @@ def admin_login():
     if not admin or not check_password_hash(admin.password, password):
         return jsonify({"msg": "Invalid credentials"}), 401
 
+    access_token = create_access_token(identity=str(admin.id))
     return jsonify({
         "msg": "Login successful",
-        "token": "Admin token",
+        "token": access_token,
         "admin": {
             "id": admin.id,
             "name": admin.name,
@@ -80,10 +81,11 @@ def create_user():
     if existing_user:
         return jsonify({"msg": "User already exists"}), 409
 
+    hashed_password = generate_password_hash(password)
     new_user = User(
         name=name,
         email=email,
-        password=password,
+        password=hashed_password,
         is_active=True
     )
 
@@ -183,7 +185,7 @@ def add_place():
         return jsonify(response="City not found"), 404
 
     try:
-        establishment_type = establishment_type.strip()
+        establishment_type = establishment_type.strip().lower()
         establishment_type = EstablishmentType(establishment_type)
     except ValueError:
         return jsonify(response="Invalid establishment type"), 400
@@ -312,12 +314,14 @@ def update_place(place_id):
 
 
 @api.route('/admin', methods=['GET'])
+@jwt_required()
 def get_admins():
     admins = AdminUser.query.all()
     return jsonify([admin.serialize() for admin in admins]), 200
 
 
 @api.route('/admin/<int:id>', methods=['GET'])
+@jwt_required()
 def get_admin(id):
     admin = AdminUser.query.get(id)
     if not admin:
@@ -326,6 +330,7 @@ def get_admin(id):
 
 
 @api.route('/admin', methods=['POST'])
+@jwt_required()
 def create_admin():
     data = request.get_json()
 
@@ -358,6 +363,7 @@ def create_admin():
 
 
 @api.route('/admin/<int:id>', methods=['PUT'])
+@jwt_required()
 def update_admin(id):
     admin = AdminUser.query.get(id)
 
@@ -390,6 +396,7 @@ def update_admin(id):
 
 
 @api.route('/admin/<int:id>', methods=['DELETE'])
+@jwt_required()
 def delete_admin(id):
     admin = AdminUser.query.get(id)
 
@@ -568,7 +575,7 @@ def login_user():
     if user is None:
         return jsonify({"msg": "Bad email or password"}), 401
 
-    if password != user.password:
+    if not check_password_hash(user.password, password):
         return jsonify({"msg": "Bad email or password"}), 401
 
     access_token = create_access_token(identity=email)
@@ -875,11 +882,15 @@ def update_reservation(id):
     if reservation_time_str:
         try:
             reservation.reservation_time = datetime.strptime(
-                reservation_time_str, '%H:%M'
+                reservation_time_str[:5], '%H:%M'
             ).time()
         except ValueError:
             return jsonify(response="Invalid time format"), 400
 
+    if 'user_id' in data:
+        reservation.user_id = int(data['user_id'])
+    if 'place_id' in data:
+        reservation.place_id = int(data['place_id'])
     if 'people_count' in data:
         reservation.people_count = int(data['people_count'])
     if 'pet_count' in data:
@@ -1071,3 +1082,82 @@ def private_place():
     if place_exists is None:
         return jsonify(response="Place not found"), 404
     return jsonify(place_exists.serialize()), 200
+
+
+@api.route('/places/private', methods=['PUT'])
+@jwt_required()
+def update_private_place():
+    place_id = int(get_jwt_identity())
+    place = db.session.get(Place, place_id)
+    if not place:
+        return jsonify(response="Place not found"), 404
+        
+    data = request.get_json(silent=True) or {}
+    
+    if 'name' in data:
+        name = str(data['name']).strip()
+        if not name:
+             return jsonify(response="Name cannot be empty"), 400
+        place.name = name
+        
+    if 'establishment_type' in data:
+        try:
+             place.establishment_type = EstablishmentType(data['establishment_type'].strip())
+        except ValueError:
+             return jsonify(response="Invalid establishment type"), 400
+             
+    if 'pet_rules' in data:
+        if data['pet_rules'] is None:
+             place.pet_rules = None
+        else:
+             rules = str(data['pet_rules']).strip()
+             if len(rules) > 250:
+                 return jsonify(response="pet_rules cannot exceed 250 characters"), 400
+             place.pet_rules = rules or None
+             
+    if 'city_id' in data:
+        city_id = data['city_id']
+        city = db.session.get(City, city_id)
+        if not city:
+            return jsonify(response="City not found"), 404
+        place.city_id = city_id
+        
+    db.session.commit()
+    return jsonify(place.serialize()), 200
+
+
+@api.route('/places/private', methods=['DELETE'])
+@jwt_required()
+def delete_private_place():
+    place_id = int(get_jwt_identity())
+    place = db.session.get(Place, place_id)
+    if not place:
+        return jsonify(response="Place not found"), 404
+        
+    db.session.delete(place)
+    db.session.commit()
+    return jsonify(response="Place deleted"), 200
+
+
+@api.route('/places/private/reservations', methods=['GET'])
+@jwt_required()
+def get_private_place_reservations():
+    place_id = int(get_jwt_identity())
+    reservations = db.session.execute(
+        db.select(Reservation).where(Reservation.place_id == place_id)
+    ).scalars().all()
+    if not reservations:
+        return jsonify(response="No reservations found for this place"), 404
+    return jsonify([res.serialize() for res in reservations]), 200
+
+
+@api.route('/places/private/reviews', methods=['GET'])
+@jwt_required()
+def get_private_place_reviews():
+    place_id = int(get_jwt_identity())
+    reviews = db.session.execute(
+        db.select(Review).join(Reservation).where(Reservation.place_id == place_id)
+    ).scalars().all()
+    if not reviews:
+        return jsonify(response="No reviews found for this place"), 404
+    return jsonify([r.serialize() for r in reviews]), 200

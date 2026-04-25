@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Link, Outlet, useLocation, useNavigate,useParams } from "react-router-dom";
 
 export const Admin = () => {
   const [isLogged, setIsLogged] = useState(false);
@@ -8,8 +8,8 @@ export const Admin = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const token = localStorage.getItem("Admin token");
-    setIsLogged(token === "Admin token");
+    const token = localStorage.getItem("tokenAdmin");
+    setIsLogged(!!token);
 
     const loginMessage = sessionStorage.getItem("adminLoginSuccess");
     if (loginMessage) {
@@ -23,9 +23,9 @@ export const Admin = () => {
   }, [location.pathname]);
 
   const handleLogout = () => {
-    localStorage.removeItem("Admin token");
+    localStorage.removeItem("tokenAdmin");
     setIsLogged(false);
-    navigate("/usuario/admin");
+    navigate("/usuario/admin/login");
   };
 
   return (
@@ -66,7 +66,10 @@ export const AdminList = () => {
       const backendUrl = import.meta.env.VITE_BACKEND_URL;
       const response = await fetch(`${backendUrl}/api/admin`, {
         method: "GET",
-        headers: { "Content-Type": "application/json" }
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("tokenAdmin")}`
+        }
       });
       const data = await response.json();
       if (response.ok) {
@@ -89,7 +92,10 @@ export const AdminList = () => {
       const backendUrl = import.meta.env.VITE_BACKEND_URL;
       const response = await fetch(`${backendUrl}/api/admin/${id}`, {
         method: "DELETE",
-        headers: { "Content-Type": "application/json" }
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("tokenAdmin")}`
+        }
       });
       if (response.ok) {
         setMessage("Admin eliminado exitosamente");
@@ -171,7 +177,10 @@ export const AdminEdit = () => {
         const backendUrl = import.meta.env.VITE_BACKEND_URL;
         const response = await fetch(`${backendUrl}/api/admin/${id}`, {
           method: "GET",
-          headers: { "Content-Type": "application/json" }
+          headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("tokenAdmin")}`
+        }
         });
         if (response.ok) {
           const data = await response.json();
@@ -205,7 +214,10 @@ export const AdminEdit = () => {
       }
       const response = await fetch(`${backendUrl}/api/admin/${id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("tokenAdmin")}`
+        },
         body: JSON.stringify(dataToSend)
       });
       if (response.ok) {
@@ -294,7 +306,10 @@ export const AdminDelete = () => {
         const backendUrl = import.meta.env.VITE_BACKEND_URL;
         const response = await fetch(`${backendUrl}/api/admin/${id}`, {
           method: "GET",
-          headers: { "Content-Type": "application/json" }
+          headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("tokenAdmin")}`
+        }
         });
         if (response.ok) {
           const data = await response.json();
@@ -317,7 +332,10 @@ export const AdminDelete = () => {
       const backendUrl = import.meta.env.VITE_BACKEND_URL;
       const response = await fetch(`${backendUrl}/api/admin/${id}`, {
         method: "DELETE",
-        headers: { "Content-Type": "application/json" }
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("tokenAdmin")}`
+        }
       });
       if (response.ok) {
         navigate("/usuario/admin");
@@ -398,7 +416,10 @@ export const AdminCreate = () => {
       const backendUrl = import.meta.env.VITE_BACKEND_URL;
       const response = await fetch(`${backendUrl}/api/admin`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("tokenAdmin")}`
+        },
         body: JSON.stringify(formData)
       });
       if (response.ok) {
@@ -482,7 +503,10 @@ export const AdminDetail = () => {
         const backendUrl = import.meta.env.VITE_BACKEND_URL;
         const response = await fetch(`${backendUrl}/api/admin/${id}`, {
           method: "GET",
-          headers: { "Content-Type": "application/json" }
+          headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("tokenAdmin")}`
+        }
         });
         if (response.ok) {
           const data = await response.json();
