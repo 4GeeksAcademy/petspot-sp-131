@@ -272,15 +272,15 @@ class Chat(db.Model):
         }
 
 
-class Race(db.Model):
-    __tablename__ = "races"
+class Breed(db.Model):
+    __tablename__ = "breeds"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(120), nullable=False)
     animal_type: Mapped[str] = mapped_column(String(120), nullable=False)
     url: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
-    pets: Mapped[list["Pet"]] = relationship("Pet", back_populates="race", cascade="all, delete-orphan")
+    pets: Mapped[list["Pet"]] = relationship("Pet", back_populates="breed", cascade="all, delete-orphan")
 
     def serialize(self):
         return {
@@ -298,12 +298,12 @@ class Pet(db.Model):
     name: Mapped[str] = mapped_column(String(120), nullable=False)
     user_id: Mapped[int] = mapped_column(ForeignKey("user.id"), nullable=False)
     animal_type: Mapped[str] = mapped_column(String(120), nullable=False)
-    race_id: Mapped[int | None] = mapped_column(ForeignKey("races.id"), nullable=True)
+    breed_id: Mapped[int | None] = mapped_column(ForeignKey("breeds.id"), nullable=True)
     size: Mapped[str] = mapped_column(String(120), nullable=False)
     url: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
     user: Mapped["User"] = relationship("User", back_populates="pets")
-    race: Mapped["Race"] = relationship("Race", back_populates="pets")
+    breed: Mapped["Breed"] = relationship("Breed", back_populates="pets")
 
     def serialize(self):
         return {
@@ -311,9 +311,9 @@ class Pet(db.Model):
             "name": self.name,
             "user_id": self.user_id,
             "animal_type": self.animal_type,
-            "race_id": self.race_id,
-            "race_name": self.race.name if self.race else None,
-            "race_url": self.race.url if self.race else None,
+            "breed_id": self.breed_id,
+            "breed_name": self.breed.name if self.breed else None,
+            "breed_url": self.breed.url if self.breed else None,
             "size": self.size,
             "url": self.url
         }

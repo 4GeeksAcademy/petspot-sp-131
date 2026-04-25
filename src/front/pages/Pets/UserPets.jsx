@@ -97,14 +97,14 @@ const UserPets = () => {
                 <div className="card-header bg-primary text-white">
                   <h5 className="card-title mb-0">{pet.name}</h5>
                 </div>
-                {(pet.url || pet.race_url) && (
+                {(pet.url || pet.breed_url) && (
                   <div className="bg-light d-flex justify-content-center align-items-center" style={{ height: "220px", overflow: "hidden" }}>
-                    <img src={pet.url || pet.race_url} alt={pet.name} style={{ maxHeight: "100%", maxWidth: "100%", objectFit: "contain" }} />
+                    <img src={pet.url || pet.breed_url} alt={pet.name} style={{ maxHeight: "100%", maxWidth: "100%", objectFit: "contain" }} />
                   </div>
                 )}
                 <div className="card-body">
                   <p className="card-text mb-2"><strong>Tipo:</strong> {pet.animal_type}</p>
-                  <p className="card-text mb-2"><strong>Raza:</strong> {pet.race_name || "Mestizo / Sin especificar"}</p>
+                  <p className="card-text mb-2"><strong>Raza:</strong> {pet.breed_name || "Mestizo / Sin especificar"}</p>
                   <p className="card-text"><strong>Tamaño:</strong> {pet.size}</p>
                 </div>
                 <div className="card-footer bg-transparent d-flex justify-content-end">
@@ -125,3 +125,4 @@ const UserPets = () => {
 };
 
 export default UserPets;
+

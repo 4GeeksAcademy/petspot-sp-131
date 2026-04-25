@@ -2,7 +2,7 @@
 import click, random, requests
 from api.cities import cities
 from datetime import datetime
-from api.models import db, User, Place, EstablishmentType, City, Favorite, AdminUser, Review, Reservation, ReservationStatus, Chat, News, PostType, Race
+from api.models import db, User, Place, EstablishmentType, City, Favorite, AdminUser, Review, Reservation, ReservationStatus, Chat, News, PostType, Breed
 from werkzeug.security import generate_password_hash
 from sqlalchemy import select
 
@@ -343,8 +343,8 @@ def setup_commands(app):
     def insert_test_data():
         pass
 
-    @app.cli.command("insert-external-races")
-    def insert_external_races():
+    @app.cli.command("insert-external-breeds")
+    def insert_external_breeds():
         import os
         print("Buscando razas en The Dog API...")
         try:
@@ -357,10 +357,10 @@ def setup_commands(app):
                 for dog in dogs:
                     name = dog.get('name')
                     if name:
-                        exists = db.session.execute(select(Race).where(Race.name == name, Race.animal_type == "Perro")).scalars().first()
+                        exists = db.session.execute(select(Breed).where(Breed.name == name, Breed.animal_type == "Perro")).scalars().first()
                         if not exists:
-                            new_race = Race(name=name, animal_type="Perro")
-                            db.session.add(new_race)
+                            new_breed = Breed(name=name, animal_type="Perro")
+                            db.session.add(new_breed)
                             dog_count += 1
                 db.session.commit()
                 print(f"Insertadas {dog_count} razas de Perro.")
@@ -374,10 +374,10 @@ def setup_commands(app):
                 ]
                 dog_count = 0
                 for name in fallback_dogs:
-                    exists = db.session.execute(select(Race).where(Race.name == name, Race.animal_type == "Perro")).scalars().first()
+                    exists = db.session.execute(select(Breed).where(Breed.name == name, Breed.animal_type == "Perro")).scalars().first()
                     if not exists:
-                        new_race = Race(name=name, animal_type="Perro")
-                        db.session.add(new_race)
+                        new_breed = Breed(name=name, animal_type="Perro")
+                        db.session.add(new_breed)
                         dog_count += 1
                 db.session.commit()
                 print(f"Insertadas {dog_count} razas de Perro (respaldo).")
@@ -393,10 +393,10 @@ def setup_commands(app):
                 for cat in cats:
                     name = cat.get('name')
                     if name:
-                        exists = db.session.execute(select(Race).where(Race.name == name, Race.animal_type == "Gato")).scalars().first()
+                        exists = db.session.execute(select(Breed).where(Breed.name == name, Breed.animal_type == "Gato")).scalars().first()
                         if not exists:
-                            new_race = Race(name=name, animal_type="Gato")
-                            db.session.add(new_race)
+                            new_breed = Breed(name=name, animal_type="Gato")
+                            db.session.add(new_breed)
                             cat_count += 1
                 db.session.commit()
                 print(f"Insertadas {cat_count} razas de Gato.")

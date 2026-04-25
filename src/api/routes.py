@@ -6,7 +6,7 @@ import io
 import json
 import re
 from flask import Flask, request, jsonify, url_for, Blueprint
-from api.models import db, User, Place, EstablishmentType, AdminUser, Review, City, Chat, Reservation, ReservationStatus, Favorite, News, PostType, Race, Pet
+from api.models import db, User, Place, EstablishmentType, AdminUser, Review, City, Chat, Reservation, ReservationStatus, Favorite, News, PostType, Breed, Pet
 from datetime import datetime
 from api.utils import generate_sitemap, APIException
 from flask_cors import CORS
@@ -1236,23 +1236,23 @@ def get_private_place_reviews():
         return jsonify(response="No reviews found for this place"), 404
     return jsonify([r.serialize() for r in reviews]), 200
 
-# CRUD for Races
+# CRUD for Breeds
 
-@api.route('/races', methods=['GET'])
-def get_races():
-    races = db.session.execute(db.select(Race)).scalars().all()
-    return jsonify([race.serialize() for race in races]), 200
+@api.route('/breeds', methods=['GET'])
+def get_breeds():
+    breeds = db.session.execute(db.select(Breed)).scalars().all()
+    return jsonify([breed.serialize() for breed in breeds]), 200
 
-@api.route('/races/<int:race_id>', methods=['GET'])
-def get_race(race_id):
-    race = db.session.execute(db.select(Race).where(Race.id == race_id)).scalars().first()
-    if not race:
-        return jsonify({"msg": "Race not found"}), 404
-    return jsonify(race.serialize()), 200
+@api.route('/breeds/<int:breed_id>', methods=['GET'])
+def get_breed(breed_id):
+    breed = db.session.execute(db.select(Breed).where(Breed.id == breed_id)).scalars().first()
+    if not breed:
+        return jsonify({"msg": "Breed not found"}), 404
+    return jsonify(breed.serialize()), 200
 
-@api.route('/races/import', methods=['POST'])
+@api.route('/breeds/import', methods=['POST'])
 @jwt_required()
-def import_external_races():
+def import_external_breeds():
     import os, requests
     dog_count = 0
     cat_count = 0
@@ -1266,10 +1266,10 @@ def import_external_races():
                 name = dog.get('name')
                 image_url = dog.get('image', {}).get('url') if dog.get('image') else None
                 if name:
-                    exists = db.session.execute(select(Race).where(Race.name == name, Race.animal_type == "Perro")).scalars().first()
+                    exists = db.session.execute(select(Breed).where(Breed.name == name, Breed.animal_type == "Perro")).scalars().first()
                     if not exists:
-                        new_race = Race(name=name, animal_type="Perro", url=image_url)
-                        db.session.add(new_race)
+                        new_breed = Breed(name=name, animal_type="Perro", url=image_url)
+                        db.session.add(new_breed)
                         dog_count += 1
                     elif exists and not exists.url and image_url:
                         exists.url = image_url
@@ -1282,10 +1282,10 @@ def import_external_races():
                 "Cocker Spaniel", "Rottweiler", "Doberman", "Pitbull", "Border Collie"
             ]
             for name in fallback_dogs:
-                exists = db.session.execute(select(Race).where(Race.name == name, Race.animal_type == "Perro")).scalars().first()
+                exists = db.session.execute(select(Breed).where(Breed.name == name, Breed.animal_type == "Perro")).scalars().first()
                 if not exists:
-                    new_race = Race(name=name, animal_type="Perro")
-                    db.session.add(new_race)
+                    new_breed = Breed(name=name, animal_type="Perro")
+                    db.session.add(new_breed)
                     dog_count += 1
             db.session.commit()
     except Exception as e:
@@ -1301,10 +1301,10 @@ def import_external_races():
                 if not image_url and cat.get('reference_image_id'):
                     image_url = f"https://cdn2.thecatapi.com/images/{cat.get('reference_image_id')}.jpg"
                 if name:
-                    exists = db.session.execute(select(Race).where(Race.name == name, Race.animal_type == "Gato")).scalars().first()
+                    exists = db.session.execute(select(Breed).where(Breed.name == name, Breed.animal_type == "Gato")).scalars().first()
                     if not exists:
-                        new_race = Race(name=name, animal_type="Gato", url=image_url)
-                        db.session.add(new_race)
+                        new_breed = Breed(name=name, animal_type="Gato", url=image_url)
+                        db.session.add(new_breed)
                         cat_count += 1
                     elif exists and not exists.url and image_url:
                         exists.url = image_url
@@ -1312,7 +1312,7 @@ def import_external_races():
     except Exception as e:
         print(f"Excepcion The Cat API: {e}")
 
-    return jsonify({"msg": f"Razas importadas exitosamente. Perros: {dog_count}, Gatos: {cat_count}"}), 200
+    return jsonify({"msg": f"Breeds imported successfully. Dogs: {dog_count}, Cats: {cat_count}"}), 200
 
 
 @api.route('/upload', methods=['POST'])
@@ -1338,9 +1338,9 @@ def upload_image():
     except Exception as e:
         return jsonify({"msg": str(e)}), 500
 
-@api.route('/races', methods=['POST'])
+@api.route('/breeds', methods=['POST'])
 @jwt_required()
-def create_race():
+def create_breed():
     body = request.get_json(silent=True)
     if not body:
         return jsonify({"msg": "Missing JSON in request"}), 400
@@ -1348,55 +1348,55 @@ def create_race():
     if "name" not in body or "animal_type" not in body:
         return jsonify({"msg": "Missing 'name' or 'animal_type' in request"}), 400
     
-    new_race = Race(
+    new_breed = Breed(
         name=body['name'],
         animal_type=body['animal_type'],
         url=body.get('url')
     )
-    db.session.add(new_race)
+    db.session.add(new_breed)
     try:
         db.session.commit()
-        return jsonify(new_race.serialize()), 201
+        return jsonify(new_breed.serialize()), 201
     except Exception as e:
         db.session.rollback()
         return jsonify({"msg": str(e)}), 500
 
-@api.route('/races/<int:race_id>', methods=['PUT'])
+@api.route('/breeds/<int:breed_id>', methods=['PUT'])
 @jwt_required()
-def update_race(race_id):
-    race = db.session.execute(db.select(Race).where(Race.id == race_id)).scalars().first()
-    if not race:
-        return jsonify({"msg": "Race not found"}), 404
-
+def update_breed(breed_id):
+    breed = db.session.execute(db.select(Breed).where(Breed.id == breed_id)).scalars().first()
+    if not breed:
+        return jsonify({"msg": "Breed not found"}), 404
+ 
     body = request.get_json(silent=True)
     if not body:
         return jsonify({"msg": "Missing JSON in request"}), 400
 
     if "name" in body:
-        race.name = body["name"]
+        breed.name = body["name"]
     if "animal_type" in body:
-        race.animal_type = body["animal_type"]
+        breed.animal_type = body["animal_type"]
     if "url" in body:
-        race.url = body["url"]
+        breed.url = body["url"]
         
     try:
         db.session.commit()
-        return jsonify(race.serialize()), 200
+        return jsonify(breed.serialize()), 200
     except Exception as e:
         db.session.rollback()
         return jsonify({"msg": str(e)}), 500
 
-@api.route('/races/<int:race_id>', methods=['DELETE'])
+@api.route('/breeds/<int:breed_id>', methods=['DELETE'])
 @jwt_required()
-def delete_race(race_id):
-    race = db.session.execute(db.select(Race).where(Race.id == race_id)).scalars().first()
-    if not race:
-        return jsonify({"msg": "Race not found"}), 404
+def delete_breed(breed_id):
+    breed = db.session.execute(db.select(Breed).where(Breed.id == breed_id)).scalars().first()
+    if not breed:
+        return jsonify({"msg": "Breed not found"}), 404
 
-    db.session.delete(race)
+    db.session.delete(breed)
     try:
         db.session.commit()
-        return jsonify({"msg": "Race deleted successfully"}), 200
+        return jsonify({"msg": "Breed deleted successfully"}), 200
     except Exception as e:
         db.session.rollback()
         return jsonify({"msg": str(e)}), 500
@@ -1445,26 +1445,26 @@ def create_pet():
             return jsonify({"msg": f"Missing '{field}' in request"}), 400
     
     animal_type = body['animal_type'].strip().lower()
-    race_id = None
+    breed_id = None
     
     if animal_type in ["perro", "gato", "dog", "cat"]:
-        if "race_id" not in body or not body["race_id"]:
-            return jsonify({"msg": "Missing 'race_id' in request for Dog or Cat"}), 400
+        if "breed_id" not in body or not body["breed_id"]:
+            return jsonify({"msg": "Missing 'breed_id' in request for Dog or Cat"}), 400
         
-        race = db.session.execute(db.select(Race).where(Race.id == body['race_id'])).scalars().first()
-        if not race:
-            return jsonify({"msg": "Race not found"}), 404
-        race_id = race.id
-    elif "race_id" in body and body["race_id"]:
-        race = db.session.execute(db.select(Race).where(Race.id == body['race_id'])).scalars().first()
-        if race:
-            race_id = race.id
+        breed = db.session.execute(db.select(Breed).where(Breed.id == body['breed_id'])).scalars().first()
+        if not breed:
+            return jsonify({"msg": "Breed not found"}), 404
+        breed_id = breed.id
+    elif "breed_id" in body and body["breed_id"]:
+        breed = db.session.execute(db.select(Breed).where(Breed.id == body['breed_id'])).scalars().first()
+        if breed:
+            breed_id = breed.id
 
     new_pet = Pet(
         name=body['name'],
         user_id=user.id,
         animal_type=body['animal_type'],
-        race_id=race_id,
+        breed_id=breed_id,
         size=body['size'],
         url=body.get('url')
     )
@@ -1499,14 +1499,14 @@ def update_pet(pet_id):
         pet.name = body["name"]
     if "animal_type" in body:
         pet.animal_type = body["animal_type"]
-    if "race_id" in body:
-        if body["race_id"] is None or body["race_id"] == "":
-            pet.race_id = None
+    if "breed_id" in body:
+        if body["breed_id"] is None or body["breed_id"] == "":
+            pet.breed_id = None
         else:
-            race = db.session.execute(db.select(Race).where(Race.id == body['race_id'])).scalars().first()
-            if not race:
-                return jsonify({"msg": "Race not found"}), 404
-            pet.race_id = race.id
+            breed = db.session.execute(db.select(Breed).where(Breed.id == body['breed_id'])).scalars().first()
+            if not breed:
+                return jsonify({"msg": "Breed not found"}), 404
+            pet.breed_id = breed.id
     if "size" in body:
         pet.size = body["size"]
     if "url" in body:

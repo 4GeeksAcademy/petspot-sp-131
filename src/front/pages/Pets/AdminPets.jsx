@@ -65,7 +65,7 @@ const AdminPets = () => {
                 <div className="card-body">
                   <p className="card-text mb-2"><strong>ID Dueño:</strong> {pet.user_id}</p>
                   <p className="card-text mb-2"><strong>Tipo:</strong> {pet.animal_type}</p>
-                  <p className="card-text mb-2"><strong>Raza:</strong> {pet.race_name || "Desconocida/Mestizo"}</p>
+                  <p className="card-text mb-2"><strong>Raza:</strong> {pet.breed_name || "Desconocida/Mestizo"}</p>
                   <p className="card-text"><strong>Tamaño:</strong> {pet.size}</p>
                 </div>
               </div>
@@ -78,3 +78,4 @@ const AdminPets = () => {
 };
 
 export default AdminPets;
+

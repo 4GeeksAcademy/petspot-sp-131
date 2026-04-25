@@ -7,12 +7,12 @@ const EditPet = () => {
     name: "",
     animal_type: "Perro",
     custom_animal_type: "",
-    race_id: "",
+    breed_id: "",
     size: "",
     url: ""
   });
-  const [races, setRaces] = useState([]);
-  const [filteredRaces, setFilteredRaces] = useState([]);
+  const [breeds, setBreeds] = useState([]);
+  const [filteredBreeds, setfilteredBreeds] = useState([]);
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [imageFile, setImageFile] = useState(null);
@@ -25,7 +25,7 @@ const EditPet = () => {
         navigate("/login/user");
         return;
     }
-    fetchRaces();
+    fetchBreeds();
     fetchPet();
   }, [id]);
 
@@ -42,7 +42,7 @@ const EditPet = () => {
           name: data.name,
           animal_type: isCustomType ? "Otros" : data.animal_type,
           custom_animal_type: isCustomType ? data.animal_type : "",
-          race_id: data.race_id || "",
+          breed_id: data.breed_id || "",
           size: data.size,
           url: data.url || ""
         });
@@ -57,14 +57,14 @@ const EditPet = () => {
     }
   };
 
-  const fetchRaces = async () => {
+  const fetchBreeds = async () => {
     try {
       const backendUrl = import.meta.env.VITE_BACKEND_URL;
-      const response = await fetch(`${backendUrl}/api/races`);
+      const response = await fetch(`${backendUrl}api/breeds`);
       const data = await response.json();
       if (response.ok) {
-        setRaces(data);
-        // We will update filtered races based on fetched pet type after both fetch
+        setBreeds(data);
+        // We will update filtered breeds based on fetched pet type after both fetch
       }
     } catch (error) {
       console.error("Error al cargar razas:", error);
@@ -72,15 +72,15 @@ const EditPet = () => {
   };
 
   useEffect(() => {
-    if (races.length > 0 && (formData.animal_type === "Perro" || formData.animal_type === "Gato")) {
-      setFilteredRaces(races.filter(r => r.animal_type.toLowerCase() === formData.animal_type.toLowerCase()));
+    if (breeds.length > 0 && (formData.animal_type === "Perro" || formData.animal_type === "Gato")) {
+      setfilteredBreeds(breeds.filter(r => r.animal_type.toLowerCase() === formData.animal_type.toLowerCase()));
     }
-  }, [races, formData.animal_type]);
+  }, [breeds, formData.animal_type]);
 
-  const handleImportRaces = async () => {
+  const handleImportBreeds = async () => {
     try {
       const backendUrl = import.meta.env.VITE_BACKEND_URL;
-      const response = await fetch(`${backendUrl}/api/races/import`, {
+      const response = await fetch(`${backendUrl}api/breeds/import`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -90,7 +90,7 @@ const EditPet = () => {
       const data = await response.json();
       if (response.ok) {
         alert(data.msg || "Razas importadas correctamente");
-        fetchRaces();
+        fetchBreeds();
       } else {
         alert("Error al importar razas: " + data.msg);
       }
@@ -102,12 +102,12 @@ const EditPet = () => {
 
   const handleAnimalTypeChange = (e) => {
     const type = e.target.value;
-    setFormData({ ...formData, animal_type: type, race_id: "", custom_animal_type: "" });
+    setFormData({ ...formData, animal_type: type, breed_id: "", custom_animal_type: "" });
     
     if (type === "Perro" || type === "Gato") {
-      setFilteredRaces(races.filter(r => r.animal_type.toLowerCase() === type.toLowerCase()));
+      setfilteredBreeds(breeds.filter(r => r.animal_type.toLowerCase() === type.toLowerCase()));
     } else {
-      setFilteredRaces([]);
+      setfilteredBreeds([]);
     }
   };
 
@@ -162,7 +162,7 @@ const EditPet = () => {
       return;
     }
 
-    if ((formData.animal_type === "Perro" || formData.animal_type === "Gato") && !formData.race_id) {
+    if ((formData.animal_type === "Perro" || formData.animal_type === "Gato") && !formData.breed_id) {
         setMessage("Por favor, selecciona una raza.");
         setSubmitting(false);
         return;
@@ -183,7 +183,7 @@ const EditPet = () => {
       name: formData.name,
       animal_type: finalAnimalType,
       size: formData.size,
-      race_id: formData.race_id || null,
+      breed_id: formData.breed_id || null,
       url: imageUrl
     };
 
@@ -292,20 +292,20 @@ const EditPet = () => {
                       <button 
                         type="button" 
                         className="btn btn-sm btn-outline-primary"
-                        onClick={handleImportRaces}
+                        onClick={handleImportBreeds}
                       >
                         Importar Razas
                       </button>
                     </label>
                     <select 
                       className="form-select" 
-                      name="race_id" 
-                      value={formData.race_id} 
+                      name="breed_id" 
+                      value={formData.breed_id} 
                       onChange={handleInputChange}
                       required
                     >
                       <option value="">-- Selecciona una raza --</option>
-                      {filteredRaces.map(r => (
+                      {filteredBreeds.map(r => (
                         <option key={r.id} value={r.id}>{r.name}</option>
                       ))}
                     </select>
@@ -343,3 +343,4 @@ const EditPet = () => {
 };
 
 export default EditPet;
+
