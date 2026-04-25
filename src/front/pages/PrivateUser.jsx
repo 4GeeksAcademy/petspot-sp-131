@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 
 const PrivateUser = () => {
     const navigate = useNavigate();
@@ -16,6 +16,11 @@ const PrivateUser = () => {
         <div className="text-center mt-5">
             <h1>Private User Area</h1>
             <p>You are logged in.</p>
+            <div className="mt-4">
+                <Link to="/private/user/pets" className="btn btn-primary">
+                    Gestionar mis Mascotas
+                </Link>
+            </div>
         </div>
     );
 };
