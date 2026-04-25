@@ -68,15 +68,12 @@ export const Home = () => {
 					Favorites
 				</Link>
 				<Link to="/reviews" className="btn btn-primary">Reviews</Link>
-				<Link to="/reservations">
-					<button className="btn btn-primary">Reservations</button>
-				</Link>
-				<Link to="/news">
-					<button className="btn btn-primary">News</button>
-				</Link>
 			</div>
 			<div className="d-flex justify-content-center gap-3 mt-3">
 				<Link className="btn btn-warning" to="/user/login">Login User</Link>
+				<Link to="/usuario/admin/pets" className="btn btn-primary">
+					Pets (Admin)
+				</Link>
 			</div>
 		</div>
 	);

@@ -29,6 +29,7 @@ class User(db.Model):
     reviews: Mapped[list["Review"]] = relationship("Review", back_populates="user", cascade="all, delete-orphan")
     chats: Mapped[list["Chat"]] = relationship("Chat", back_populates="user", cascade="all, delete-orphan")
     favorite_places: Mapped[list["Favorite"]] = relationship("Favorite", back_populates="user", cascade="all, delete-orphan")
+    pets: Mapped[list["Pet"]] = relationship("Pet", back_populates="user", cascade="all, delete-orphan")
     
     def __str__(self):
         return self.name
@@ -268,4 +269,51 @@ class Chat(db.Model):
             "place_name": self.place.name,
             "message": self.message,
             "sender": self.sender
+        }
+
+
+class Race(db.Model):
+    __tablename__ = "races"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(120), nullable=False)
+    animal_type: Mapped[str] = mapped_column(String(120), nullable=False)
+    url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+
+    pets: Mapped[list["Pet"]] = relationship("Pet", back_populates="race", cascade="all, delete-orphan")
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "animal_type": self.animal_type,
+            "url": self.url
+        }
+
+
+class Pet(db.Model):
+    __tablename__ = "pets"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(120), nullable=False)
+    user_id: Mapped[int] = mapped_column(ForeignKey("user.id"), nullable=False)
+    animal_type: Mapped[str] = mapped_column(String(120), nullable=False)
+    race_id: Mapped[int | None] = mapped_column(ForeignKey("races.id"), nullable=True)
+    size: Mapped[str] = mapped_column(String(120), nullable=False)
+    url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+
+    user: Mapped["User"] = relationship("User", back_populates="pets")
+    race: Mapped["Race"] = relationship("Race", back_populates="pets")
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "user_id": self.user_id,
+            "animal_type": self.animal_type,
+            "race_id": self.race_id,
+            "race_name": self.race.name if self.race else None,
+            "race_url": self.race.url if self.race else None,
+            "size": self.size,
+            "url": self.url
         }

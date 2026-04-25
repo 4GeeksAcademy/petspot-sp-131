@@ -17,6 +17,30 @@ export const Navbar = () => {
                         <button className="btn btn-primary">News</button>
                     </Link>
 
+					<Link to="/tell-me-more">
+						<button
+							className="btn"
+							style={{
+								background: "linear-gradient(135deg, #7c3aed, #a855f7)",
+								color: "white",
+								fontWeight: 600,
+								border: "none",
+								boxShadow: "0 4px 15px rgba(124, 58, 237, 0.35)",
+								transition: "all 0.2s",
+							}}
+							onMouseEnter={e => {
+								e.currentTarget.style.transform = "translateY(-2px)";
+								e.currentTarget.style.boxShadow = "0 8px 25px rgba(124, 58, 237, 0.5)";
+							}}
+							onMouseLeave={e => {
+								e.currentTarget.style.transform = "translateY(0)";
+								e.currentTarget.style.boxShadow = "0 4px 15px rgba(124, 58, 237, 0.35)";
+							}}
+						>
+							✨ Tell me more about it
+						</button>
+					</Link>
+
 					<Link to="/login/user">
 						<button className="btn btn-outline-primary">Login</button>
 					</Link>

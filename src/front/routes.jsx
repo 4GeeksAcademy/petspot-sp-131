@@ -44,6 +44,11 @@ import CityDetail from "./pages/Cities/CityDetail";
 
 import { LoginUser } from "./pages/LoginUser";
 import { SignupUser } from "./pages/SignupUser";
+import PrivateUser from "./pages/PrivateUser";
+import AdminPets from "./pages/Pets/AdminPets";
+import UserPets from "./pages/Pets/UserPets";
+import AddPet from "./pages/Pets/AddPet";
+import EditPet from "./pages/Pets/EditPet";
 
 import Reservations from "./pages/Reservations/Reservations";
 import AddReservation from "./pages/Reservations/AddReservation";
@@ -77,10 +82,13 @@ import UserReservations from "./pages/UserPrivate/UserReservations/UserReservati
 import RequireUserAuth from "./components/UserPrivate/RequireUserAuth.jsx";
 import UserPlaceDetailCard from "./components/UserPrivate/UserPlaces/UserPlaceDetailCard.jsx";
 
+import { TellMeMore } from "./pages/TellMeMore";
+
 export const router = createBrowserRouter(
   createRoutesFromElements(
     <Route path="/" element={<Layout />} errorElement={<h1>Not found!</h1>}>
       <Route index element={<Home />} />
+      <Route path="tell-me-more" element={<TellMeMore />} />
       <Route path="demo" element={<Demo />} />
       <Route path="single/:theId" element={<Single />} />
 
@@ -100,6 +108,11 @@ export const router = createBrowserRouter(
         </Route>
       </Route>
 
+      <Route path="private/user" element={<PrivateUser />} />
+      <Route path="private/user/pets" element={<UserPets />} />
+      <Route path="private/user/pets/add" element={<AddPet />} />
+      <Route path="private/user/pets/edit/:id" element={<EditPet />} />
+
       <Route path="user" element={<RequireAdmin><User /></RequireAdmin>} />
       <Route path="user/create" element={<RequireAdmin><UserCreate /></RequireAdmin>} />
       <Route path="user/edit/:id" element={<RequireAdmin><UserEdit /></RequireAdmin>} />
@@ -113,6 +126,7 @@ export const router = createBrowserRouter(
         <Route path="editar/:id" element={<AdminEdit />} />
         <Route path="eliminar/:id" element={<AdminDelete />} />
         <Route path="detalle/:id" element={<AdminDetail />} />
+        <Route path="pets" element={<AdminPets />} />
       </Route>
 
       <Route path="places" element={<RequireAdmin><Places /></RequireAdmin>} />
