@@ -24,6 +24,10 @@ function UserLogin() {
 
             navigate("/user/private", { replace: true });
         }
+        else {
+            dispatch({type: "USER_LOGOUT"})
+        }
+
     }, [dispatch, navigate, store.userToken]);
 
     async function handleSubmit(event) {

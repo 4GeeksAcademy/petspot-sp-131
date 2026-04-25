@@ -50,9 +50,6 @@ function UserProfileCard() {
     return (
         <div className="mx-auto p-5 bg-secondary-subtle border-0 rounded text-start" style={{ maxWidth: 700 }}>
             <div className="mb-3">
-                <span className="fw-bold">User ID: </span>{store.privateUser.id}
-            </div>
-            <div className="mb-3">
                 <span className="fw-bold">Name: </span>{store.privateUser.name}
             </div>
             <div className="mb-4">
@@ -68,13 +65,7 @@ function UserProfileCard() {
                     <button type="button" className="btn btn-outline-primary" disabled>
                         Change password
                     </button>
-                    <Link to="/user/private" className="btn btn-secondary">
-                        Go Back to Dashboard
-                    </Link>
                 </div>
-                <p className="text-body-secondary small mt-3 mb-0">
-                    This page follows the app detail-card pattern and is ready for the edit flows to be connected here.
-                </p>
             </div>
         </div>
     );

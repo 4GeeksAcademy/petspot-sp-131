@@ -17,7 +17,9 @@ function UserPlaceDetailCard() {
     return (
         <>
             <div className="text-center my-5">
-                <button className="btn btn-secondary" onClick={() => navigate(-1)}>GO BACK</button>
+                <Link to="/user/private" className="btn btn-secondary">
+                    Go Back to Dashboard
+                </Link>
             </div>
             <div className="mx-auto p-5 bg-secondary-subtle border-0 rounded text-start" style={{ maxWidth: 600 }}>
                 <div className="mb-3">

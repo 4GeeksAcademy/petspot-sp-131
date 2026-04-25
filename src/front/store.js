@@ -182,7 +182,6 @@ export default function storeReducer(store, action = {}) {
 
       return {
         ...store,
-        authUser: false,
         privateUser: {},
         userToken: null
       }
@@ -191,7 +190,6 @@ export default function storeReducer(store, action = {}) {
 
       return {
         ...store,
-        authUser: true,
         userToken: action.payload
       }
 
