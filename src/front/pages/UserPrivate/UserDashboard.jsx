@@ -20,7 +20,12 @@ function UserDashboard() {
                     }
                 })
                 if (response.status === 401) {
-                    navigate('/')
+                    localStorage.removeItem("userToken")
+                    dispatch({
+                        type: "USER_LOGOUT"
+                    })
+                    navigate("/user/login", { replace: true })
+                    return
                 }
                 const responseJSON = await response.json()
 

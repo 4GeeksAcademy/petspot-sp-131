@@ -1252,7 +1252,7 @@ def get_race(race_id):
 @api.route('/races/import', methods=['POST'])
 @jwt_required()
 def import_external_races():
-    # import os, requests
+    import os, requests
     dog_count = 0
     cat_count = 0
     try:
@@ -1317,7 +1317,7 @@ def import_external_races():
 @api.route('/upload', methods=['POST'])
 @jwt_required()
 def upload_image():
-    # import cloudinary.uploader
+    import cloudinary.uploader
     if 'image' not in request.files:
         return jsonify({"msg": "No image provided"}), 400
     
