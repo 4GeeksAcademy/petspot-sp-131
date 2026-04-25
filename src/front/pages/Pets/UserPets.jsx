@@ -98,7 +98,9 @@ const UserPets = () => {
                   <h5 className="card-title mb-0">{pet.name}</h5>
                 </div>
                 {(pet.url || pet.race_url) && (
-                  <img src={pet.url || pet.race_url} alt={pet.name} className="card-img-top" style={{ height: "200px", objectFit: "cover" }} />
+                  <div className="bg-light d-flex justify-content-center align-items-center" style={{ height: "220px", overflow: "hidden" }}>
+                    <img src={pet.url || pet.race_url} alt={pet.name} style={{ maxHeight: "100%", maxWidth: "100%", objectFit: "contain" }} />
+                  </div>
                 )}
                 <div className="card-body">
                   <p className="card-text mb-2"><strong>Tipo:</strong> {pet.animal_type}</p>

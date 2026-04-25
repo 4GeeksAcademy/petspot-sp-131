@@ -1247,7 +1247,13 @@ def upload_image():
         return jsonify({"msg": "No selected file"}), 400
         
     try:
-        upload_result = cloudinary.uploader.upload(file)
+        upload_result = cloudinary.uploader.upload(
+            file,
+            transformation=[
+                {'width': 1000, 'height': 1000, 'crop': 'limit'},
+                {'quality': 'auto'}
+            ]
+        )
         return jsonify({"url": upload_result['secure_url']}), 200
     except Exception as e:
         return jsonify({"msg": str(e)}), 500
