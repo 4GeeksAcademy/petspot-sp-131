@@ -1191,6 +1191,8 @@ def import_external_races():
                         new_race = Race(name=name, animal_type="Perro", url=image_url)
                         db.session.add(new_race)
                         dog_count += 1
+                    elif exists and not exists.url and image_url:
+                        exists.url = image_url
             db.session.commit()
         else:
             fallback_dogs = [
@@ -1216,12 +1218,16 @@ def import_external_races():
             for cat in cats:
                 name = cat.get('name')
                 image_url = cat.get('image', {}).get('url') if cat.get('image') else None
+                if not image_url and cat.get('reference_image_id'):
+                    image_url = f"https://cdn2.thecatapi.com/images/{cat.get('reference_image_id')}.jpg"
                 if name:
                     exists = db.session.execute(select(Race).where(Race.name == name, Race.animal_type == "Gato")).scalars().first()
                     if not exists:
                         new_race = Race(name=name, animal_type="Gato", url=image_url)
                         db.session.add(new_race)
                         cat_count += 1
+                    elif exists and not exists.url and image_url:
+                        exists.url = image_url
             db.session.commit()
     except Exception as e:
         print(f"Excepcion The Cat API: {e}")
