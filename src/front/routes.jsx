@@ -48,6 +48,7 @@ import PrivateUser from "./pages/PrivateUser";
 import AdminPets from "./pages/Pets/AdminPets";
 import UserPets from "./pages/Pets/UserPets";
 import AddPet from "./pages/Pets/AddPet";
+import EditPet from "./pages/Pets/EditPet";
 
 import Reservations from "./pages/Reservations/Reservations";
 import AddReservation from "./pages/Reservations/AddReservation";
@@ -83,6 +84,7 @@ export const router = createBrowserRouter(
       <Route path="private/user" element={<PrivateUser />} />
       <Route path="private/user/pets" element={<UserPets />} />
       <Route path="private/user/pets/add" element={<AddPet />} />
+      <Route path="private/user/pets/edit/:id" element={<EditPet />} />
 
       <Route path="user" element={<RequireAdmin><User /></RequireAdmin>} />
       <Route path="user/create" element={<RequireAdmin><UserCreate /></RequireAdmin>} />

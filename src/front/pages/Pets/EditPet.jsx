@@ -1,19 +1,22 @@
 import React, { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 
-const AddPet = () => {
+const EditPet = () => {
+  const { id } = useParams();
   const [formData, setFormData] = useState({
     name: "",
     animal_type: "Perro",
     custom_animal_type: "",
     race_id: "",
-    size: ""
+    size: "",
+    url: ""
   });
   const [races, setRaces] = useState([]);
   const [filteredRaces, setFilteredRaces] = useState([]);
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [imageFile, setImageFile] = useState(null);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -23,7 +26,36 @@ const AddPet = () => {
         return;
     }
     fetchRaces();
-  }, []);
+    fetchPet();
+  }, [id]);
+
+  const fetchPet = async () => {
+    try {
+      const backendUrl = import.meta.env.VITE_BACKEND_URL;
+      const response = await fetch(`${backendUrl}/api/pets/${id}`);
+      if (response.ok) {
+        const data = await response.json();
+        
+        let isCustomType = data.animal_type !== "Perro" && data.animal_type !== "Gato";
+        
+        setFormData({
+          name: data.name,
+          animal_type: isCustomType ? "Otros" : data.animal_type,
+          custom_animal_type: isCustomType ? data.animal_type : "",
+          race_id: data.race_id || "",
+          size: data.size,
+          url: data.url || ""
+        });
+      } else {
+        setMessage("No se pudo cargar la mascota");
+      }
+    } catch (error) {
+      console.error("Error al cargar mascota:", error);
+      setMessage("Error al cargar mascota");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchRaces = async () => {
     try {
@@ -32,13 +64,18 @@ const AddPet = () => {
       const data = await response.json();
       if (response.ok) {
         setRaces(data);
-        // By default, filter for "Perro" since it's the initial state
-        setFilteredRaces(data.filter(r => r.animal_type.toLowerCase() === "perro"));
+        // We will update filtered races based on fetched pet type after both fetch
       }
     } catch (error) {
       console.error("Error al cargar razas:", error);
     }
   };
+
+  useEffect(() => {
+    if (races.length > 0 && (formData.animal_type === "Perro" || formData.animal_type === "Gato")) {
+      setFilteredRaces(races.filter(r => r.animal_type.toLowerCase() === formData.animal_type.toLowerCase()));
+    }
+  }, [races, formData.animal_type]);
 
   const handleImportRaces = async () => {
     try {
@@ -114,6 +151,7 @@ const AddPet = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
+    setMessage("");
     
     // Determine the final animal_type to send
     const finalAnimalType = formData.animal_type === "Otros" ? formData.custom_animal_type : formData.animal_type;
@@ -130,7 +168,7 @@ const AddPet = () => {
         return;
     }
 
-    let imageUrl = null;
+    let imageUrl = formData.url;
     try {
       if (imageFile) {
         imageUrl = await uploadImage();
@@ -151,8 +189,8 @@ const AddPet = () => {
 
     try {
       const backendUrl = import.meta.env.VITE_BACKEND_URL;
-      const response = await fetch(`${backendUrl}/api/pets`, {
-        method: "POST",
+      const response = await fetch(`${backendUrl}/api/pets/${id}`, {
+        method: "PUT",
         headers: { 
           "Content-Type": "application/json",
           "Authorization": `Bearer ${localStorage.getItem("tokenUser")}`
@@ -163,23 +201,27 @@ const AddPet = () => {
         navigate("/private/user/pets");
       } else {
         const errorData = await response.json();
-        setMessage(errorData.msg || "Error al crear la mascota");
+        setMessage(errorData.msg || "Error al actualizar la mascota");
       }
     } catch (error) {
-      console.error("Error al crear mascota:", error);
+      console.error("Error al actualizar mascota:", error);
       setMessage("Error al conectar con el servidor");
     } finally {
       setSubmitting(false);
     }
   };
 
+  if (loading) {
+    return <div className="text-center mt-5"><p>Cargando datos de la mascota...</p></div>;
+  }
+
   return (
-    <div className="container mt-5">
+    <div className="container mt-5 mb-5">
       <div className="row justify-content-center">
         <div className="col-md-8">
           <div className="card shadow-sm">
-            <div className="card-header bg-success text-white">
-              <h3 className="mb-0">Añadir Nueva Mascota</h3>
+            <div className="card-header bg-primary text-white">
+              <h3 className="mb-0">Editar Mascota</h3>
             </div>
             <div className="card-body">
               {message && <div className="alert alert-danger">{message}</div>}
@@ -199,13 +241,19 @@ const AddPet = () => {
                 </div>
 
                 <div className="mb-3">
-                  <label className="form-label">Foto de la Mascota (Opcional)</label>
+                  <label className="form-label">Foto de la Mascota</label>
+                  {formData.url && !imageFile && (
+                    <div className="mb-2">
+                        <img src={formData.url} alt="Mascota" className="img-thumbnail" style={{ height: "100px" }} />
+                    </div>
+                  )}
                   <input
                     type="file"
                     className="form-control"
                     accept="image/*"
                     onChange={handleImageChange}
                   />
+                  <small className="text-muted">Sube una nueva foto si quieres cambiar la actual (opcional).</small>
                 </div>
 
                 <div className="mb-3">
@@ -281,8 +329,8 @@ const AddPet = () => {
                   <Link to="/private/user/pets" className="btn btn-outline-secondary">
                     Cancelar
                   </Link>
-                  <button type="submit" className="btn btn-success" disabled={submitting}>
-                    {submitting ? "Guardando..." : "Guardar Mascota"}
+                  <button type="submit" className="btn btn-primary" disabled={submitting}>
+                    {submitting ? "Guardando..." : "Guardar Cambios"}
                   </button>
                 </div>
               </form>
@@ -294,4 +342,4 @@ const AddPet = () => {
   );
 };
 
-export default AddPet;
+export default EditPet;

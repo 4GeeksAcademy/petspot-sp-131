@@ -313,6 +313,7 @@ class Pet(db.Model):
             "animal_type": self.animal_type,
             "race_id": self.race_id,
             "race_name": self.race.name if self.race else None,
+            "race_url": self.race.url if self.race else None,
             "size": self.size,
             "url": self.url
         }

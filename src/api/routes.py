@@ -1170,6 +1170,82 @@ def get_race(race_id):
         return jsonify({"msg": "Race not found"}), 404
     return jsonify(race.serialize()), 200
 
+@api.route('/races/import', methods=['POST'])
+@jwt_required()
+def import_external_races():
+    import os, requests
+    dog_count = 0
+    cat_count = 0
+    try:
+        api_key = os.getenv("DOG_API_KEY")
+        headers = {"x-api-key": api_key} if api_key else {}
+        dog_res = requests.get('https://api.thedogapi.com/v1/breeds', headers=headers)
+        if dog_res.status_code == 200:
+            dogs = dog_res.json()
+            for dog in dogs:
+                name = dog.get('name')
+                image_url = dog.get('image', {}).get('url') if dog.get('image') else None
+                if name:
+                    exists = db.session.execute(select(Race).where(Race.name == name, Race.animal_type == "Perro")).scalars().first()
+                    if not exists:
+                        new_race = Race(name=name, animal_type="Perro", url=image_url)
+                        db.session.add(new_race)
+                        dog_count += 1
+            db.session.commit()
+        else:
+            fallback_dogs = [
+                "Golden Retriever", "Labrador Retriever", "Bulldog", "Poodle", 
+                "Beagle", "Chihuahua", "German Shepherd", "Yorkshire Terrier", 
+                "Boxer", "Husky", "Pomeranian", "Dachshund", "Pug", 
+                "Cocker Spaniel", "Rottweiler", "Doberman", "Pitbull", "Border Collie"
+            ]
+            for name in fallback_dogs:
+                exists = db.session.execute(select(Race).where(Race.name == name, Race.animal_type == "Perro")).scalars().first()
+                if not exists:
+                    new_race = Race(name=name, animal_type="Perro")
+                    db.session.add(new_race)
+                    dog_count += 1
+            db.session.commit()
+    except Exception as e:
+        print(f"Excepcion The Dog API: {e}")
+
+    try:
+        cat_res = requests.get('https://api.thecatapi.com/v1/breeds')
+        if cat_res.status_code == 200:
+            cats = cat_res.json()
+            for cat in cats:
+                name = cat.get('name')
+                image_url = cat.get('image', {}).get('url') if cat.get('image') else None
+                if name:
+                    exists = db.session.execute(select(Race).where(Race.name == name, Race.animal_type == "Gato")).scalars().first()
+                    if not exists:
+                        new_race = Race(name=name, animal_type="Gato", url=image_url)
+                        db.session.add(new_race)
+                        cat_count += 1
+            db.session.commit()
+    except Exception as e:
+        print(f"Excepcion The Cat API: {e}")
+
+    return jsonify({"msg": f"Razas importadas exitosamente. Perros: {dog_count}, Gatos: {cat_count}"}), 200
+
+
+@api.route('/upload', methods=['POST'])
+@jwt_required()
+def upload_image():
+    import cloudinary.uploader
+    if 'image' not in request.files:
+        return jsonify({"msg": "No image provided"}), 400
+    
+    file = request.files['image']
+    if file.filename == '':
+        return jsonify({"msg": "No selected file"}), 400
+        
+    try:
+        upload_result = cloudinary.uploader.upload(file)
+        return jsonify({"url": upload_result['secure_url']}), 200
+    except Exception as e:
+        return jsonify({"msg": str(e)}), 500
+
 @api.route('/races', methods=['POST'])
 @jwt_required()
 def create_race():
