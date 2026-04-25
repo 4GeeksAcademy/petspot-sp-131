@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 export const AdminLogin = () => {
   const [formData, setFormData] = useState({
@@ -10,6 +10,9 @@ export const AdminLogin = () => {
   const [submitting, setSubmitting] = useState(false);
 
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const from = location.state?.from || "/usuario/admin";
 
   const handleChange = (e) => {
     setFormData({
@@ -36,9 +39,9 @@ export const AdminLogin = () => {
       const data = await response.json();
 
       if (response.ok) {
-        localStorage.setItem("tokenAdmin", "tokenAdmin");
+        localStorage.setItem("tokenAdmin", data.access_token);
         sessionStorage.setItem("adminLoginSuccess", "Login realizado correctamente");
-        navigate("/usuario/admin");
+        navigate(from, { replace: true });
       } else {
         setMessage(data.msg || "Invalid credentials");
       }

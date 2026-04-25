@@ -36,10 +36,12 @@ def admin_login():
     admin = AdminUser.query.filter_by(email=email).first()
     if not admin or not check_password_hash(admin.password, password):
         return jsonify({"msg": "Invalid credentials"}), 401
+    
+    access_token = create_access_token(identity=admin.id)
 
     return jsonify({
         "msg": "Login successful",
-        "token": "Admin token",
+        "access_token": access_token,
         "admin": {
             "id": admin.id,
             "name": admin.name,
