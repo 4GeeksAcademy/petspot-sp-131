@@ -1,8 +1,8 @@
 
-import click, random
+import click, random, requests
 from api.cities import cities
 from datetime import datetime
-from api.models import db, User, Place, EstablishmentType, City, Favorite, AdminUser, Review, Reservation, ReservationStatus, Chat, News, PostType
+from api.models import db, User, Place, EstablishmentType, City, Favorite, AdminUser, Review, Reservation, ReservationStatus, Chat, News, PostType, Race
 from werkzeug.security import generate_password_hash
 from sqlalchemy import select
 
@@ -342,3 +342,65 @@ def setup_commands(app):
     @app.cli.command("insert-test-data")
     def insert_test_data():
         pass
+
+    @app.cli.command("insert-external-races")
+    def insert_external_races():
+        import os
+        print("Buscando razas en The Dog API...")
+        try:
+            api_key = os.getenv("DOG_API_KEY")
+            headers = {"x-api-key": api_key} if api_key else {}
+            dog_res = requests.get('https://api.thedogapi.com/v1/breeds', headers=headers)
+            if dog_res.status_code == 200:
+                dogs = dog_res.json()
+                dog_count = 0
+                for dog in dogs:
+                    name = dog.get('name')
+                    if name:
+                        exists = db.session.execute(select(Race).where(Race.name == name, Race.animal_type == "Perro")).scalars().first()
+                        if not exists:
+                            new_race = Race(name=name, animal_type="Perro")
+                            db.session.add(new_race)
+                            dog_count += 1
+                db.session.commit()
+                print(f"Insertadas {dog_count} razas de Perro.")
+            else:
+                print(f"Error al conectar con The Dog API ({dog_res.status_code}). Usando lista de respaldo...")
+                fallback_dogs = [
+                    "Golden Retriever", "Labrador Retriever", "Bulldog", "Poodle", 
+                    "Beagle", "Chihuahua", "German Shepherd", "Yorkshire Terrier", 
+                    "Boxer", "Husky", "Pomeranian", "Dachshund", "Pug", 
+                    "Cocker Spaniel", "Rottweiler", "Doberman", "Pitbull", "Border Collie"
+                ]
+                dog_count = 0
+                for name in fallback_dogs:
+                    exists = db.session.execute(select(Race).where(Race.name == name, Race.animal_type == "Perro")).scalars().first()
+                    if not exists:
+                        new_race = Race(name=name, animal_type="Perro")
+                        db.session.add(new_race)
+                        dog_count += 1
+                db.session.commit()
+                print(f"Insertadas {dog_count} razas de Perro (respaldo).")
+        except Exception as e:
+            print(f"Excepcion The Dog API: {e}")
+
+        print("Buscando razas en The Cat API...")
+        try:
+            cat_res = requests.get('https://api.thecatapi.com/v1/breeds')
+            if cat_res.status_code == 200:
+                cats = cat_res.json()
+                cat_count = 0
+                for cat in cats:
+                    name = cat.get('name')
+                    if name:
+                        exists = db.session.execute(select(Race).where(Race.name == name, Race.animal_type == "Gato")).scalars().first()
+                        if not exists:
+                            new_race = Race(name=name, animal_type="Gato")
+                            db.session.add(new_race)
+                            cat_count += 1
+                db.session.commit()
+                print(f"Insertadas {cat_count} razas de Gato.")
+            else:
+                print("Error al conectar con The Cat API")
+        except Exception as e:
+            print(f"Excepcion The Cat API: {e}")

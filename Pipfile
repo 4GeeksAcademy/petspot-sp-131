@@ -24,7 +24,6 @@ colorama = "*"
 requests = "*"
 google-generativeai = "*"
 pillow = "*"
-
 [requires]
 python_version = "3.13"
 
