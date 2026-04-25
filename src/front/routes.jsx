@@ -77,10 +77,12 @@ import UserLayout from "./pages/UserPrivate/UserLayout.jsx";
 import UserDashboard from "./pages/UserPrivate/UserDashboard.jsx";
 import UserChats from "./pages/UserPrivate/UserChats/UserChats.jsx";
 import UserFavorites from "./pages/UserPrivate/UserFavorites/UserFavorites.jsx";
+import UserNews from "./pages/UserPrivate/UserNews/UserNews.jsx";
 import UserProfile from "./pages/UserPrivate/UserProfile/UserProfile.jsx";
 import UserReservations from "./pages/UserPrivate/UserReservations/UserReservations.jsx";
 import RequireUserAuth from "./components/UserPrivate/RequireUserAuth.jsx";
 import UserPlaceDetailCard from "./components/UserPrivate/UserPlaces/UserPlaceDetailCard.jsx";
+import UserNewsDetail from "./components/UserPrivate/UserNews/UserNewsDetail.jsx";
 
 import { TellMeMore } from "./pages/TellMeMore";
 
@@ -104,6 +106,8 @@ export const router = createBrowserRouter(
           <Route path="profile" element={<UserProfile />} />
           <Route path="favorites" element={<UserFavorites />} />
           <Route path="reservations" element={<UserReservations />} />
+          <Route path="news" element={<UserNews />} />
+          <Route path="news/:id" element={<UserNewsDetail />} />
           <Route path="places/view/:id" element={<UserPlaceDetailCard />} />
         </Route>
       </Route>

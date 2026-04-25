@@ -342,7 +342,7 @@ def setup_commands(app):
 
         created_count = 0
 
-        for news_data in enumerate(test_news_posts):
+        for news_data in test_news_posts:
             if news_data["title"] in existing_titles:
                 print(f'News post "{news_data["title"]}" already exists. Skipping.')
                 continue
