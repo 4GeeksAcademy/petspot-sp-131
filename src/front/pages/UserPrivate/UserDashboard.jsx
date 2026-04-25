@@ -13,7 +13,7 @@ function UserDashboard() {
     useEffect(() => {
         async function getPrivateUser() {
             try {
-                const userToken = localStorage.getItem("tokenUser")
+                const userToken = localStorage.getItem("userToken")
                 const response = await fetch(`${backendUrl}/api/users/private`, {
                     headers: {
                         Authorization: `Bearer ${userToken}`

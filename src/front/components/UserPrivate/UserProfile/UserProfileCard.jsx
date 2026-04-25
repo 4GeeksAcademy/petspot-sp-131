@@ -14,7 +14,7 @@ function UserProfileCard() {
             }
 
             try {
-                const userToken = localStorage.getItem("tokenUser");
+                const userToken = localStorage.getItem("userToken");
 
                 const response = await fetch(`${backendUrl}/api/users/private`, {
                     headers: {
@@ -68,7 +68,7 @@ function UserProfileCard() {
                     <button type="button" className="btn btn-outline-primary" disabled>
                         Change password
                     </button>
-                    <Link to="/private/user" className="btn btn-secondary">
+                    <Link to="/user/private" className="btn btn-secondary">
                         Go Back to Dashboard
                     </Link>
                 </div>

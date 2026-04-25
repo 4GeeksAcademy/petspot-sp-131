@@ -9,7 +9,7 @@ function UserNavbar() {
     const { dispatch } = useGlobalReducer()
 
     function handleLogout() {
-        localStorage.removeItem("tokenUser")
+        localStorage.removeItem("userToken")
         dispatch({
             type: "USER_LOGOUT"
         })
@@ -23,7 +23,7 @@ function UserNavbar() {
                     <NavLink
                         end
                         className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
-                        to="/private/user"
+                        to="/user/private"
                     >
                         Home
                     </NavLink>
@@ -31,7 +31,7 @@ function UserNavbar() {
                 <li className="nav-item">
                     <NavLink
                         className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
-                        to="/private/user/profile"
+                        to="/user/private/profile"
                     >
                         Profile
                     </NavLink>
@@ -39,7 +39,7 @@ function UserNavbar() {
                 <li className="nav-item">
                     <NavLink
                         className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
-                        to="/private/user/favorites"
+                        to="/user/private/favorites"
                     >
                         Favorites
                     </NavLink>
@@ -47,7 +47,7 @@ function UserNavbar() {
                 <li className="nav-item">
                     <NavLink
                         className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
-                        to="/private/user/reservations"
+                        to="/user/private/reservations"
                     >
                         Reservations
                     </NavLink>
@@ -55,7 +55,7 @@ function UserNavbar() {
                 <li className="nav-item">
                     <NavLink
                         className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
-                        to="/private/user/chats"
+                        to="/user/private/chats"
                     >
                         Chats
                     </NavLink>
