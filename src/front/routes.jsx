@@ -72,6 +72,16 @@ import EditFavorite from "./pages/Favorites/EditFavorite";
 import DeleteFavorite from "./pages/Favorites/DeleteFavorite";
 import FavoriteDetail from "./pages/Favorites/FavoriteDetail";
 
+import UserLogin from "./pages/UserPrivate/UserLogin.jsx";
+import UserLayout from "./pages/UserPrivate/UserLayout.jsx";
+import UserDashboard from "./pages/UserPrivate/UserDashboard.jsx";
+import UserChats from "./pages/UserPrivate/UserChats/UserChats.jsx";
+import UserFavorites from "./pages/UserPrivate/UserFavorites/UserFavorites.jsx";
+import UserProfile from "./pages/UserPrivate/UserProfile/UserProfile.jsx";
+import UserReservations from "./pages/UserPrivate/UserReservations/UserReservations.jsx";
+import RequireUserAuth from "./components/UserPrivate/RequireUserAuth.jsx";
+import UserPlaceDetailCard from "./components/UserPrivate/UserPlaces/UserPlaceDetailCard.jsx";
+
 import { TellMeMore } from "./pages/TellMeMore";
 
 export const router = createBrowserRouter(
@@ -84,6 +94,20 @@ export const router = createBrowserRouter(
 
       <Route path="login/user" element={<LoginUser />} />
       <Route path="signup/user" element={<SignupUser />} />
+      {/* <Route path="private/user" element={<PrivateUser />} /> */}
+      
+      <Route path="user/login" element={<UserLogin />} />
+      <Route element={<RequireUserAuth/>}>
+        <Route path="user/private" element={<UserLayout />}>
+          <Route index element={<UserDashboard />} />
+          <Route path="chats" element={<UserChats />} />
+          <Route path="profile" element={<UserProfile />} />
+          <Route path="favorites" element={<UserFavorites />} />
+          <Route path="reservations" element={<UserReservations />} />
+          <Route path="places/view/:id" element={<UserPlaceDetailCard />} />
+        </Route>
+      </Route>
+
       <Route path="private/user" element={<PrivateUser />} />
       <Route path="private/user/pets" element={<UserPets />} />
       <Route path="private/user/pets/add" element={<AddPet />} />
@@ -149,6 +173,8 @@ export const router = createBrowserRouter(
       <Route path="reviews/detail/:id" element={<RequireAdmin><ReviewDetail /></RequireAdmin>} />
       <Route path="reviews/create" element={<RequireAdmin><ReviewCreate /></RequireAdmin>} />
       <Route path="reviews/edit/:id" element={<RequireAdmin><ReviewEdit /></RequireAdmin>} />
+
+
     </Route>
   )
 );

@@ -48,7 +48,7 @@ export const Home = () => {
 					</span>
 				)}
 			</div>
-			<div className="d-flex justify-content-center gap-3 mt-3">
+			<div className="d-flex justify-content-center gap-3 mt-3 flex-wrap">
 				<Link to="/user" className="btn btn-primary">
 					Users
 				</Link>
@@ -66,8 +66,11 @@ export const Home = () => {
 				</Link>
 				<Link to="/favorites" className="btn btn-primary">
 					Favorites
-				</Link>	
+				</Link>
 				<Link to="/reviews" className="btn btn-primary">Reviews</Link>
+			</div>
+			<div className="d-flex justify-content-center gap-3 mt-3">
+				<Link className="btn btn-warning" to="/user/login">Login User</Link>
 				<Link to="/usuario/admin/pets" className="btn btn-primary">
 					Pets (Admin)
 				</Link>
