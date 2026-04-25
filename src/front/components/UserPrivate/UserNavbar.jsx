@@ -55,6 +55,14 @@ function UserNavbar() {
                 <li className="nav-item">
                     <NavLink
                         className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
+                        to="/user/private/news"
+                    >
+                        News
+                    </NavLink>
+                </li>
+                <li className="nav-item">
+                    <NavLink
+                        className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
                         to="/user/private/chats"
                     >
                         Chats
