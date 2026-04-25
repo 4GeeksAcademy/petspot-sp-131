@@ -16,8 +16,7 @@ from sqlalchemy.exc import IntegrityError
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 from sqlalchemy.orm import joinedload
-import google.generativeai as genai
-from PIL import Image
+import base64
 
 
 api = Blueprint('api', __name__)
@@ -36,36 +35,55 @@ def analyze_pet():
     if image_file.filename == '':
         return jsonify({"msg": "No file selected"}), 400
 
-    gemini_key = os.getenv("GEMINI_API_KEY")
-    if not gemini_key:
-        return jsonify({"msg": "Gemini API key not configured"}), 500
+    groq_key = os.getenv("GROQ_API_KEY")
+    if not groq_key:
+        return jsonify({"msg": "Groq API key not configured"}), 500
 
     try:
-        genai.configure(api_key=gemini_key)
-        model = genai.GenerativeModel("gemini-1.5-flash")
-
         img_bytes = image_file.read()
-        pil_image = Image.open(io.BytesIO(img_bytes))
+        img_base64 = base64.b64encode(img_bytes).decode('utf-8')
+        mime_type = image_file.mimetype or "image/jpeg"
+        data_url = f"data:{mime_type};base64,{img_base64}"
 
-        prompt = """
-        Analyze this pet image and return ONLY a valid JSON object with no markdown formatting, no code blocks, just pure JSON.
-        The JSON must have exactly these fields:
-        {
-          "animal_type": "Dog or Cat or Other (specify)",
-          "breed": "Most likely breed name",
-          "is_mix": true or false,
-          "mix_description": "If it is a mix, describe which breeds are likely combined. If not a mix, put null.",
-          "recommended_food": ["list", "of", "3-4", "food", "recommendations"],
-          "care_tips": ["list", "of", "2-3", "care", "tips"],
-          "fun_facts": "One interesting fun fact about this breed",
-          "personality": "Brief description of typical personality traits"
-        }
-        If you cannot identify a pet in the image, return:
-        {"error": "No pet detected in image"}
-        """
+        prompt = (
+            "Analyze this pet image and return ONLY a valid JSON object. "
+            "No markdown, no code blocks, no extra text — just raw JSON. "
+            "Use exactly these fields:\n"
+            '{"animal_type":"Dog or Cat or Other","breed":"Most likely breed name",'
+            '"is_mix":true or false,'
+            '"mix_description":"Describe mixed breeds, or null if purebred",'
+            '"recommended_food":["3-4 specific food recommendations"],'
+            '"care_tips":["2-3 practical care tips"],'
+            '"fun_facts":"One interesting fun fact about this breed",'
+            '"personality":"Brief description of typical personality traits"}\n'
+            'If no pet is visible in the image, return: {"error":"No pet detected in image"}'
+        )
 
-        response = model.generate_content([prompt, pil_image])
-        raw_text = response.text.strip()
+        import requests as http_requests
+        resp = http_requests.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            headers={
+                "Authorization": f"Bearer {groq_key}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "model": "meta-llama/llama-4-scout-17b-16e-instruct",
+                "temperature": 0.2,
+                "messages": [{
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": prompt},
+                        {"type": "image_url", "image_url": {"url": data_url}}
+                    ]
+                }]
+            },
+            timeout=30
+        )
+
+        if not resp.ok:
+            return jsonify({"msg": f"Groq API error {resp.status_code}: {resp.text}"}), 502
+
+        raw_text = resp.json()["choices"][0]["message"]["content"].strip()
 
         # Strip markdown code blocks if present
         raw_text = re.sub(r'^```(?:json)?\s*', '', raw_text)
