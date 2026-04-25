@@ -476,7 +476,7 @@ export const TellMeMore = () => {
 
           {/* Hero */}
           <div className="tm-hero">
-            <div className="tm-badge">✨ Powered by Gemini AI</div>
+            <div className="tm-badge">✨ Powered by Groq · Llama 4</div>
             <h1 className="tm-title">Tell me more about it</h1>
             <p className="tm-subtitle">
               Upload a photo of your pet and let AI tell you its breed, dietary recommendations, care tips, and more.
@@ -547,7 +547,7 @@ export const TellMeMore = () => {
             <div className="tm-card tm-loading-card">
               <div className="tm-loading-spinner-big"></div>
               <h3>Analyzing your pet...</h3>
-              <p>Gemini AI is identifying the breed and preparing personalized recommendations</p>
+              <p>Llama 4 is identifying the breed and preparing personalized recommendations</p>
             </div>
           )}
 
