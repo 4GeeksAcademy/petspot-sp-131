@@ -68,10 +68,13 @@ import EditFavorite from "./pages/Favorites/EditFavorite";
 import DeleteFavorite from "./pages/Favorites/DeleteFavorite";
 import FavoriteDetail from "./pages/Favorites/FavoriteDetail";
 
+import { TellMeMore } from "./pages/TellMeMore";
+
 export const router = createBrowserRouter(
   createRoutesFromElements(
     <Route path="/" element={<Layout />} errorElement={<h1>Not found!</h1>}>
       <Route index element={<Home />} />
+      <Route path="tell-me-more" element={<TellMeMore />} />
       <Route path="demo" element={<Demo />} />
       <Route path="single/:theId" element={<Single />} />
 
