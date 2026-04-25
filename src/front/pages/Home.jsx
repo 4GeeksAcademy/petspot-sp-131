@@ -76,10 +76,7 @@ export const Home = () => {
 				</Link>
 			</div>
 			<div className="d-flex justify-content-center gap-3 mt-3">
-				<Link className="btn btn-warning" to="/login/user">Login User</Link>
-				<Link to="/signup/user">
-					<button className="btn btn-success">Signup user</button>
-				</Link>
+				<Link className="btn btn-warning" to="/user/login">Login User</Link>
 			</div>
 		</div>
 	);

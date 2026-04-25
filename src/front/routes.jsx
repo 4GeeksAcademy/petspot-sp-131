@@ -67,6 +67,7 @@ import EditFavorite from "./pages/Favorites/EditFavorite";
 import DeleteFavorite from "./pages/Favorites/DeleteFavorite";
 import FavoriteDetail from "./pages/Favorites/FavoriteDetail";
 
+import UserLogin from "./pages/UserPrivate/UserLogin.jsx";
 import UserLayout from "./pages/UserPrivate/UserLayout.jsx";
 import UserDashboard from "./pages/UserPrivate/UserDashboard.jsx";
 import UserChats from "./pages/UserPrivate/UserChats/UserChats.jsx";
@@ -87,8 +88,9 @@ export const router = createBrowserRouter(
       <Route path="signup/user" element={<SignupUser />} />
       {/* <Route path="private/user" element={<PrivateUser />} /> */}
       
+      <Route path="user/login" element={<UserLogin />} />
       <Route element={<RequireUserAuth/>}>
-        <Route path="private/user" element={<UserLayout />}>
+        <Route path="user/private" element={<UserLayout />}>
           <Route index element={<UserDashboard />} />
           <Route path="chats" element={<UserChats />} />
           <Route path="profile" element={<UserProfile />} />
