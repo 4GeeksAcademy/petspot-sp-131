@@ -8,7 +8,7 @@ function UserProfile() {
             <div className="text-center my-5">
                 <Link to="/user/private" className="btn btn-secondary">
                     Go Back to Dashboard
-                </Link>
+                </Link> 
             </div>
             <UserProfileCard />
         </div>

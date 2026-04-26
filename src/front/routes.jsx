@@ -79,6 +79,8 @@ import UserChats from "./pages/UserPrivate/UserChats/UserChats.jsx";
 import UserFavorites from "./pages/UserPrivate/UserFavorites/UserFavorites.jsx";
 import UserNews from "./pages/UserPrivate/UserNews/UserNews.jsx";
 import UserProfile from "./pages/UserPrivate/UserProfile/UserProfile.jsx";
+import UserDeleteProfile from "./components/UserPrivate/UserProfile/UserDeleteProfile.jsx";
+import UserEditProfile from "./components/UserPrivate/UserProfile/UserEditProfile.jsx";
 import UserReservations from "./pages/UserPrivate/UserReservations/UserReservations.jsx";
 import RequireUserAuth from "./components/UserPrivate/RequireUserAuth.jsx";
 import UserPlaceDetailCard from "./components/UserPrivate/UserPlaces/UserPlaceDetailCard.jsx";
@@ -104,6 +106,8 @@ export const router = createBrowserRouter(
           <Route index element={<UserDashboard />} />
           <Route path="chats" element={<UserChats />} />
           <Route path="profile" element={<UserProfile />} />
+          <Route path="profile/edit" element={<UserEditProfile />} />
+          <Route path="profile/delete" element={<UserDeleteProfile />} />
           <Route path="favorites" element={<UserFavorites />} />
           <Route path="reservations" element={<UserReservations />} />
           <Route path="news" element={<UserNews />} />

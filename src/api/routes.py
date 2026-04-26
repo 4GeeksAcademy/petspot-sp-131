@@ -208,7 +208,11 @@ def update_user(user_id):
 
     user.name = body.get("name", user.name)
     user.email = body.get("email", user.email)
-    user.password = body.get("password", user.password)
+    password = body.get("password")
+    if password is not None:
+        hashed_password = generate_password_hash(password)
+        user.password = hashed_password
+    
     user.is_active = body.get("is_active", user.is_active)
 
     db.session.commit()
@@ -647,6 +651,9 @@ def login_user():
     ).scalar_one_or_none()
 
     if user is None:
+        return jsonify({"msg": "Bad email or password"}), 401
+    
+    if not user.is_active:
         return jsonify({"msg": "Bad email or password"}), 401
 
     if not check_password_hash(user.password, password):
@@ -1551,3 +1558,70 @@ def get_private_user():
         return jsonify(response="No user found"), 404
 
     return jsonify(user.serialize()), 200
+
+@api.route("/users/private", methods=["PUT"])
+@jwt_required()
+def update_private_user():
+    user_id = get_jwt_identity()
+    user = db.session.execute(select(User).where(User.id == user_id)).scalar_one_or_none()
+    if user is None:
+        return jsonify(response="User not found"), 404
+
+    data = request.get_json(silent=True) or {}
+    email = data.get("email")
+    name = data.get("name")
+    password = data.get("password")
+
+    if email is not None:
+        if not isinstance(email, str):
+            return jsonify(response="Email must be a string"), 400
+
+        email_exists = db.session.execute(select(User).where(User.email == email, User.id != user_id)).scalar_one_or_none()
+        if email_exists is not None:
+            return jsonify(response="Unable to update the email"), 400
+        
+        email = email.strip()
+        if len(email) == 0:
+            return jsonify(response="Email cannot be empty")
+        
+        user.email = email
+    
+    if name is not None:
+        if not isinstance(name, str):
+            return jsonify(response="Name must be a string"), 400
+        
+        name = name.strip()
+        if len(name) == 0:
+            return jsonify(response="Name cannot be empty"), 400
+        
+        user.name = name
+    
+    if password is not None:
+        if not isinstance(password, str):
+            return jsonify(response="Password must be a string"), 400
+        
+        password = password.strip()
+
+        if len(password) == 0:
+            return jsonify(response="Password cannot be empty"), 400
+        
+        hashed_password = generate_password_hash(password)
+        user.password = hashed_password
+    
+    db.session.commit()
+   
+    return jsonify(user.serialize()), 200
+
+@api.route("/users/private", methods=["DELETE"])
+@jwt_required()
+def delete_private_user():
+    user_id = get_jwt_identity()
+    user = db.session.execute(select(User).where(User.id == user_id)).scalar_one_or_none()
+    if user is None:
+        return jsonify(response="User not found"), 404
+
+    user.is_active = False
+    db.session.commit()
+
+    return jsonify(response="User deleted"), 200
+
