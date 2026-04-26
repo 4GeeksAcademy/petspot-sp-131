@@ -1,6 +1,7 @@
 import useGlobalReducer from "../../../hooks/useGlobalReducer";
 import { useParams } from "react-router-dom";
 import { Link } from "react-router-dom";
+import { useEffect } from "react";
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
@@ -10,6 +11,26 @@ function UserPlaceDetailCard() {
     const { id } = useParams();
     const activePlace = store.places.find((place) => place.id === Number(id))
     const isFavorite = (store.privateUser?.favorite_places || []).includes(Number(id));
+
+    useEffect(() => {
+            async function getPlaces() {
+                try {
+                    const response = await fetch(`${backendUrl}/api/places`)
+                    if (!response.ok) {
+                        throw new Error(`Request failed with status ${response.status}`)
+                    }
+                    const responseJSON = await response.json()
+                    dispatch({
+                        type: "GET_PLACES",
+                        payload: responseJSON
+                    })
+    
+                } catch (error) {
+                    alert("Unable to load places right now. Please try again.")
+                }
+            }
+            getPlaces()
+        }, [])
 
     async function handleAddToFavorites() {
         try {
@@ -89,6 +110,14 @@ function UserPlaceDetailCard() {
                 </Link>
             </div>
             <div className="mx-auto p-5 bg-secondary-subtle border-0 rounded text-start" style={{ maxWidth: 600 }}>
+                {activePlace.image_url && (
+                    <img
+                        src={activePlace.image_url}
+                        alt={activePlace.name}
+                        className="img-fluid rounded mb-4"
+                        style={{ width: "100%", height: "300px", objectFit: "cover" }}
+                    />
+                )}
                 <div className="mb-3">
                     <span className="fw-bold">Name: </span>{activePlace.name}
                 </div>

@@ -2,13 +2,38 @@
 import { useParams } from "react-router-dom";
 import useGlobalReducer from "../../../hooks/useGlobalReducer";
 import { Link } from "react-router-dom";
+import { useEffect } from "react";
+
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 function UserNewsDetail() {
 
     const { id } = useParams();
-    const { store } = useGlobalReducer();
+    const { store, dispatch } = useGlobalReducer();
 
     const activeNews = store.news.find((news) => news.id === Number(id))
+
+    useEffect(() => {
+        async function getNews() {
+            try {
+                const response = await fetch(`${backendUrl}/api/news`)
+                if (!response.ok) {
+                    alert(`Request failed with status ${response.status}`)
+                }
+                const responseJSON = await response.json()
+
+                dispatch({
+                    type: "GET_NEWS",
+                    payload: responseJSON
+                })
+
+            } catch (error) {
+                alert("Unable to load news right now. Please try again.")
+            }
+        }
+        getNews()
+    }, [])
+
 
     if (!activeNews) {
         return (
