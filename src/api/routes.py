@@ -1635,3 +1635,63 @@ def delete_private_user():
 
     return jsonify(response="User deleted"), 200
 
+@api.route("/users/private/favorites", methods=['DELETE'])
+@jwt_required()
+def delete_private_user_favorite():
+    user_id = get_jwt_identity()
+    user = db.session.execute(select(User).where(User.id == user_id)).scalar_one_or_none()
+    if user is None:
+        return jsonify(response="User not found"), 404
+
+    data = request.get_json(silent=True) or {}
+    place_id = data.get("place_id")
+
+    if place_id is None:
+        return jsonify(response="Place id is required"), 400
+    
+    if not isinstance(place_id, str):
+        return jsonify(response="Place id must be a string"), 400
+    
+    place_id = int(place_id)
+
+    favorite_exists = db.session.execute(select(Favorite).where(Favorite.place_id == place_id, Favorite.user_id == user_id)).scalar_one_or_none()
+    if favorite_exists is None:
+        return jsonify(response="Favorite relation not found"), 404
+    
+    db.session.delete(favorite_exists)
+    db.session.commit()
+    
+    return jsonify(response="Favorite deleted"), 200
+
+@api.route("/users/private/favorites", methods=['POST'])
+@jwt_required()
+def add_private_user_favorite():
+    user_id = get_jwt_identity()
+    user = db.session.execute(select(User).where(User.id == user_id)).scalar_one_or_none()
+    if user is None:
+        return jsonify(response="User not found"), 404
+
+    data = request.get_json(silent=True) or {}
+    place_id = data.get("place_id")
+
+    if place_id is None:
+        return jsonify(response="Place id is required"), 400
+    
+    if not isinstance(place_id, str):
+        return jsonify(response="Place id must be a string"), 400
+    
+    place_id = int(place_id)
+
+    place_exists = db.session.execute(select(Place).where(Place.id == place_id)).scalar_one_or_none()
+    if place_exists is None:
+        return jsonify(response="Place not found"), 404
+
+    favorite_exists = db.session.execute(select(Favorite).where(Favorite.place_id == place_id, Favorite.user_id == user_id)).scalar_one_or_none()
+    if favorite_exists is not None:
+        return jsonify(response="Favorite relation already exists"), 400
+    
+    new_favorite = Favorite(user_id=user_id, place_id=place_id)
+    db.session.add(new_favorite)
+    db.session.commit()
+    
+    return jsonify(user.serialize()), 200

@@ -35,7 +35,9 @@ function UserNewsList() {
                 ? store.news.map((news) => {
                     return <UserNewsCard newsObj={news} key={news.id} />
                 })
-                : "No news posted yet."}
+                : (
+                    <p className="text-center">No news yet</p>
+                    )}
         </>
     );
 }
