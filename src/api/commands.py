@@ -1,8 +1,8 @@
 
-import click, random
+import click, random, requests
 from api.cities import cities
 from datetime import datetime
-from api.models import db, User, Place, EstablishmentType, City, Favorite, AdminUser, Review, Reservation, ReservationStatus, Chat, News, PostType
+from api.models import db, User, Place, EstablishmentType, City, Favorite, AdminUser, Review, Reservation, ReservationStatus, Chat, News, PostType, Race
 from werkzeug.security import generate_password_hash
 from sqlalchemy import select
 
@@ -298,47 +298,133 @@ def setup_commands(app):
         return print("All test chat messages added")
 
     @app.cli.command('insert-test-news')
-    @click.argument("count") # argument of out command
-    def insert_news(count):
+    def insert_news():
         admins = db.session.execute(select(AdminUser)).scalars().all() or None
 
         if admins is None:
             return print('Unable to insert test news. Make sure admins exist in the database')
 
-        news_titles = [
-            "Updated Pet Policy for Indoor Areas",
-            "New Terrace Rules for Pets",
-            "Weekend Guidelines for Pet Owners",
-            "Important Update on Vaccination Requirements",
-            "Pet-Friendly Space Improvements"
+        if not admins:
+            return print('Unable to insert test news. Make sure admins exist in the database')
+
+        test_news_posts = [
+            {
+                "title": "Updated Pet Policy for Indoor Areas",
+                "content": "We have updated our indoor pet policy to improve comfort and safety for all guests. Please keep pets close to your table and under supervision at all times.",
+                "post_type": PostType.NORMATIVE
+            },
+            {
+                "title": "New Terrace Rules for Pets",
+                "content": "Pets are welcome on the terrace. We kindly ask owners to keep walkways clear and make sure pets remain calm around other guests.",
+                "post_type": PostType.NORMATIVE
+            },
+            {
+                "title": "Weekend Guidelines for Pet Owners",
+                "content": "For busy weekends, we recommend arriving on time and indicating the number of pets included in your booking so our staff can prepare your table properly.",
+                "post_type": PostType.NEWS
+            },
+            {
+                "title": "Important Update on Vaccination Requirements",
+                "content": "To ensure a safe environment, we may request that pets are up to date on their basic vaccinations before entering shared dining areas.",
+                "post_type": PostType.NORMATIVE
+            },
+            {
+                "title": "Pet-Friendly Space Improvements",
+                "content": "We are introducing small improvements in our pet-friendly spaces, including water stations and clearer seating guidelines for guests visiting with animals.",
+                "post_type": PostType.EVENT
+            }
         ]
 
-        news_contents = [
-            "We have updated our indoor pet policy to improve comfort and safety for all guests. Please keep pets close to your table and under supervision at all times.",
-            "Pets are welcome on the terrace. We kindly ask owners to keep walkways clear and make sure pets remain calm around other guests.",
-            "For busy weekends, we recommend arriving on time and indicating the number of pets included in your booking so our staff can prepare your table properly.",
-            "To ensure a safe environment, we may request that pets are up to date on their basic vaccinations before entering shared dining areas.",
-            "We are introducing small improvements in our pet-friendly spaces, including water stations and clearer seating guidelines for guests visiting with animals."
-        ]
+        existing_titles = {
+            news.title
+            for news in db.session.execute(select(News)).scalars().all()
+        }
 
-        for x in range(1, int(count) + 1):
-            admin = random.choice(admins)
+        created_count = 0
+
+        for news_data in test_news_posts:
+            if news_data["title"] in existing_titles:
+                print(f'News post "{news_data["title"]}" already exists. Skipping.')
+                continue
 
             new_post = News(
-                id_admin=admin.id,
-                title=random.choice(news_titles),
-                content=random.choice(news_contents),
+                id_admin=random.choice(admins).id,
+                title=news_data["title"],
+                content=news_data["content"],
                 post_date=datetime.now().date(),
-                post_type=random.choice(list(PostType))
+                post_type=news_data["post_type"]
             )
 
             db.session.add(new_post)
             db.session.commit()
-            print(f"News post {x} added")
+            created_count += 1
+            print(f'News post "{new_post.title}" added')
 
-        return print("All test news posts added")
+        return print(f"Test news sync complete. {created_count} new posts added.")
 
     
     @app.cli.command("insert-test-data")
     def insert_test_data():
         pass
+
+    @app.cli.command("insert-external-races")
+    def insert_external_races():
+        import os
+        print("Buscando razas en The Dog API...")
+        try:
+            api_key = os.getenv("DOG_API_KEY")
+            headers = {"x-api-key": api_key} if api_key else {}
+            dog_res = requests.get('https://api.thedogapi.com/v1/breeds', headers=headers)
+            if dog_res.status_code == 200:
+                dogs = dog_res.json()
+                dog_count = 0
+                for dog in dogs:
+                    name = dog.get('name')
+                    if name:
+                        exists = db.session.execute(select(Race).where(Race.name == name, Race.animal_type == "Perro")).scalars().first()
+                        if not exists:
+                            new_race = Race(name=name, animal_type="Perro")
+                            db.session.add(new_race)
+                            dog_count += 1
+                db.session.commit()
+                print(f"Insertadas {dog_count} razas de Perro.")
+            else:
+                print(f"Error al conectar con The Dog API ({dog_res.status_code}). Usando lista de respaldo...")
+                fallback_dogs = [
+                    "Golden Retriever", "Labrador Retriever", "Bulldog", "Poodle", 
+                    "Beagle", "Chihuahua", "German Shepherd", "Yorkshire Terrier", 
+                    "Boxer", "Husky", "Pomeranian", "Dachshund", "Pug", 
+                    "Cocker Spaniel", "Rottweiler", "Doberman", "Pitbull", "Border Collie"
+                ]
+                dog_count = 0
+                for name in fallback_dogs:
+                    exists = db.session.execute(select(Race).where(Race.name == name, Race.animal_type == "Perro")).scalars().first()
+                    if not exists:
+                        new_race = Race(name=name, animal_type="Perro")
+                        db.session.add(new_race)
+                        dog_count += 1
+                db.session.commit()
+                print(f"Insertadas {dog_count} razas de Perro (respaldo).")
+        except Exception as e:
+            print(f"Excepcion The Dog API: {e}")
+
+        print("Buscando razas en The Cat API...")
+        try:
+            cat_res = requests.get('https://api.thecatapi.com/v1/breeds')
+            if cat_res.status_code == 200:
+                cats = cat_res.json()
+                cat_count = 0
+                for cat in cats:
+                    name = cat.get('name')
+                    if name:
+                        exists = db.session.execute(select(Race).where(Race.name == name, Race.animal_type == "Gato")).scalars().first()
+                        if not exists:
+                            new_race = Race(name=name, animal_type="Gato")
+                            db.session.add(new_race)
+                            cat_count += 1
+                db.session.commit()
+                print(f"Insertadas {cat_count} razas de Gato.")
+            else:
+                print("Error al conectar con The Cat API")
+        except Exception as e:
+            print(f"Excepcion The Cat API: {e}")
