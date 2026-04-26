@@ -55,17 +55,9 @@ function UserProfileCard() {
             <div className="mb-4">
                 <span className="fw-bold">Email: </span>{store.privateUser.email}
             </div>
-
-            <div className="border-top pt-4">
-                <h2 className="h4 mb-3">Profile Actions</h2>
-                <div className="d-flex flex-wrap gap-2">
-                    <button type="button" className="btn btn-outline-primary" disabled>
-                        Edit personal info
-                    </button>
-                    <button type="button" className="btn btn-outline-primary" disabled>
-                        Change password
-                    </button>
-                </div>
+            <div className="d-grid d-sm-flex gap-2 justify-content-sm-center mt-5">
+                <Link to="/user/private/profile/edit" className="btn btn-outline-success">Edit profile</Link>
+                <Link to="/user/private/profile/delete" className="btn btn-outline-danger">Delete account</Link>
             </div>
         </div>
     );
