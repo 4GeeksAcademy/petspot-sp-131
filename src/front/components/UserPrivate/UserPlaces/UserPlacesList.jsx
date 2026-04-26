@@ -35,7 +35,9 @@ function UserPlacesList() {
                 ? store.places.map((place) => {
                     return <UserPlaceCard placeObj={place} key={place.id} />
                 })
-                : "No places registered yet."}
+                : (
+                    <p className="text-center">No places yet</p>
+                    )}
         </>
     )
 }
