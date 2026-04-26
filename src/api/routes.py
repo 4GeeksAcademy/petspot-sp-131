@@ -254,6 +254,7 @@ def add_place():
     name = data.get("name")
     establishment_type = data.get("establishment_type")
     pet_rules = data.get("pet_rules")
+    image_url = data.get("image_url")
     city_id = data.get("city_id")
 
     if not all([x for x in [email, password, name, establishment_type, city_id]]):
@@ -281,6 +282,9 @@ def add_place():
     password = password.strip()
     name = name.strip()
 
+    if image_url is not None:
+        image_url = str(image_url).strip()
+    
     if pet_rules is not None:
         pet_rules = str(pet_rules).strip()
         if len(pet_rules) > 250:
@@ -302,7 +306,8 @@ def add_place():
         password=hashed_password,
         city=city,
         establishment_type=establishment_type,
-        pet_rules=pet_rules or None
+        pet_rules=pet_rules or None,
+        image_url=image_url or None
     )
     db.session.add(place)
     db.session.commit()
@@ -328,6 +333,7 @@ def update_place(place_id):
     establishment_type = data.get("establishment_type")
     pet_rules_provided = "pet_rules" in data
     pet_rules = data.get("pet_rules")
+    image_url = data.get("image_url")
     city_id = data.get("city_id")
 
     if email is not None:
