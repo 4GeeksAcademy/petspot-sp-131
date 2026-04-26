@@ -1,8 +1,91 @@
+import UserFavoriteCard from "./UserFavoriteCard";
+import useGlobalReducer from "../../../hooks/useGlobalReducer";
+import { useEffect } from "react";
+
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
+
 function UserFavoritesList() {
+    const { store, dispatch } = useGlobalReducer();
+
+    useEffect(() => {
+        async function getPlaces() {
+            try {
+                if (store.places.length > 0) {
+                    return;
+                }
+
+                const response = await fetch(`${backendUrl}/api/places`);
+                if (!response.ok) {
+                    throw new Error(`Places request failed with status ${response.status}`);
+                }
+
+                const places = await response.json();
+                dispatch({
+                    type: "GET_PLACES",
+                    payload: places
+                });
+            } catch (error) {
+                console.error("Unable to load places:", error);
+            }
+        }
+
+        getPlaces();
+    }, [dispatch, store.places.length]);
+
+    useEffect(() => {
+        async function getPrivateUser() {
+            try {
+                if (store.privateUser?.id) {
+                    return;
+                }
+
+                const userToken = localStorage.getItem("userToken");
+                if (!userToken) {
+                    return;
+                }
+
+                const response = await fetch(`${backendUrl}/api/users/private`, {
+                    headers: {
+                        Authorization: `Bearer ${userToken}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`User request failed with status ${response.status}`);
+                }
+
+                const privateUser = await response.json();
+                dispatch({
+                    type: "GET_PRIVATE_USER",
+                    payload: privateUser
+                });
+            } catch (error) {
+                console.error("Unable to load private user:", error);
+            }
+        }
+
+        getPrivateUser();
+    }, [dispatch, store.privateUser?.id]);
+
+    const allPlaces = store.places;
+    const favoritePlaceIds = store.privateUser?.favorite_places || [];
+
+    const favoritePlaces = favoritePlaceIds.map((favoritePlaceId) => {
+        const matchingPlace = allPlaces.find((place) => place.id === favoritePlaceId);
+        return matchingPlace;
+    });
+
+
     return (
-        <div className="mx-auto p-5 bg-secondary-subtle border-0 rounded text-start" style={{ maxWidth: 700 }}>
-            <p className="mb-0">Your favorites section will live here.</p>
-        </div>
+        <>
+            {favoritePlaces.length > 0
+                ? favoritePlaces.map((favoritePlace) => {
+                    return <UserFavoriteCard favPlaceObj={favoritePlace} key={favoritePlace.id} />
+                })
+                : (
+                    <p className="text-center">No favorites yet</p>
+                    )}
+        </>
     );
 }
 

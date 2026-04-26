@@ -3,43 +3,14 @@ import useGlobalReducer from "../../../hooks/useGlobalReducer";
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
-function UserPlaceCard({ placeObj }) {
-    const { store, dispatch } = useGlobalReducer();
-    const { name, pet_rules, city, establishment_type, id } = placeObj
-    const isFavorite = (store.privateUser?.favorite_places || []).includes(id);
+function UserFavoriteCard({ favPlaceObj }) {
+    const { dispatch } = useGlobalReducer();
 
+    const { name, city, establishment_type, id } = favPlaceObj
     const establishmentTypeEmoji = {
         bar: "\u{1F37A}",
         restaurant: "\u{1F35D}",
         cafe: "\u{2615}"
-    }
-
-    async function handleAddToFavorites() {
-        try {
-            const userToken = localStorage.getItem("userToken");
-            const response = await fetch(`${backendUrl}/api/users/private/favorites`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${userToken}`
-                },
-                body: JSON.stringify({
-                    place_id: id.toString()
-                })
-            });
-
-            if (!response.ok) {
-                throw new Error(`Request failed with status ${response.status}`);
-            }
-
-            const updatedPrivateUser = await response.json();
-            dispatch({
-                type: "GET_PRIVATE_USER",
-                payload: updatedPrivateUser
-            });
-        } catch (error) {
-            alert("Unable to add favorite right now. Please try again.");
-        }
     }
 
     async function handleRemoveFromFavorites() {
@@ -71,6 +42,7 @@ function UserPlaceCard({ placeObj }) {
             }
 
             const updatedPrivateUser = await userResponse.json();
+
             dispatch({
                 type: "GET_PRIVATE_USER",
                 payload: updatedPrivateUser
@@ -84,7 +56,10 @@ function UserPlaceCard({ placeObj }) {
         <>
             <div className="card mb-3 mx-auto w-100 bg-secondary-subtle border-0" style={{ maxWidth: 800 }}>
                 <div className="card-body">
-                    <h5 className="card-title card-header bg-secondary-subtle mb-3 ps-0 h2">{name}</h5>
+                    <div className="card-header d-flex justify-content-between align-items-center bg-secondary-subtle p-0 mb-3">
+                        <h5 className="card-title   mb-3 ps-0 h2">{name}</h5>
+                        <button className="btn btn-close" onClick={handleRemoveFromFavorites}></button>
+                    </div>
                     <h6 className="card-subtitle mb-2 text-body-secondary">
                         {establishmentTypeEmoji[establishment_type]}
                         <span className="fst-italic">{establishment_type.toUpperCase()}</span>
@@ -93,17 +68,8 @@ function UserPlaceCard({ placeObj }) {
                         {"\u{1F4CC}"}{city.city}
                     </div>
                     <div className="d-flex flex-column gap-3">
-                        <p className="card-text m-0">{pet_rules}</p>
                         <div className="d-grid d-sm-flex gap-2 justify-content-sm-end">
                             <Link to={`/user/private/places/view/${id}`} className="btn btn-outline-primary">View</Link>
-                            <Link to="#" className="btn btn-outline-success">Make a reservation</Link>
-                            <button
-                                type="button"
-                                className={`btn ${isFavorite ? "btn-warning" : "btn-outline-warning"} `}
-                                onClick={isFavorite ? handleRemoveFromFavorites : handleAddToFavorites}
-                            >
-                                ❤︎
-                            </button>
                         </div>
                     </div>
                 </div>
@@ -112,4 +78,4 @@ function UserPlaceCard({ placeObj }) {
     )
 }
 
-export default UserPlaceCard
+export default UserFavoriteCard;

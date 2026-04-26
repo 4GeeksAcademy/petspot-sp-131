@@ -42,7 +42,7 @@ class User(db.Model):
             "id": self.id,
             "name": self.name,
             "email": self.email,
-            "favorite_places": [favorite.serialize()["place_name"] for favorite in self.favorite_places],
+            "favorite_places": [favorite.place_id for favorite in self.favorite_places],
             "reservations": [reservation.serialize() for reservation in self.reservations]
         }
 
