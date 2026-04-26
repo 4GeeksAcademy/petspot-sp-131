@@ -21,6 +21,9 @@ import DeletePlace from "./pages/Places/DeletePlace";
 import PlaceDetail from "./pages/Places/PlaceDetail";
 import LoginPlace from "./pages/Places/LoginPlace";
 import PrivatePlace from "./pages/Places/PrivatePlace";
+import SignupPlace from "./pages/Places/SignupPlace";
+import EditPrivatePlace from "./pages/Places/EditPrivatePlace";
+import RequirePlace from "./components/RequirePlace";
 
 import { Admin } from "./pages/Admin";
 import { AdminList, AdminCreate, AdminEdit, AdminDelete, AdminDetail } from "./pages/Admin";
@@ -42,6 +45,10 @@ import CityDetail from "./pages/Cities/CityDetail";
 import { LoginUser } from "./pages/LoginUser";
 import { SignupUser } from "./pages/SignupUser";
 import PrivateUser from "./pages/PrivateUser";
+import AdminPets from "./pages/Pets/AdminPets";
+import UserPets from "./pages/Pets/UserPets";
+import AddPet from "./pages/Pets/AddPet";
+import EditPet from "./pages/Pets/EditPet";
 
 import Reservations from "./pages/Reservations/Reservations";
 import AddReservation from "./pages/Reservations/AddReservation";
@@ -65,16 +72,54 @@ import EditFavorite from "./pages/Favorites/EditFavorite";
 import DeleteFavorite from "./pages/Favorites/DeleteFavorite";
 import FavoriteDetail from "./pages/Favorites/FavoriteDetail";
 
+import UserLogin from "./pages/UserPrivate/UserLogin.jsx";
+import UserLayout from "./pages/UserPrivate/UserLayout.jsx";
+import UserDashboard from "./pages/UserPrivate/UserDashboard.jsx";
+import UserChats from "./pages/UserPrivate/UserChats/UserChats.jsx";
+import UserFavorites from "./pages/UserPrivate/UserFavorites/UserFavorites.jsx";
+import UserNews from "./pages/UserPrivate/UserNews/UserNews.jsx";
+import UserProfile from "./pages/UserPrivate/UserProfile/UserProfile.jsx";
+import UserDeleteProfile from "./components/UserPrivate/UserProfile/UserDeleteProfile.jsx";
+import UserEditProfile from "./components/UserPrivate/UserProfile/UserEditProfile.jsx";
+import UserReservations from "./pages/UserPrivate/UserReservations/UserReservations.jsx";
+import RequireUserAuth from "./components/UserPrivate/RequireUserAuth.jsx";
+import UserPlaceDetailCard from "./components/UserPrivate/UserPlaces/UserPlaceDetailCard.jsx";
+import UserNewsDetail from "./components/UserPrivate/UserNews/UserNewsDetail.jsx";
+
+import { TellMeMore } from "./pages/TellMeMore";
+
 export const router = createBrowserRouter(
   createRoutesFromElements(
     <Route path="/" element={<Layout />} errorElement={<h1>Not found!</h1>}>
       <Route index element={<Home />} />
+      <Route path="tell-me-more" element={<TellMeMore />} />
       <Route path="demo" element={<Demo />} />
       <Route path="single/:theId" element={<Single />} />
 
       <Route path="login/user" element={<LoginUser />} />
       <Route path="signup/user" element={<SignupUser />} />
+      {/* <Route path="private/user" element={<PrivateUser />} /> */}
+      
+      <Route path="user/login" element={<UserLogin />} />
+      <Route element={<RequireUserAuth/>}>
+        <Route path="user/private" element={<UserLayout />}>
+          <Route index element={<UserDashboard />} />
+          <Route path="chats" element={<UserChats />} />
+          <Route path="profile" element={<UserProfile />} />
+          <Route path="profile/edit" element={<UserEditProfile />} />
+          <Route path="profile/delete" element={<UserDeleteProfile />} />
+          <Route path="favorites" element={<UserFavorites />} />
+          <Route path="reservations" element={<UserReservations />} />
+          <Route path="news" element={<UserNews />} />
+          <Route path="news/:id" element={<UserNewsDetail />} />
+          <Route path="places/view/:id" element={<UserPlaceDetailCard />} />
+        </Route>
+      </Route>
+
       <Route path="private/user" element={<PrivateUser />} />
+      <Route path="private/user/pets" element={<UserPets />} />
+      <Route path="private/user/pets/add" element={<AddPet />} />
+      <Route path="private/user/pets/edit/:id" element={<EditPet />} />
 
       <Route path="user" element={<RequireAdmin><User /></RequireAdmin>} />
       <Route path="user/create" element={<RequireAdmin><UserCreate /></RequireAdmin>} />
@@ -89,6 +134,7 @@ export const router = createBrowserRouter(
         <Route path="editar/:id" element={<AdminEdit />} />
         <Route path="eliminar/:id" element={<AdminDelete />} />
         <Route path="detalle/:id" element={<AdminDetail />} />
+        <Route path="pets" element={<AdminPets />} />
       </Route>
 
       <Route path="places" element={<RequireAdmin><Places /></RequireAdmin>} />
@@ -97,7 +143,9 @@ export const router = createBrowserRouter(
       <Route path="places/delete/:id" element={<RequireAdmin><DeletePlace /></RequireAdmin>} />
       <Route path="places/view/:id" element={<RequireAdmin><PlaceDetail /></RequireAdmin>} />
       <Route path="places/login" element={<LoginPlace />} />
-      <Route path="places/private" element={<PrivatePlace />} />
+      <Route path="places/signup" element={<SignupPlace />} />
+      <Route path="places/private" element={<RequirePlace><PrivatePlace /></RequirePlace>} />
+      <Route path="places/private/edit" element={<RequirePlace><EditPrivatePlace /></RequirePlace>} />
 
       <Route path="cities" element={<RequireAdmin><Cities /></RequireAdmin>} />
       <Route path="cities/add" element={<RequireAdmin><AddCity /></RequireAdmin>} />
@@ -133,6 +181,8 @@ export const router = createBrowserRouter(
       <Route path="reviews/detail/:id" element={<RequireAdmin><ReviewDetail /></RequireAdmin>} />
       <Route path="reviews/create" element={<RequireAdmin><ReviewCreate /></RequireAdmin>} />
       <Route path="reviews/edit/:id" element={<RequireAdmin><ReviewEdit /></RequireAdmin>} />
+
+
     </Route>
   )
 );

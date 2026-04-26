@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import useGlobalReducer from "../../hooks/useGlobalReducer";
 
@@ -9,9 +9,35 @@ function AddNewsForm() {
     const [content, setContent] = useState("")
     const [postDate, setPostDate] = useState("")
     const [postType, setPostType] = useState("news")
+    const [admins, setAdmins] = useState([])
+    const [adminId, setAdminId] = useState("")
 
     const { store, dispatch } = useGlobalReducer();
     const navigate = useNavigate();
+
+    useEffect(() => {
+        const fetchAdmins = async () => {
+            try {
+                const response = await fetch(`${backendUrl}/api/admin`, {
+                    method: "GET",
+                    headers: { 
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${localStorage.getItem("tokenAdmin")}`
+                    }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    setAdmins(data);
+                    if (data.length > 0) {
+                        setAdminId(data[0].id);
+                    }
+                }
+            } catch (error) {
+                console.error("Error fetching admins:", error);
+            }
+        };
+        fetchAdmins();
+    }, []);
 
     function handleSubmit(event) {
         event.preventDefault()
@@ -19,13 +45,10 @@ function AddNewsForm() {
         const trimmedTitle = title.trim()
         const trimmedContent = content.trim()
 
-        if (!trimmedTitle || !trimmedContent || !postDate) {
+        if (!trimmedTitle || !trimmedContent || !postDate || !adminId) {
             alert("Please fill all required fields.")
             return
         }
-
-        // For now, use the first admin as default. In a real app, this would come from authentication
-        const adminId = store.admins?.[0]?.id || 1
 
         const body = {
             id_admin: adminId,
@@ -68,6 +91,24 @@ function AddNewsForm() {
 
     return (
         <form onSubmit={handleSubmit} className="mx-auto p-5 bg-secondary-subtle border-0 rounded text-start" style={{ maxWidth: 600 }}>
+            <div className="mb-3">
+                <label htmlFor="adminId" className="form-label">Admin *</label>
+                <select
+                    onChange={(event) => setAdminId(event.target.value)}
+                    value={adminId}
+                    className="form-control"
+                    id="adminId"
+                    name="admin_id"
+                    required
+                >
+                    <option value="" disabled>Select an admin</option>
+                    {admins.map(admin => (
+                        <option key={admin.id} value={admin.id}>
+                            {admin.name} ({admin.email})
+                        </option>
+                    ))}
+                </select>
+            </div>
             <div className="mb-3">
                 <label htmlFor="title" className="form-label">Title *</label>
                 <input

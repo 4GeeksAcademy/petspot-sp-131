@@ -1,8 +1,12 @@
 """
 This module takes care of starting the API Server, Loading the DB and Adding the endpoints
 """
+import os
+import io
+import json
+import re
 from flask import Flask, request, jsonify, url_for, Blueprint
-from api.models import db, User, Place, EstablishmentType, AdminUser, Review, City, Chat, Reservation, ReservationStatus, Favorite, News, PostType
+from api.models import db, User, Place, EstablishmentType, AdminUser, Review, City, Chat, Reservation, ReservationStatus, Favorite, News, PostType, Race, Pet
 from datetime import datetime
 from api.utils import generate_sitemap, APIException
 from flask_cors import CORS
@@ -12,12 +16,88 @@ from sqlalchemy.exc import IntegrityError
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 from sqlalchemy.orm import joinedload
+import base64
 
 
 api = Blueprint('api', __name__)
 
 # Allow CORS requests to this API
 CORS(api)
+
+
+@api.route('/analyze-pet', methods=['POST'])
+def analyze_pet():
+    if 'image' not in request.files:
+        return jsonify({"msg": "No image file provided"}), 400
+
+    image_file = request.files['image']
+
+    if image_file.filename == '':
+        return jsonify({"msg": "No file selected"}), 400
+
+    groq_key = os.getenv("GROQ_API_KEY")
+    if not groq_key:
+        return jsonify({"msg": "Groq API key not configured"}), 500
+
+    try:
+        img_bytes = image_file.read()
+        img_base64 = base64.b64encode(img_bytes).decode('utf-8')
+        mime_type = image_file.mimetype or "image/jpeg"
+        data_url = f"data:{mime_type};base64,{img_base64}"
+
+        prompt = (
+            "Analyze this pet image and return ONLY a valid JSON object. "
+            "No markdown, no code blocks, no extra text — just raw JSON. "
+            "Use exactly these fields:\n"
+            '{"animal_type":"Dog or Cat or Other","breed":"Most likely breed name",'
+            '"is_mix":true or false,'
+            '"mix_description":"Describe mixed breeds, or null if purebred",'
+            '"recommended_food":["3-4 specific food recommendations"],'
+            '"care_tips":["2-3 practical care tips"],'
+            '"fun_facts":"One interesting fun fact about this breed",'
+            '"personality":"Brief description of typical personality traits"}\n'
+            'If no pet is visible in the image, return: {"error":"No pet detected in image"}'
+        )
+
+        import requests as http_requests
+        resp = http_requests.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            headers={
+                "Authorization": f"Bearer {groq_key}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "model": "meta-llama/llama-4-scout-17b-16e-instruct",
+                "temperature": 0.2,
+                "messages": [{
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": prompt},
+                        {"type": "image_url", "image_url": {"url": data_url}}
+                    ]
+                }]
+            },
+            timeout=30
+        )
+
+        if not resp.ok:
+            return jsonify({"msg": f"Groq API error {resp.status_code}: {resp.text}"}), 502
+
+        raw_text = resp.json()["choices"][0]["message"]["content"].strip()
+
+        # Strip markdown code blocks if present
+        raw_text = re.sub(r'^```(?:json)?\s*', '', raw_text)
+        raw_text = re.sub(r'\s*```$', '', raw_text)
+
+        result = json.loads(raw_text)
+        return jsonify(result), 200
+
+    except json.JSONDecodeError:
+        return jsonify({"msg": "AI response could not be parsed", "raw": raw_text}), 500
+    except Exception as e:
+        return jsonify({"msg": f"Error analyzing image: {str(e)}"}), 500
+
+
 
 
 @api.route('/admin/login', methods=['POST'])
@@ -39,9 +119,12 @@ def admin_login():
     
     access_token = create_access_token(identity=admin.id)
 
+    access_token = create_access_token(identity=str(admin.id))
     return jsonify({
         "msg": "Login successful",
+
         "access_token": access_token,
+        "token": access_token,
         "admin": {
             "id": admin.id,
             "name": admin.name,
@@ -82,10 +165,11 @@ def create_user():
     if existing_user:
         return jsonify({"msg": "User already exists"}), 409
 
+    hashed_password = generate_password_hash(password)
     new_user = User(
         name=name,
         email=email,
-        password=password,
+        password=hashed_password,
         is_active=True
     )
 
@@ -128,7 +212,11 @@ def update_user(user_id):
 
     user.name = body.get("name", user.name)
     user.email = body.get("email", user.email)
-    user.password = body.get("password", user.password)
+    password = body.get("password")
+    if password is not None:
+        hashed_password = generate_password_hash(password)
+        user.password = hashed_password
+    
     user.is_active = body.get("is_active", user.is_active)
 
     db.session.commit()
@@ -184,7 +272,7 @@ def add_place():
         return jsonify(response="City not found"), 404
 
     try:
-        establishment_type = establishment_type.strip()
+        establishment_type = establishment_type.strip().lower()
         establishment_type = EstablishmentType(establishment_type)
     except ValueError:
         return jsonify(response="Invalid establishment type"), 400
@@ -308,12 +396,14 @@ def update_place(place_id):
 
 
 @api.route('/admin', methods=['GET'])
+@jwt_required()
 def get_admins():
     admins = AdminUser.query.all()
     return jsonify([admin.serialize() for admin in admins]), 200
 
 
 @api.route('/admin/<int:id>', methods=['GET'])
+@jwt_required()
 def get_admin(id):
     admin = AdminUser.query.get(id)
     if not admin:
@@ -322,6 +412,7 @@ def get_admin(id):
 
 
 @api.route('/admin', methods=['POST'])
+@jwt_required()
 def create_admin():
     data = request.get_json()
 
@@ -354,6 +445,7 @@ def create_admin():
 
 
 @api.route('/admin/<int:id>', methods=['PUT'])
+@jwt_required()
 def update_admin(id):
     admin = AdminUser.query.get(id)
 
@@ -386,6 +478,7 @@ def update_admin(id):
 
 
 @api.route('/admin/<int:id>', methods=['DELETE'])
+@jwt_required()
 def delete_admin(id):
     admin = AdminUser.query.get(id)
 
@@ -563,11 +656,14 @@ def login_user():
 
     if user is None:
         return jsonify({"msg": "Bad email or password"}), 401
-
-    if password != user.password:
+    
+    if not user.is_active:
         return jsonify({"msg": "Bad email or password"}), 401
 
-    access_token = create_access_token(identity=email)
+    if not check_password_hash(user.password, password):
+        return jsonify({"msg": "Bad email or password"}), 401
+
+    access_token = create_access_token(identity=str(user.id))
     return jsonify(access_token=access_token), 200
 
 
@@ -871,11 +967,15 @@ def update_reservation(id):
     if reservation_time_str:
         try:
             reservation.reservation_time = datetime.strptime(
-                reservation_time_str, '%H:%M'
+                reservation_time_str[:5], '%H:%M'
             ).time()
         except ValueError:
             return jsonify(response="Invalid time format"), 400
 
+    if 'user_id' in data:
+        reservation.user_id = int(data['user_id'])
+    if 'place_id' in data:
+        reservation.place_id = int(data['place_id'])
     if 'people_count' in data:
         reservation.people_count = int(data['people_count'])
     if 'pet_count' in data:
@@ -1067,3 +1167,465 @@ def private_place():
     if place_exists is None:
         return jsonify(response="Place not found"), 404
     return jsonify(place_exists.serialize()), 200
+
+
+@api.route('/places/private', methods=['PUT'])
+@jwt_required()
+def update_private_place():
+    place_id = int(get_jwt_identity())
+    place = db.session.get(Place, place_id)
+    if not place:
+        return jsonify(response="Place not found"), 404
+        
+    data = request.get_json(silent=True) or {}
+    
+    if 'name' in data:
+        name = str(data['name']).strip()
+        if not name:
+             return jsonify(response="Name cannot be empty"), 400
+        place.name = name
+        
+    if 'establishment_type' in data:
+        try:
+             place.establishment_type = EstablishmentType(data['establishment_type'].strip())
+        except ValueError:
+             return jsonify(response="Invalid establishment type"), 400
+             
+    if 'pet_rules' in data:
+        if data['pet_rules'] is None:
+             place.pet_rules = None
+        else:
+             rules = str(data['pet_rules']).strip()
+             if len(rules) > 250:
+                 return jsonify(response="pet_rules cannot exceed 250 characters"), 400
+             place.pet_rules = rules or None
+             
+    if 'city_id' in data:
+        city_id = data['city_id']
+        city = db.session.get(City, city_id)
+        if not city:
+            return jsonify(response="City not found"), 404
+        place.city_id = city_id
+        
+    db.session.commit()
+    return jsonify(place.serialize()), 200
+
+
+@api.route('/places/private', methods=['DELETE'])
+@jwt_required()
+def delete_private_place():
+    place_id = int(get_jwt_identity())
+    place = db.session.get(Place, place_id)
+    if not place:
+        return jsonify(response="Place not found"), 404
+        
+    db.session.delete(place)
+    db.session.commit()
+    return jsonify(response="Place deleted"), 200
+
+@api.route('/places/private/reservations', methods=['GET'])
+@jwt_required()
+def get_private_place_reservations():
+    place_id = int(get_jwt_identity())
+    reservations = db.session.execute(
+        db.select(Reservation).where(Reservation.place_id == place_id)
+    ).scalars().all()
+    if not reservations:
+        return jsonify(response="No reservations found for this place"), 404
+    return jsonify([res.serialize() for res in reservations]), 200
+
+
+@api.route('/places/private/reviews', methods=['GET'])
+@jwt_required()
+def get_private_place_reviews():
+    place_id = int(get_jwt_identity())
+    reviews = db.session.execute(
+        db.select(Review).join(Reservation).where(Reservation.place_id == place_id)
+    ).scalars().all()
+    if not reviews:
+        return jsonify(response="No reviews found for this place"), 404
+    return jsonify([r.serialize() for r in reviews]), 200
+
+# CRUD for Races
+
+@api.route('/races', methods=['GET'])
+def get_races():
+    races = db.session.execute(db.select(Race)).scalars().all()
+    return jsonify([race.serialize() for race in races]), 200
+
+@api.route('/races/<int:race_id>', methods=['GET'])
+def get_race(race_id):
+    race = db.session.execute(db.select(Race).where(Race.id == race_id)).scalars().first()
+    if not race:
+        return jsonify({"msg": "Race not found"}), 404
+    return jsonify(race.serialize()), 200
+
+@api.route('/races/import', methods=['POST'])
+@jwt_required()
+def import_external_races():
+    import os, requests
+    dog_count = 0
+    cat_count = 0
+    try:
+        api_key = os.getenv("DOG_API_KEY")
+        headers = {"x-api-key": api_key} if api_key else {}
+        dog_res = requests.get('https://api.thedogapi.com/v1/breeds', headers=headers)
+        if dog_res.status_code == 200:
+            dogs = dog_res.json()
+            for dog in dogs:
+                name = dog.get('name')
+                image_url = dog.get('image', {}).get('url') if dog.get('image') else None
+                if name:
+                    exists = db.session.execute(select(Race).where(Race.name == name, Race.animal_type == "Perro")).scalars().first()
+                    if not exists:
+                        new_race = Race(name=name, animal_type="Perro", url=image_url)
+                        db.session.add(new_race)
+                        dog_count += 1
+                    elif exists and not exists.url and image_url:
+                        exists.url = image_url
+            db.session.commit()
+        else:
+            fallback_dogs = [
+                "Golden Retriever", "Labrador Retriever", "Bulldog", "Poodle", 
+                "Beagle", "Chihuahua", "German Shepherd", "Yorkshire Terrier", 
+                "Boxer", "Husky", "Pomeranian", "Dachshund", "Pug", 
+                "Cocker Spaniel", "Rottweiler", "Doberman", "Pitbull", "Border Collie"
+            ]
+            for name in fallback_dogs:
+                exists = db.session.execute(select(Race).where(Race.name == name, Race.animal_type == "Perro")).scalars().first()
+                if not exists:
+                    new_race = Race(name=name, animal_type="Perro")
+                    db.session.add(new_race)
+                    dog_count += 1
+            db.session.commit()
+    except Exception as e:
+        print(f"Excepcion The Dog API: {e}")
+
+    try:
+        cat_res = requests.get('https://api.thecatapi.com/v1/breeds')
+        if cat_res.status_code == 200:
+            cats = cat_res.json()
+            for cat in cats:
+                name = cat.get('name')
+                image_url = cat.get('image', {}).get('url') if cat.get('image') else None
+                if not image_url and cat.get('reference_image_id'):
+                    image_url = f"https://cdn2.thecatapi.com/images/{cat.get('reference_image_id')}.jpg"
+                if name:
+                    exists = db.session.execute(select(Race).where(Race.name == name, Race.animal_type == "Gato")).scalars().first()
+                    if not exists:
+                        new_race = Race(name=name, animal_type="Gato", url=image_url)
+                        db.session.add(new_race)
+                        cat_count += 1
+                    elif exists and not exists.url and image_url:
+                        exists.url = image_url
+            db.session.commit()
+    except Exception as e:
+        print(f"Excepcion The Cat API: {e}")
+
+    return jsonify({"msg": f"Razas importadas exitosamente. Perros: {dog_count}, Gatos: {cat_count}"}), 200
+
+
+@api.route('/upload', methods=['POST'])
+@jwt_required()
+def upload_image():
+    import cloudinary.uploader
+    if 'image' not in request.files:
+        return jsonify({"msg": "No image provided"}), 400
+    
+    file = request.files['image']
+    if file.filename == '':
+        return jsonify({"msg": "No selected file"}), 400
+        
+    try:
+        upload_result = cloudinary.uploader.upload(
+            file,
+            transformation=[
+                {'width': 1000, 'height': 1000, 'crop': 'limit'},
+                {'quality': 'auto'}
+            ]
+        )
+        return jsonify({"url": upload_result['secure_url']}), 200
+    except Exception as e:
+        return jsonify({"msg": str(e)}), 500
+
+@api.route('/races', methods=['POST'])
+@jwt_required()
+def create_race():
+    body = request.get_json(silent=True)
+    if not body:
+        return jsonify({"msg": "Missing JSON in request"}), 400
+    
+    if "name" not in body or "animal_type" not in body:
+        return jsonify({"msg": "Missing 'name' or 'animal_type' in request"}), 400
+    
+    new_race = Race(
+        name=body['name'],
+        animal_type=body['animal_type'],
+        url=body.get('url')
+    )
+    db.session.add(new_race)
+    try:
+        db.session.commit()
+        return jsonify(new_race.serialize()), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"msg": str(e)}), 500
+
+@api.route('/races/<int:race_id>', methods=['PUT'])
+@jwt_required()
+def update_race(race_id):
+    race = db.session.execute(db.select(Race).where(Race.id == race_id)).scalars().first()
+    if not race:
+        return jsonify({"msg": "Race not found"}), 404
+
+    body = request.get_json(silent=True)
+    if not body:
+        return jsonify({"msg": "Missing JSON in request"}), 400
+
+    if "name" in body:
+        race.name = body["name"]
+    if "animal_type" in body:
+        race.animal_type = body["animal_type"]
+    if "url" in body:
+        race.url = body["url"]
+        
+    try:
+        db.session.commit()
+        return jsonify(race.serialize()), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"msg": str(e)}), 500
+
+@api.route('/races/<int:race_id>', methods=['DELETE'])
+@jwt_required()
+def delete_race(race_id):
+    race = db.session.execute(db.select(Race).where(Race.id == race_id)).scalars().first()
+    if not race:
+        return jsonify({"msg": "Race not found"}), 404
+
+    db.session.delete(race)
+    try:
+        db.session.commit()
+        return jsonify({"msg": "Race deleted successfully"}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"msg": str(e)}), 500
+
+
+# CRUD for Pets
+
+@api.route('/pets', methods=['GET'])
+def get_pets():
+    pets = db.session.execute(db.select(Pet)).scalars().all()
+    return jsonify([pet.serialize() for pet in pets]), 200
+
+@api.route('/users/pets', methods=['GET'])
+@jwt_required()
+def get_user_pets():
+    email = get_jwt_identity()
+    user = db.session.execute(db.select(User).filter_by(email=email)).scalar_one_or_none()
+    if not user:
+        return jsonify({"msg": "User not found"}), 404
+        
+    pets = db.session.execute(db.select(Pet).where(Pet.user_id == user.id)).scalars().all()
+    return jsonify([pet.serialize() for pet in pets]), 200
+
+@api.route('/pets/<int:pet_id>', methods=['GET'])
+def get_pet(pet_id):
+    pet = db.session.execute(db.select(Pet).where(Pet.id == pet_id)).scalars().first()
+    if not pet:
+        return jsonify({"msg": "Pet not found"}), 404
+    return jsonify(pet.serialize()), 200
+
+@api.route('/pets', methods=['POST'])
+@jwt_required()
+def create_pet():
+    email = get_jwt_identity()
+    user = db.session.execute(db.select(User).filter_by(email=email)).scalar_one_or_none()
+    if not user:
+        return jsonify({"msg": "User not found"}), 404
+
+    body = request.get_json(silent=True)
+    if not body:
+        return jsonify({"msg": "Missing JSON in request"}), 400
+    
+    required_fields = ["name", "animal_type", "size"]
+    for field in required_fields:
+        if field not in body:
+            return jsonify({"msg": f"Missing '{field}' in request"}), 400
+    
+    animal_type = body['animal_type'].strip().lower()
+    race_id = None
+    
+    if animal_type in ["perro", "gato", "dog", "cat"]:
+        if "race_id" not in body or not body["race_id"]:
+            return jsonify({"msg": "Missing 'race_id' in request for Dog or Cat"}), 400
+        
+        race = db.session.execute(db.select(Race).where(Race.id == body['race_id'])).scalars().first()
+        if not race:
+            return jsonify({"msg": "Race not found"}), 404
+        race_id = race.id
+    elif "race_id" in body and body["race_id"]:
+        race = db.session.execute(db.select(Race).where(Race.id == body['race_id'])).scalars().first()
+        if race:
+            race_id = race.id
+
+    new_pet = Pet(
+        name=body['name'],
+        user_id=user.id,
+        animal_type=body['animal_type'],
+        race_id=race_id,
+        size=body['size'],
+        url=body.get('url')
+    )
+    db.session.add(new_pet)
+    try:
+        db.session.commit()
+        return jsonify(new_pet.serialize()), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"msg": str(e)}), 500
+
+@api.route('/pets/<int:pet_id>', methods=['PUT'])
+@jwt_required()
+def update_pet(pet_id):
+    email = get_jwt_identity()
+    user = db.session.execute(db.select(User).filter_by(email=email)).scalar_one_or_none()
+    if not user:
+        return jsonify({"msg": "User not found"}), 404
+
+    pet = db.session.execute(db.select(Pet).where(Pet.id == pet_id)).scalars().first()
+    if not pet:
+        return jsonify({"msg": "Pet not found"}), 404
+
+    if pet.user_id != user.id:
+        return jsonify({"msg": "Unauthorized to update this pet"}), 403
+
+    body = request.get_json(silent=True)
+    if not body:
+        return jsonify({"msg": "Missing JSON in request"}), 400
+
+    if "name" in body:
+        pet.name = body["name"]
+    if "animal_type" in body:
+        pet.animal_type = body["animal_type"]
+    if "race_id" in body:
+        if body["race_id"] is None or body["race_id"] == "":
+            pet.race_id = None
+        else:
+            race = db.session.execute(db.select(Race).where(Race.id == body['race_id'])).scalars().first()
+            if not race:
+                return jsonify({"msg": "Race not found"}), 404
+            pet.race_id = race.id
+    if "size" in body:
+        pet.size = body["size"]
+    if "url" in body:
+        pet.url = body["url"]
+        
+    try:
+        db.session.commit()
+        return jsonify(pet.serialize()), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"msg": str(e)}), 500
+
+@api.route('/pets/<int:pet_id>', methods=['DELETE'])
+@jwt_required()
+def delete_pet(pet_id):
+    email = get_jwt_identity()
+    user = db.session.execute(db.select(User).filter_by(email=email)).scalar_one_or_none()
+    if not user:
+        return jsonify({"msg": "User not found"}), 404
+
+    pet = db.session.execute(db.select(Pet).where(Pet.id == pet_id)).scalars().first()
+    if not pet:
+        return jsonify({"msg": "Pet not found"}), 404
+
+    if pet.user_id != user.id:
+        return jsonify({"msg": "Unauthorized to delete this pet"}), 403
+
+    db.session.delete(pet)
+    try:
+        db.session.commit()
+        return jsonify({"msg": "Pet deleted successfully"}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"msg": str(e)}), 500
+
+
+@api.route("/users/private", methods=['GET'])
+@jwt_required()
+def get_private_user():
+    user_id = get_jwt_identity()
+    user = db.session.execute(select(User).where(User.id == user_id)).scalar_one_or_none()
+    if user is None:
+        return jsonify(response="No user found"), 404
+
+    return jsonify(user.serialize()), 200
+
+@api.route("/users/private", methods=["PUT"])
+@jwt_required()
+def update_private_user():
+    user_id = get_jwt_identity()
+    user = db.session.execute(select(User).where(User.id == user_id)).scalar_one_or_none()
+    if user is None:
+        return jsonify(response="User not found"), 404
+
+    data = request.get_json(silent=True) or {}
+    email = data.get("email")
+    name = data.get("name")
+    password = data.get("password")
+
+    if email is not None:
+        if not isinstance(email, str):
+            return jsonify(response="Email must be a string"), 400
+
+        email_exists = db.session.execute(select(User).where(User.email == email, User.id != user_id)).scalar_one_or_none()
+        if email_exists is not None:
+            return jsonify(response="Unable to update the email"), 400
+        
+        email = email.strip()
+        if len(email) == 0:
+            return jsonify(response="Email cannot be empty")
+        
+        user.email = email
+    
+    if name is not None:
+        if not isinstance(name, str):
+            return jsonify(response="Name must be a string"), 400
+        
+        name = name.strip()
+        if len(name) == 0:
+            return jsonify(response="Name cannot be empty"), 400
+        
+        user.name = name
+    
+    if password is not None:
+        if not isinstance(password, str):
+            return jsonify(response="Password must be a string"), 400
+        
+        password = password.strip()
+
+        if len(password) == 0:
+            return jsonify(response="Password cannot be empty"), 400
+        
+        hashed_password = generate_password_hash(password)
+        user.password = hashed_password
+    
+    db.session.commit()
+   
+    return jsonify(user.serialize()), 200
+
+@api.route("/users/private", methods=["DELETE"])
+@jwt_required()
+def delete_private_user():
+    user_id = get_jwt_identity()
+    user = db.session.execute(select(User).where(User.id == user_id)).scalar_one_or_none()
+    if user is None:
+        return jsonify(response="User not found"), 404
+
+    user.is_active = False
+    db.session.commit()
+
+    return jsonify(response="User deleted"), 200
+
