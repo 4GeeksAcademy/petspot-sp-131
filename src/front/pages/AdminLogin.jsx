@@ -40,11 +40,7 @@ export const AdminLogin = () => {
       const data = await response.json();
 
       if (response.ok) {
-<<<<<<< HEAD
-        localStorage.setItem("tokenAdmin", data.access_token);
-=======
         localStorage.setItem("tokenAdmin", data.token);
->>>>>>> dfec4fe8b8d55fecf7ebb6877d9e835ae7795910
         sessionStorage.setItem("adminLoginSuccess", "Login realizado correctamente");
         navigate(from, { replace: true });
       } else {
@@ -115,7 +111,7 @@ export const AdminLogin = () => {
                 <span>Login</span>
               )}
             </button>
-          </form>
+3          </form>
         </div>
         
         <div className="card-footer text-center py-3 bg-white border-0">
