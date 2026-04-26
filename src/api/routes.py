@@ -952,7 +952,6 @@ def add_reservation():
 
     return jsonify(new_reservation.serialize()), 201
 
-
 @api.route('/reservations/<int:id>', methods=['PUT'])
 def update_reservation(id):
     reservation = db.session.get(Reservation, id)
@@ -1694,4 +1693,147 @@ def add_private_user_favorite():
     db.session.add(new_favorite)
     db.session.commit()
     
-    return jsonify(user.serialize()), 200
+    return jsonify(user.serialize()), 201
+
+@api.route('/users/private/reservations', methods=['POST'])
+@jwt_required()
+def add_private_user_reservation():
+    user_id = get_jwt_identity()
+    user = db.session.execute(select(User).where(User.id == user_id)).scalar_one_or_none()
+    if user is None:
+        return jsonify(response="User not found"), 404
+
+    data = request.get_json(silent=True) or {}
+    place_id = data.get("place_id")
+    reservation_date_str = data.get("reservation_date")
+    reservation_time_str = data.get("reservation_time")
+    people_count = data.get("people_count")
+    pet_count = data.get("pet_count")
+    zone_preference = data.get("zone_preference")
+    notes = data.get("notes")
+
+    if any([
+        place_id is None,
+        reservation_date_str is None,
+        reservation_time_str is None,
+        people_count is None,
+        pet_count is None
+    ]):
+        return jsonify(response="Missing required fields"), 400
+
+    if not all([
+        isinstance(place_id, str),
+        isinstance(reservation_date_str, str),
+        isinstance(reservation_time_str, str),
+        isinstance(people_count, str),
+        isinstance(pet_count, str)
+    ]):
+        return jsonify(response="Place id, date, time, people count and pet count must be strings"), 400
+
+    place_id = place_id.strip()
+    reservation_date_str = reservation_date_str.strip()
+    reservation_time_str = reservation_time_str.strip()
+    people_count = people_count.strip()
+    pet_count = pet_count.strip()
+
+    if zone_preference is not None:
+        if not isinstance(zone_preference, str):
+            return jsonify(response="Zone preference must be a string"), 400
+        
+        zone_preference = zone_preference.strip() or None
+
+    if notes is not None:
+        if not isinstance(notes, str):
+            return jsonify(response="Notes must be a string"), 400
+        
+        notes = notes.strip() or None
+
+    if any([
+        len(place_id) == 0,
+        len(reservation_date_str) == 0,
+        len(reservation_time_str) == 0,
+        len(people_count) == 0,
+        len(pet_count) == 0
+    ]):
+        return jsonify(response="Required fields cannot be empty"), 400
+
+    try:
+        place_id = int(place_id)
+    except (TypeError, ValueError):
+        return jsonify(response="Place id must be a valid integer"), 400
+
+    place = db.session.get(Place, place_id)
+    if not place:
+        return jsonify(response="Place not found"), 404
+
+    try:
+        people_count = int(people_count)
+        pet_count = int(pet_count)
+    except (TypeError, ValueError):
+        return jsonify(response="People count and pet count must be valid integers"), 400
+
+    try:
+        res_date = datetime.strptime(reservation_date_str, '%Y-%m-%d').date()
+        res_time = datetime.strptime(reservation_time_str[:5], '%H:%M').time()
+    except ValueError:
+        return jsonify(response="Invalid date or time format. Use YYYY-MM-DD and HH:MM"), 400
+
+    new_reservation = Reservation(
+        user_id=user_id,
+        place_id=place_id,
+        reservation_date=res_date,
+        reservation_time=res_time,
+        people_count=people_count,
+        pet_count=pet_count,
+        zone_preference=zone_preference,
+        notes=notes,
+        status=ReservationStatus.PENDING
+    )
+
+    db.session.add(new_reservation)
+    db.session.commit()
+
+    return jsonify(new_reservation.serialize()), 201
+
+
+@api.route('/users/private/reservations', methods=['DELETE'])
+@jwt_required()
+def cancel_private_user_reservation():
+    user_id = get_jwt_identity()
+    user = db.session.execute(select(User).where(User.id == user_id)).scalar_one_or_none()
+    if user is None:
+        return jsonify(response="User not found"), 404
+
+    data = request.get_json(silent=True) or {}
+    reservation_id = data.get("reservation_id")
+
+    if reservation_id is None:
+        return jsonify(response="Reservation id is required"), 400
+
+    if not isinstance(reservation_id, str):
+        return jsonify(response="Reservation id must be a string"), 400
+
+    reservation_id = reservation_id.strip()
+    if len(reservation_id) == 0:
+        return jsonify(response="Reservation id cannot be empty"), 400
+
+    try:
+        reservation_id = int(reservation_id)
+    except (TypeError, ValueError):
+        return jsonify(response="Reservation id must be a valid integer"), 400
+
+    reservation = db.session.execute(
+        select(Reservation).where(
+            Reservation.id == reservation_id,
+            Reservation.user_id == user_id
+        )
+    ).scalar_one_or_none()
+    if reservation is None:
+        return jsonify(response="Reservation not found"), 404
+
+    reservation.status = ReservationStatus.CANCELLED
+    db.session.commit()
+
+    return jsonify(reservation.serialize()), 200
+
+

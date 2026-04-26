@@ -106,7 +106,7 @@ function UserPlaceDetailCard() {
                     <span className="fw-bold">Pet rules: </span>{activePlace.pet_rules ? activePlace.pet_rules : "-"}
                 </div>
                 <div className="d-grid d-sm-flex gap-2 justify-content-sm-center mt-5">
-                    <Link to="#" className="btn btn-outline-success">Make a reservation</Link>
+                    <Link to={`/user/private/reservations/add/${id}`} className="btn btn-outline-success">Make a reservation</Link>
                     <button
                         type="button"
                         className={`btn ${isFavorite ? "btn-warning" : "btn-outline-warning"}`}

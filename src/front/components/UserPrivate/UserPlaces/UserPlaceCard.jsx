@@ -96,7 +96,7 @@ function UserPlaceCard({ placeObj }) {
                         <p className="card-text m-0">{pet_rules}</p>
                         <div className="d-grid d-sm-flex gap-2 justify-content-sm-end">
                             <Link to={`/user/private/places/view/${id}`} className="btn btn-outline-primary">View</Link>
-                            <Link to="#" className="btn btn-outline-success">Make a reservation</Link>
+                            <Link to={`/user/private/reservations/add/${id}`} className="btn btn-outline-success">Make a reservation</Link>
                             <button
                                 type="button"
                                 className={`btn ${isFavorite ? "btn-warning" : "btn-outline-warning"} `}
