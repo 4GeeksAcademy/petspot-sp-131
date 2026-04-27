@@ -16,7 +16,7 @@ function UserPlaceCard({ placeObj }) {
 
     async function handleAddToFavorites() {
         try {
-            const userToken = localStorage.getItem("userToken");
+            const userToken = store.userToken;
             const response = await fetch(`${backendUrl}/api/users/private/favorites`, {
                 method: "POST",
                 headers: {
@@ -44,7 +44,7 @@ function UserPlaceCard({ placeObj }) {
 
     async function handleRemoveFromFavorites() {
         try {
-            const userToken = localStorage.getItem("userToken");
+            const userToken = store.userToken;
             const response = await fetch(`${backendUrl}/api/users/private/favorites`, {
                 method: "DELETE",
                 headers: {
