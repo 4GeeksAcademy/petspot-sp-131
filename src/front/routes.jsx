@@ -42,8 +42,6 @@ import EditCity from "./pages/Cities/EditCity";
 import DeleteCity from "./pages/Cities/DeleteCity";
 import CityDetail from "./pages/Cities/CityDetail";
 
-import { LoginUser } from "./pages/LoginUser";
-import { SignupUser } from "./pages/SignupUser";
 import AdminPets from "./pages/Pets/AdminPets";
 
 import Reservations from "./pages/Reservations/Reservations";
@@ -68,6 +66,7 @@ import EditFavorite from "./pages/Favorites/EditFavorite";
 import DeleteFavorite from "./pages/Favorites/DeleteFavorite";
 import FavoriteDetail from "./pages/Favorites/FavoriteDetail";
 
+import { SignupUser } from "./pages/SignupUser";
 import UserLogin from "./pages/UserPrivate/UserLogin.jsx";
 import UserLayout from "./pages/UserPrivate/UserLayout.jsx";
 import UserDashboard from "./pages/UserPrivate/UserDashboard.jsx";
@@ -98,9 +97,8 @@ export const router = createBrowserRouter(
       <Route path="tell-me-more" element={<TellMeMore />} />
       <Route path="demo" element={<Demo />} />
       <Route path="single/:theId" element={<Single />} />
-
-      <Route path="signup/user" element={<SignupUser />} />
       
+      <Route path="signup/user" element={<SignupUser />} />
       <Route path="user/login" element={<UserLogin />} />
       <Route element={<RequireUserAuth/>}>
         <Route path="user/private" element={<UserLayout />}>

@@ -40,9 +40,6 @@ export const Navbar = () => {
 							✨ Tell me more about it
 						</button>
 					</Link>
-					<Link to="/signup/user">
-						<button className="btn btn-success">Signup</button>
-					</Link>
 				</div>
 			</div>
 		</nav>
