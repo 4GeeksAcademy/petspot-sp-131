@@ -100,8 +100,19 @@ const ChatPanelMDB = ({ type }) => {
         const decoded = decodeToken(token);
 
         if (decoded && decoded.sub) {
+            console.log(`DEBUG: Joining room ${type}_${decoded.sub}`);
             socket.emit("join", { id: decoded.sub, type: type });
+        } else {
+            console.warn("DEBUG: No decoded.sub found in token", decoded);
         }
+
+        socket.on("connect", () => {
+            console.log("DEBUG: Socket connected with ID:", socket.id);
+        });
+
+        socket.on("joined", (data) => {
+            console.log("DEBUG: Successfully joined room:", data);
+        });
 
         socket.on("new_message", (msg) => {
             console.log("New real-time message received:", msg);

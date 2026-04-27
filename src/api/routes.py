@@ -912,8 +912,14 @@ def create_chat():
         # Use a dynamic import to avoid circular dependency
         from app import socketio
         serialized_chat = new_chat.serialize()
+        
+        print(f"DEBUG: Emitting new_message to user_{user_id} and place_{place_id}")
+        print(f"DEBUG: Payload: {serialized_chat}")
+        
         socketio.emit('new_message', serialized_chat, room=f"user_{user_id}")
         socketio.emit('new_message', serialized_chat, room=f"place_{place_id}")
+        
+        print("DEBUG: Emission successful")
     except Exception as e:
         print(f"Error emitting socket event: {e}")
 
