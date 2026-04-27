@@ -2,7 +2,7 @@
 import click, random, requests
 from api.cities import cities
 from datetime import datetime
-from api.models import db, User, Place, EstablishmentType, City, Favorite, AdminUser, Review, Reservation, ReservationStatus, Chat, News, PostType, Race
+from api.models import db, User, Place, EstablishmentType, City, Favorite, AdminUser, Review, Reservation, ReservationStatus, Chat, News, PostType, Race, Pet, PetAnimalType, PetSize
 from werkzeug.security import generate_password_hash
 from sqlalchemy import select
 
@@ -376,7 +376,7 @@ def setup_commands(app):
     @app.cli.command("insert-external-races")
     def insert_external_races():
         import os
-        print("Buscando razas en The Dog API...")
+        print("Fetching races from The Dog API...")
         try:
             api_key = os.getenv("DOG_API_KEY")
             headers = {"x-api-key": api_key} if api_key else {}
@@ -393,9 +393,9 @@ def setup_commands(app):
                             db.session.add(new_race)
                             dog_count += 1
                 db.session.commit()
-                print(f"Insertadas {dog_count} razas de Perro.")
+                print(f"Inserted {dog_count} dog races.")
             else:
-                print(f"Error al conectar con The Dog API ({dog_res.status_code}). Usando lista de respaldo...")
+                print(f"Unable to connect to The Dog API ({dog_res.status_code}). Using fallback list...")
                 fallback_dogs = [
                     "Golden Retriever", "Labrador Retriever", "Bulldog", "Poodle", 
                     "Beagle", "Chihuahua", "German Shepherd", "Yorkshire Terrier", 
@@ -410,11 +410,11 @@ def setup_commands(app):
                         db.session.add(new_race)
                         dog_count += 1
                 db.session.commit()
-                print(f"Insertadas {dog_count} razas de Perro (respaldo).")
+                print(f"Inserted {dog_count} dog races from the fallback list.")
         except Exception as e:
-            print(f"Excepcion The Dog API: {e}")
+            print(f"Dog API exception: {e}")
 
-        print("Buscando razas en The Cat API...")
+        print("Fetching races from The Cat API...")
         try:
             cat_res = requests.get('https://api.thecatapi.com/v1/breeds')
             if cat_res.status_code == 200:
@@ -429,8 +429,84 @@ def setup_commands(app):
                             db.session.add(new_race)
                             cat_count += 1
                 db.session.commit()
-                print(f"Insertadas {cat_count} razas de Gato.")
+                print(f"Inserted {cat_count} cat races.")
             else:
-                print("Error al conectar con The Cat API")
+                print(f"Unable to connect to The Cat API ({cat_res.status_code}).")
         except Exception as e:
-            print(f"Excepcion The Cat API: {e}")
+            print(f"Cat API exception: {e}")
+
+    @app.cli.command('insert-test-pets')
+    @click.argument("count")
+    def insert_test_pets(count):
+        users = db.session.execute(select(User)).scalars().all() or None
+        races = db.session.execute(select(Race)).scalars().all() or None
+
+        if users is None:
+            return print("Unable to insert test pets. Make sure users exist in the database")
+
+        if not users:
+            return print("Unable to insert test pets. Make sure users exist in the database")
+
+        dog_races = [race for race in races if race.animal_type == "Perro"] if races else []
+        cat_races = [race for race in races if race.animal_type == "Gato"] if races else []
+
+        other_pet_types = [
+            "Parrot",
+            "Rabbit",
+            "Hamster",
+            "Turtle",
+            "Ferret"
+        ]
+        other_pet_type_urls = {
+            "parrot": "https://images.unsplash.com/photo-1693218722743-eba71402ab37",
+            "rabbit": "https://images.unsplash.com/photo-1589933767411-38a58367efd7",
+            "turtle": "https://images.unsplash.com/photo-1644776986545-a3b246aa77a0",
+            "hamster": "https://images.unsplash.com/photo-1738486310390-7d5bf189b98a",
+            "ferret": "https://images.unsplash.com/photo-1615087240969-eeff2fa558f2"
+        }
+        pet_names = [
+            "Max",
+            "Luna",
+            "Charlie",
+            "Bella",
+            "Rocky",
+            "Milo",
+            "Coco",
+            "Nala"
+        ]
+
+        for x in range(1, int(count) + 1):
+            user = random.choice(users)
+            animal_type = random.choice(list(PetAnimalType))
+            race_id = None
+            other_type = None
+            pet_url = None
+
+            if animal_type == PetAnimalType.DOG and dog_races:
+                selected_race = random.choice(dog_races)
+                race_id = selected_race.id
+                pet_url = selected_race.url
+            elif animal_type == PetAnimalType.CAT and cat_races:
+                selected_race = random.choice(cat_races)
+                race_id = selected_race.id
+                pet_url = selected_race.url
+            else:
+                animal_type = PetAnimalType.OTHER
+                other_type = random.choice(other_pet_types)
+                pet_url = other_pet_type_urls.get(other_type.lower())
+
+            new_pet = Pet(
+                name=f"{random.choice(pet_names)}_{x}",
+                user_id=user.id,
+                animal_type=animal_type,
+                other_type=other_type,
+                race_id=race_id,
+                size=random.choice(list(PetSize)),
+                url=pet_url
+            )
+
+            db.session.add(new_pet)
+            db.session.commit()
+            print(f"Pet {x} added")
+
+        return print("All test pets added")

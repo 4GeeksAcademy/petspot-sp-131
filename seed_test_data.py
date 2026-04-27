@@ -7,6 +7,8 @@ COMMANDS = [
     ["pipenv", "run", "flask", "insert-test-users", "5"],
     ["pipenv", "run", "flask", "insert-test-places", "5"],
     ["pipenv", "run", "flask", "insert-test-admins", "5"],
+    ["pipenv", "run", "flask", "insert-external-races"],
+    ["pipenv", "run", "flask", "insert-test-pets", "5"],
     ["pipenv", "run", "flask", "insert-test-favorites", "5"],
     ["pipenv", "run", "flask", "insert-test-reservations", "5"],
     ["pipenv", "run", "flask", "insert-test-reviews", "5"],

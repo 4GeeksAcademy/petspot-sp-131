@@ -42,13 +42,7 @@ import EditCity from "./pages/Cities/EditCity";
 import DeleteCity from "./pages/Cities/DeleteCity";
 import CityDetail from "./pages/Cities/CityDetail";
 
-import { LoginUser } from "./pages/LoginUser";
-import { SignupUser } from "./pages/SignupUser";
-import PrivateUser from "./pages/PrivateUser";
 import AdminPets from "./pages/Pets/AdminPets";
-import UserPets from "./pages/Pets/UserPets";
-import AddPet from "./pages/Pets/AddPet";
-import EditPet from "./pages/Pets/EditPet";
 
 import Reservations from "./pages/Reservations/Reservations";
 import AddReservation from "./pages/Reservations/AddReservation";
@@ -72,6 +66,7 @@ import EditFavorite from "./pages/Favorites/EditFavorite";
 import DeleteFavorite from "./pages/Favorites/DeleteFavorite";
 import FavoriteDetail from "./pages/Favorites/FavoriteDetail";
 
+import { SignupUser } from "./pages/SignupUser";
 import UserLogin from "./pages/UserPrivate/UserLogin.jsx";
 import UserLayout from "./pages/UserPrivate/UserLayout.jsx";
 import UserDashboard from "./pages/UserPrivate/UserDashboard.jsx";
@@ -88,6 +83,10 @@ import UserAddReviewForm from "./components/UserPrivate/UserReviews/UserAddRevie
 import RequireUserAuth from "./components/UserPrivate/RequireUserAuth.jsx";
 import UserPlaceDetailCard from "./components/UserPrivate/UserPlaces/UserPlaceDetailCard.jsx";
 import UserNewsDetail from "./components/UserPrivate/UserNews/UserNewsDetail.jsx";
+import UserPets from "./pages/UserPrivate/UserPets/UserPets.jsx";
+import UserAddPet from "./pages/UserPrivate/UserPets/UserAddPet.jsx";
+import UserEditPet from "./pages/UserPrivate/UserPets/UserEditPet.jsx";
+import UserDeletePet from "./pages/UserPrivate/UserPets/UserDeletePet.jsx";
 
 import { TellMeMore } from "./pages/TellMeMore";
 
@@ -98,11 +97,8 @@ export const router = createBrowserRouter(
       <Route path="tell-me-more" element={<TellMeMore />} />
       <Route path="demo" element={<Demo />} />
       <Route path="single/:theId" element={<Single />} />
-
-      <Route path="login/user" element={<LoginUser />} />
-      <Route path="signup/user" element={<SignupUser />} />
-      {/* <Route path="private/user" element={<PrivateUser />} /> */}
       
+      <Route path="signup/user" element={<SignupUser />} />
       <Route path="user/login" element={<UserLogin />} />
       <Route element={<RequireUserAuth/>}>
         <Route path="user/private" element={<UserLayout />}>
@@ -112,6 +108,10 @@ export const router = createBrowserRouter(
           <Route path="profile/edit" element={<UserEditProfile />} />
           <Route path="profile/delete" element={<UserDeleteProfile />} />
           <Route path="favorites" element={<UserFavorites />} />
+          <Route path="pets" element={<UserPets />} />
+          <Route path="pets/add" element={<UserAddPet />} />
+          <Route path="pets/edit/:id" element={<UserEditPet />} />
+          <Route path="pets/delete/:id" element={<UserDeletePet />} />
           <Route path="reservations" element={<UserReservations />} />
           <Route path="reservations/add/:id" element={<UserAddReservationForm />} />
           <Route path="reviews" element={<UserReviews />} />
@@ -121,11 +121,6 @@ export const router = createBrowserRouter(
           <Route path="places/view/:id" element={<UserPlaceDetailCard />} />
         </Route>
       </Route>
-
-      <Route path="private/user" element={<PrivateUser />} />
-      <Route path="private/user/pets" element={<UserPets />} />
-      <Route path="private/user/pets/add" element={<AddPet />} />
-      <Route path="private/user/pets/edit/:id" element={<EditPet />} />
 
       <Route path="user" element={<RequireAdmin><User /></RequireAdmin>} />
       <Route path="user/create" element={<RequireAdmin><UserCreate /></RequireAdmin>} />

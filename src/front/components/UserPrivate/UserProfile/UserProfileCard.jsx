@@ -42,7 +42,20 @@ function UserProfileCard() {
             <div className="mb-4">
                 <span className="fw-bold">Email: </span>{store.privateUser.email}
             </div>
+            <div className="mb-4">
+                <span className="fw-bold">Pets: </span>{store.privateUser.pets?.length || 0}
+                {store.privateUser.pets?.length > 0 && (
+                    <div className="mt-2">
+                        {store.privateUser.pets.map((pet) => (
+                            <div key={pet.id} className="small text-body-secondary">
+                                {pet.animal_type} · {pet.name} · {pet.race_name || pet.other_type || pet.animal_type}
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
             <div className="d-grid d-sm-flex gap-2 justify-content-sm-center mt-5">
+                <Link to="/user/private/pets" className="btn btn-outline-primary">Manage pets</Link>
                 <Link to="/user/private/profile/edit" className="btn btn-outline-success">Edit profile</Link>
                 <Link to="/user/private/profile/delete" className="btn btn-outline-danger">Delete account</Link>
             </div>

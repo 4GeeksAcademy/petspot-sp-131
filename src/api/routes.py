@@ -6,7 +6,7 @@ import io
 import json
 import re
 from flask import Flask, request, jsonify, url_for, Blueprint
-from api.models import db, User, Place, EstablishmentType, AdminUser, Review, City, Chat, Reservation, ReservationStatus, Favorite, News, PostType, Race, Pet
+from api.models import db, User, Place, EstablishmentType, AdminUser, Review, City, Chat, Reservation, ReservationStatus, Favorite, News, PostType, Race, Pet, PetAnimalType, PetSize
 from datetime import datetime
 from api.utils import generate_sitemap, APIException
 from flask_cors import CORS
@@ -23,6 +23,36 @@ api = Blueprint('api', __name__)
 
 # Allow CORS requests to this API
 CORS(api)
+
+
+def normalize_pet_animal_type(raw_value):
+    if not isinstance(raw_value, str):
+        raise ValueError("Animal type must be a string")
+
+    normalized = raw_value.strip().lower()
+    if normalized in ["perro", "dog"]:
+        return PetAnimalType.DOG
+    if normalized in ["gato", "cat"]:
+        return PetAnimalType.CAT
+    if normalized in ["otros", "other"]:
+        return PetAnimalType.OTHER
+
+    raise ValueError("Invalid animal type. Use dog, cat, or other")
+
+
+def normalize_pet_size(raw_value):
+    if not isinstance(raw_value, str):
+        raise ValueError("Size must be a string")
+
+    normalized = raw_value.strip().lower()
+    if normalized in ["pequeño", "pequeno", "small"]:
+        return PetSize.SMALL
+    if normalized in ["mediano", "medium"]:
+        return PetSize.MEDIUM
+    if normalized in ["grande", "large"]:
+        return PetSize.LARGE
+
+    raise ValueError("Invalid size. Use small, medium, or large")
 
 
 @api.route('/analyze-pet', methods=['POST'])
@@ -1443,8 +1473,8 @@ def get_pets():
 @api.route('/users/pets', methods=['GET'])
 @jwt_required()
 def get_user_pets():
-    email = get_jwt_identity()
-    user = db.session.execute(db.select(User).filter_by(email=email)).scalar_one_or_none()
+    user_id = get_jwt_identity()
+    user = db.session.execute(db.select(User).where(User.id == user_id)).scalar_one_or_none()
     if not user:
         return jsonify({"msg": "User not found"}), 404
         
@@ -1461,8 +1491,8 @@ def get_pet(pet_id):
 @api.route('/pets', methods=['POST'])
 @jwt_required()
 def create_pet():
-    email = get_jwt_identity()
-    user = db.session.execute(db.select(User).filter_by(email=email)).scalar_one_or_none()
+    user_id = get_jwt_identity()
+    user = db.session.execute(db.select(User).where(User.id == user_id)).scalar_one_or_none()
     if not user:
         return jsonify({"msg": "User not found"}), 404
 
@@ -1475,17 +1505,32 @@ def create_pet():
         if field not in body:
             return jsonify({"msg": f"Missing '{field}' in request"}), 400
     
-    animal_type = body['animal_type'].strip().lower()
+    try:
+        animal_type = normalize_pet_animal_type(body['animal_type'])
+        size = normalize_pet_size(body['size'])
+    except ValueError as error:
+        return jsonify({"msg": str(error)}), 400
+
+    other_type = body.get("other_type")
+    if other_type is not None and not isinstance(other_type, str):
+        return jsonify({"msg": "'other_type' must be a string"}), 400
+
+    other_type = other_type.strip() if isinstance(other_type, str) else None
+    other_type = other_type or None
     race_id = None
     
-    if animal_type in ["perro", "gato", "dog", "cat"]:
+    if animal_type in [PetAnimalType.DOG, PetAnimalType.CAT]:
         if "race_id" not in body or not body["race_id"]:
-            return jsonify({"msg": "Missing 'race_id' in request for Dog or Cat"}), 400
+            return jsonify({"msg": "Missing 'race_id' in request for dog or cat"}), 400
         
         race = db.session.execute(db.select(Race).where(Race.id == body['race_id'])).scalars().first()
         if not race:
             return jsonify({"msg": "Race not found"}), 404
         race_id = race.id
+        other_type = None
+    elif animal_type == PetAnimalType.OTHER:
+        if not other_type:
+            return jsonify({"msg": "Missing 'other_type' in request when animal_type is 'other'"}), 400
     elif "race_id" in body and body["race_id"]:
         race = db.session.execute(db.select(Race).where(Race.id == body['race_id'])).scalars().first()
         if race:
@@ -1494,9 +1539,10 @@ def create_pet():
     new_pet = Pet(
         name=body['name'],
         user_id=user.id,
-        animal_type=body['animal_type'],
+        animal_type=animal_type,
+        other_type=other_type,
         race_id=race_id,
-        size=body['size'],
+        size=size,
         url=body.get('url')
     )
     db.session.add(new_pet)
@@ -1510,8 +1556,8 @@ def create_pet():
 @api.route('/pets/<int:pet_id>', methods=['PUT'])
 @jwt_required()
 def update_pet(pet_id):
-    email = get_jwt_identity()
-    user = db.session.execute(db.select(User).filter_by(email=email)).scalar_one_or_none()
+    user_id = get_jwt_identity()
+    user = db.session.execute(db.select(User).where(User.id == user_id)).scalar_one_or_none()
     if not user:
         return jsonify({"msg": "User not found"}), 404
 
@@ -1526,10 +1572,21 @@ def update_pet(pet_id):
     if not body:
         return jsonify({"msg": "Missing JSON in request"}), 400
 
+    next_animal_type = pet.animal_type
+    next_other_type = pet.other_type
+
     if "name" in body:
         pet.name = body["name"]
     if "animal_type" in body:
-        pet.animal_type = body["animal_type"]
+        try:
+            next_animal_type = normalize_pet_animal_type(body["animal_type"])
+        except ValueError as error:
+            return jsonify({"msg": str(error)}), 400
+    if "other_type" in body:
+        if body["other_type"] is not None and not isinstance(body["other_type"], str):
+            return jsonify({"msg": "'other_type' must be a string"}), 400
+        next_other_type = body["other_type"].strip() if isinstance(body["other_type"], str) else None
+        next_other_type = next_other_type or None
     if "race_id" in body:
         if body["race_id"] is None or body["race_id"] == "":
             pet.race_id = None
@@ -1539,9 +1596,23 @@ def update_pet(pet_id):
                 return jsonify({"msg": "Race not found"}), 404
             pet.race_id = race.id
     if "size" in body:
-        pet.size = body["size"]
+        try:
+            pet.size = normalize_pet_size(body["size"])
+        except ValueError as error:
+            return jsonify({"msg": str(error)}), 400
     if "url" in body:
         pet.url = body["url"]
+
+    if next_animal_type in [PetAnimalType.DOG, PetAnimalType.CAT]:
+        if pet.race_id is None:
+            return jsonify({"msg": "A race is required for dog or cat"}), 400
+        pet.animal_type = next_animal_type
+        pet.other_type = None
+    else:
+        if not next_other_type:
+            return jsonify({"msg": "'other_type' is required when animal_type is 'other'"}), 400
+        pet.animal_type = next_animal_type
+        pet.other_type = next_other_type
         
     try:
         db.session.commit()
@@ -1553,8 +1624,8 @@ def update_pet(pet_id):
 @api.route('/pets/<int:pet_id>', methods=['DELETE'])
 @jwt_required()
 def delete_pet(pet_id):
-    email = get_jwt_identity()
-    user = db.session.execute(db.select(User).filter_by(email=email)).scalar_one_or_none()
+    user_id = get_jwt_identity()
+    user = db.session.execute(db.select(User).where(User.id == user_id)).scalar_one_or_none()
     if not user:
         return jsonify({"msg": "User not found"}), 404
 

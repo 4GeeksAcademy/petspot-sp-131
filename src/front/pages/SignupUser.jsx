@@ -31,7 +31,7 @@ export const SignupUser = () => {
             })
             .then(({ status, data }) => {
                 if (status === 201) {
-                    navigate("/login/user");
+                    navigate("/user/login");
                 } else {
                     setError(data.msg || "Error al registrar usuario");
                 }
