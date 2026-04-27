@@ -40,11 +40,6 @@ export const Navbar = () => {
 							✨ Tell me more about it
 						</button>
 					</Link>
-
-					<Link to="/login/user">
-						<button className="btn btn-outline-primary">Login</button>
-					</Link>
-
 					<Link to="/signup/user">
 						<button className="btn btn-success">Signup</button>
 					</Link>

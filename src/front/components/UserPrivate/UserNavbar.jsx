@@ -47,6 +47,14 @@ function UserNavbar() {
                 <li className="nav-item">
                     <NavLink
                         className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
+                        to="/user/private/pets"
+                    >
+                        Pets
+                    </NavLink>
+                </li>
+                <li className="nav-item">
+                    <NavLink
+                        className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
                         to="/user/private/reservations"
                     >
                         Reservations
