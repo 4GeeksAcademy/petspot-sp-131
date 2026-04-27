@@ -43,7 +43,8 @@ class User(db.Model):
             "name": self.name,
             "email": self.email,
             "favorite_places": [favorite.place_id for favorite in self.favorite_places],
-            "reservations": [reservation.serialize() for reservation in self.reservations]
+            "reservations": [reservation.serialize() for reservation in self.reservations],
+            "reviews": [review.serialize() for review in self.reviews]
         }
 
 class Place(db.Model):
@@ -82,7 +83,8 @@ class Place(db.Model):
             "pet_rules": self.pet_rules,
             "city": self.city.serialize(),
             "favorited_by_users": [favorite.user_id for favorite in self.favorites],
-            "image_url": self.image_url
+            "image_url": self.image_url,
+            "reviews": [review.serialize() for reservation in self.reservations for review in reservation.reviews]
         }
 
 class City(db.Model):
@@ -145,7 +147,10 @@ class Review(db.Model):
         return {
             "id": self.id,
             "user_id": self.user_id,
+            "user_name": self.user.name,
             "reservation_id": self.reservation_id,
+            "place_id": self.reservation.place_id,
+            "place_name": self.reservation.place.name,
             "rating": self.rating,
             "title": self.title,
             "content": self.content,

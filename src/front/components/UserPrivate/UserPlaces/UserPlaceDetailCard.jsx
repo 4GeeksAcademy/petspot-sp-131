@@ -1,7 +1,7 @@
 import useGlobalReducer from "../../../hooks/useGlobalReducer";
 import { useParams } from "react-router-dom";
 import { Link } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
@@ -9,6 +9,7 @@ function UserPlaceDetailCard() {
 
     const { store, dispatch } = useGlobalReducer();
     const { id } = useParams();
+    const [placeReviews, setPlaceReviews] = useState([]);
     const activePlace = store.places.find((place) => place.id === Number(id))
     const isFavorite = (store.privateUser?.favorite_places || []).includes(Number(id));
 
@@ -31,6 +32,24 @@ function UserPlaceDetailCard() {
             }
             getPlaces()
         }, [])
+
+    useEffect(() => {
+        async function getPlaceReviews() {
+            try {
+                const response = await fetch(`${backendUrl}/api/places/${id}/reviews`);
+                if (!response.ok) {
+                    throw new Error(`Request failed with status ${response.status}`);
+                }
+
+                const reviews = await response.json();
+                setPlaceReviews(reviews);
+            } catch (error) {
+                console.error("Unable to load place reviews:", error);
+            }
+        }
+
+        getPlaceReviews();
+    }, [id]);
 
     async function handleAddToFavorites() {
         try {
@@ -134,7 +153,7 @@ function UserPlaceDetailCard() {
                 <div className="mb-3">
                     <span className="fw-bold">Pet rules: </span>{activePlace.pet_rules ? activePlace.pet_rules : "-"}
                 </div>
-                <div className="d-grid d-sm-flex gap-2 justify-content-sm-center mt-5">
+                <div className="d-grid d-sm-flex gap-2 justify-content-sm-center mt-5 mb-3">
                     <Link to={`/user/private/reservations/add/${id}`} className="btn btn-outline-success">Make a reservation</Link>
                     <button
                         type="button"
@@ -143,6 +162,22 @@ function UserPlaceDetailCard() {
                     >
                         ❤︎
                     </button>
+                </div>
+                <div className="mb-3">
+                    <span className="fw-bold">Reviews:</span>
+                    {placeReviews.length > 0 ? (
+                        <div className="mt-3 d-flex flex-column gap-3">
+                            {placeReviews.map((review) => (
+                                <div key={review.id} className="bg-light rounded p-3">
+                                    <div><strong>{review.title}</strong> ({review.rating}/5)</div>
+                                    <div className="text-body-secondary small mb-2">by {review.user_name}</div>
+                                    <div>{review.content}</div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="mt-2 text-body-secondary">No reviews yet.</div>
+                    )}
                 </div>
             </div>
         </>

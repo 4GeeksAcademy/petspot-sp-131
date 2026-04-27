@@ -581,6 +581,22 @@ def delete_review(review_id):
     return jsonify({"msg": "Review eliminada correctamente"}), 200
 
 
+@api.route('/places/<int:place_id>/reviews', methods=['GET'])
+def get_place_reviews(place_id):
+    place = db.session.get(Place, place_id)
+    if place is None:
+        return jsonify(response="Place not found"), 404
+
+    reviews = db.session.execute(
+        select(Review)
+        .join(Reservation, Review.reservation_id == Reservation.id)
+        .where(Reservation.place_id == place_id)
+        .order_by(Review.id.desc())
+    ).scalars().all()
+
+    return jsonify([review.serialize() for review in reviews]), 200
+
+
 @api.route('/cities', methods=['GET'])
 def get_cities():
     cities = db.session.execute(
@@ -1835,5 +1851,103 @@ def cancel_private_user_reservation():
     db.session.commit()
 
     return jsonify(reservation.serialize()), 200
+
+
+@api.route('/users/private/reviews', methods=['GET'])
+@jwt_required()
+def get_private_user_reviews():
+    user_id = get_jwt_identity()
+    user = db.session.execute(select(User).where(User.id == user_id)).scalar_one_or_none()
+    if user is None:
+        return jsonify(response="User not found"), 404
+
+    reviews = db.session.execute(
+        select(Review).where(Review.user_id == user_id).order_by(Review.id.desc())
+    ).scalars().all()
+
+    return jsonify([review.serialize() for review in reviews]), 200
+
+
+@api.route('/users/private/reviews', methods=['POST'])
+@jwt_required()
+def add_private_user_review():
+    user_id = get_jwt_identity()
+    user = db.session.execute(select(User).where(User.id == user_id)).scalar_one_or_none()
+    if user is None:
+        return jsonify(response="User not found"), 404
+
+    data = request.get_json(silent=True) or {}
+    reservation_id = data.get("reservation_id")
+    rating = data.get("rating")
+    title = data.get("title")
+    content = data.get("content")
+
+    if any([reservation_id is None, rating is None, title is None, content is None]):
+        return jsonify(response="Missing required fields"), 400
+
+    if not all([
+        isinstance(reservation_id, str),
+        isinstance(rating, str),
+        isinstance(title, str),
+        isinstance(content, str)
+    ]):
+        return jsonify(response="Reservation id, rating, title and content must be strings"), 400
+
+    reservation_id = reservation_id.strip()
+    rating = rating.strip()
+    title = title.strip()
+    content = content.strip()
+
+    if any([len(reservation_id) == 0, len(rating) == 0, len(title) == 0, len(content) == 0]):
+        return jsonify(response="Required fields cannot be empty"), 400
+
+    try:
+        reservation_id = int(reservation_id)
+    except (TypeError, ValueError):
+        return jsonify(response="Reservation id must be a valid integer"), 400
+
+    try:
+        rating = int(rating)
+    except (TypeError, ValueError):
+        return jsonify(response="Rating must be a valid integer"), 400
+
+    if rating < 1 or rating > 5:
+        return jsonify(response="Rating must be between 1 and 5"), 400
+
+    reservation = db.session.execute(
+        select(Reservation).where(
+            Reservation.id == reservation_id,
+            Reservation.user_id == user_id
+        )
+    ).scalar_one_or_none()
+    if reservation is None:
+        return jsonify(response="Reservation not found"), 404
+
+    if reservation.status != ReservationStatus.CONFIRMED:
+        return jsonify(response="Only confirmed reservations can be reviewed"), 400
+
+    existing_review = db.session.execute(
+        select(Review).where(
+            Review.user_id == user_id,
+            Review.reservation_id == reservation_id
+        )
+    ).scalar_one_or_none()
+    if existing_review is not None:
+        return jsonify(response="A review for this reservation already exists"), 400
+
+    new_review = Review(
+        user_id=user_id,
+        reservation_id=reservation_id,
+        rating=rating,
+        title=title,
+        content=content,
+        created_at=datetime.now().isoformat(),
+        is_active=True
+    )
+
+    db.session.add(new_review)
+    db.session.commit()
+
+    return jsonify(new_review.serialize()), 201
 
 
