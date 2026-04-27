@@ -2,7 +2,11 @@ import useGlobalReducer from "../../../hooks/useGlobalReducer";
 import { useParams } from "react-router-dom";
 import { Link } from "react-router-dom";
 import { useEffect } from "react";
-import { getPlaces, getPrivateUser } from "../../../services/userPrivateService";
+import {
+    getPlaces,
+    handleAddToFavorites,
+    handleRemoveFromFavorites
+} from "../../../services/userPrivateService";
 
 function UserPlaceDetailCard() {
 
@@ -14,20 +18,20 @@ function UserPlaceDetailCard() {
     const isFavorite = (store.privateUser?.favorite_places || []).includes(Number(id));
 
     useEffect(() => {
-            async function loadPlaces() {
-                try {
-                    const responseJSON = await getPlaces();
-                    dispatch({
-                        type: "GET_PLACES",
-                        payload: responseJSON
-                    })
-    
-                } catch (error) {
-                    alert("Unable to load places right now. Please try again.")
-                }
+        async function loadPlaces() {
+            try {
+                const responseJSON = await getPlaces();
+                dispatch({
+                    type: "GET_PLACES",
+                    payload: responseJSON
+                })
+
+            } catch (error) {
+                alert("Unable to load places right now. Please try again.")
             }
-            loadPlaces()
-        }, [])
+        }
+        loadPlaces()
+    }, [])
 
     // useEffect(() => {
     //     async function getPlaceReviews() {
@@ -47,25 +51,9 @@ function UserPlaceDetailCard() {
     //     getPlaceReviews();
     // }, [id]);
 
-    async function handleAddToFavorites() {
+    async function addToFavorites() {
         try {
-            const userToken = localStorage.getItem("userToken");
-            const response = await fetch(`${backendUrl}/api/users/private/favorites`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${userToken}`
-                },
-                body: JSON.stringify({
-                    place_id: id.toString()
-                })
-            });
-
-            if (!response.ok) {
-                throw new Error(`Request failed with status ${response.status}`);
-            }
-
-            const updatedPrivateUser = await response.json();
+            const updatedPrivateUser = await handleAddToFavorites(id);
             dispatch({
                 type: "GET_PRIVATE_USER",
                 payload: updatedPrivateUser
@@ -75,25 +63,9 @@ function UserPlaceDetailCard() {
         }
     }
 
-    async function handleRemoveFromFavorites() {
+    async function removeFromFavorites() {
         try {
-            const userToken = localStorage.getItem("userToken");
-            const response = await fetch(`${backendUrl}/api/users/private/favorites`, {
-                method: "DELETE",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${userToken}`
-                },
-                body: JSON.stringify({
-                    place_id: id.toString()
-                })
-            });
-
-            if (!response.ok) {
-                throw new Error(`Request failed with status ${response.status}`);
-            }
-
-            const updatedPrivateUser = await getPrivateUser();
+            const updatedPrivateUser = await handleRemoveFromFavorites(id);
             dispatch({
                 type: "GET_PRIVATE_USER",
                 payload: updatedPrivateUser
@@ -144,7 +116,7 @@ function UserPlaceDetailCard() {
                     <button
                         type="button"
                         className={`btn ${isFavorite ? "btn-warning" : "btn-outline-warning"}`}
-                        onClick={isFavorite ? handleRemoveFromFavorites : handleAddToFavorites}
+                        onClick={isFavorite ? removeFromFavorites : addToFavorites}
                     >
                         ❤︎
                     </button>

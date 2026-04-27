@@ -1,7 +1,6 @@
 import { Link } from "react-router-dom";
 import useGlobalReducer from "../../../hooks/useGlobalReducer";
-
-const backendUrl = import.meta.env.VITE_BACKEND_URL;
+import { handleRemoveFromFavorites } from "../../../services/userPrivateService";
 
 function UserFavoriteCard({ favPlaceObj }) {
     const { dispatch } = useGlobalReducer();
@@ -13,36 +12,9 @@ function UserFavoriteCard({ favPlaceObj }) {
         cafe: "\u{2615}"
     }
 
-    async function handleRemoveFromFavorites() {
+    async function removeFromFavorites() {
         try {
-            const userToken = localStorage.getItem("userToken");
-            const response = await fetch(`${backendUrl}/api/users/private/favorites`, {
-                method: "DELETE",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${userToken}`
-                },
-                body: JSON.stringify({
-                    place_id: id.toString()
-                })
-            });
-
-            if (!response.ok) {
-                throw new Error(`Request failed with status ${response.status}`);
-            }
-
-            const userResponse = await fetch(`${backendUrl}/api/users/private`, {
-                headers: {
-                    Authorization: `Bearer ${userToken}`
-                }
-            });
-
-            if (!userResponse.ok) {
-                throw new Error(`User request failed with status ${userResponse.status}`);
-            }
-
-            const updatedPrivateUser = await userResponse.json();
-
+            const updatedPrivateUser = await handleRemoveFromFavorites(id);
             dispatch({
                 type: "GET_PRIVATE_USER",
                 payload: updatedPrivateUser
@@ -58,7 +30,7 @@ function UserFavoriteCard({ favPlaceObj }) {
                 <div className="card-body">
                     <div className="card-header d-flex justify-content-between align-items-center bg-secondary-subtle p-0 mb-3">
                         <h5 className="card-title   mb-3 ps-0 h2">{name}</h5>
-                        <button className="btn btn-close" onClick={handleRemoveFromFavorites}></button>
+                        <button className="btn btn-close" onClick={removeFromFavorites}></button>
                     </div>
                     <h6 className="card-subtitle mb-2 text-body-secondary">
                         {establishmentTypeEmoji[establishment_type]}
