@@ -1,14 +1,16 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
+const OTHER_PET_FALLBACK_IMAGE = "https://images.unsplash.com/vector-1738926674638-65961800cd33?q=80&w=1160&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D";
+
 const EditPet = () => {
   const { id } = useParams();
   const [formData, setFormData] = useState({
     name: "",
-    animal_type: "Perro",
-    custom_animal_type: "",
+    animal_type: "dog",
+    other_type: "",
     race_id: "",
-    size: "",
+    size: "medium",
     url: ""
   });
   const [races, setRaces] = useState([]);
@@ -19,11 +21,15 @@ const EditPet = () => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
+  const previewImage = imageFile
+    ? null
+    : formData.url || (formData.animal_type === "other" ? OTHER_PET_FALLBACK_IMAGE : null);
+
   useEffect(() => {
     const token = localStorage.getItem("tokenUser");
     if (!token) {
-        navigate("/login/user");
-        return;
+      navigate("/login/user");
+      return;
     }
     fetchRaces();
     fetchPet();
@@ -35,23 +41,22 @@ const EditPet = () => {
       const response = await fetch(`${backendUrl}/api/pets/${id}`);
       if (response.ok) {
         const data = await response.json();
-        
-        let isCustomType = data.animal_type !== "Perro" && data.animal_type !== "Gato";
-        
+        const isCustomType = data.animal_type === "other";
+
         setFormData({
           name: data.name,
-          animal_type: isCustomType ? "Otros" : data.animal_type,
-          custom_animal_type: isCustomType ? data.animal_type : "",
+          animal_type: data.animal_type,
+          other_type: isCustomType ? (data.other_type || "") : "",
           race_id: data.race_id || "",
           size: data.size,
           url: data.url || ""
         });
       } else {
-        setMessage("No se pudo cargar la mascota");
+        setMessage("Could not load the pet.");
       }
     } catch (error) {
-      console.error("Error al cargar mascota:", error);
-      setMessage("Error al cargar mascota");
+      console.error("Error loading pet:", error);
+      setMessage("Error loading pet.");
     } finally {
       setLoading(false);
     }
@@ -64,16 +69,16 @@ const EditPet = () => {
       const data = await response.json();
       if (response.ok) {
         setRaces(data);
-        // We will update filtered races based on fetched pet type after both fetch
       }
     } catch (error) {
-      console.error("Error al cargar razas:", error);
+      console.error("Error loading races:", error);
     }
   };
 
   useEffect(() => {
-    if (races.length > 0 && (formData.animal_type === "Perro" || formData.animal_type === "Gato")) {
-      setFilteredRaces(races.filter(r => r.animal_type.toLowerCase() === formData.animal_type.toLowerCase()));
+    if (races.length > 0 && (formData.animal_type === "dog" || formData.animal_type === "cat")) {
+      const raceType = formData.animal_type === "dog" ? "perro" : "gato";
+      setFilteredRaces(races.filter((race) => race.animal_type.toLowerCase() === raceType));
     }
   }, [races, formData.animal_type]);
 
@@ -89,36 +94,37 @@ const EditPet = () => {
       });
       const data = await response.json();
       if (response.ok) {
-        alert(data.msg || "Razas importadas correctamente");
+        alert(data.msg || "Races imported successfully");
         fetchRaces();
       } else {
-        alert("Error al importar razas: " + data.msg);
+        alert("Error importing races: " + data.msg);
       }
     } catch (error) {
-      console.error("Error importando razas:", error);
-      alert("Error al conectar con el servidor");
+      console.error("Error importing races:", error);
+      alert("Error connecting to the server");
     }
   };
 
-  const handleAnimalTypeChange = (e) => {
-    const type = e.target.value;
-    setFormData({ ...formData, animal_type: type, race_id: "", custom_animal_type: "" });
-    
-    if (type === "Perro" || type === "Gato") {
-      setFilteredRaces(races.filter(r => r.animal_type.toLowerCase() === type.toLowerCase()));
+  const handleAnimalTypeChange = (event) => {
+    const type = event.target.value;
+    setFormData({ ...formData, animal_type: type, race_id: "", other_type: "" });
+
+    if (type === "dog" || type === "cat") {
+      const raceType = type === "dog" ? "perro" : "gato";
+      setFilteredRaces(races.filter((race) => race.animal_type.toLowerCase() === raceType));
     } else {
       setFilteredRaces([]);
     }
   };
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
+  const handleInputChange = (event) => {
+    const { name, value } = event.target;
     setFormData({ ...formData, [name]: value });
   };
 
-  const handleImageChange = (e) => {
-    if (e.target.files && e.target.files[0]) {
-      setImageFile(e.target.files[0]);
+  const handleImageChange = (event) => {
+    if (event.target.files && event.target.files[0]) {
+      setImageFile(event.target.files[0]);
     }
   };
 
@@ -126,7 +132,7 @@ const EditPet = () => {
     if (!imageFile) return null;
     const uploadData = new FormData();
     uploadData.append("image", imageFile);
-    
+
     try {
       const backendUrl = import.meta.env.VITE_BACKEND_URL;
       const response = await fetch(`${backendUrl}/api/upload`, {
@@ -139,33 +145,29 @@ const EditPet = () => {
       const data = await response.json();
       if (response.ok) {
         return data.url;
-      } else {
-        throw new Error(data.msg || "Error subiendo imagen");
       }
+      throw new Error(data.msg || "Error uploading image");
     } catch (error) {
       console.error("Upload error:", error);
       throw error;
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
     setSubmitting(true);
     setMessage("");
-    
-    // Determine the final animal_type to send
-    const finalAnimalType = formData.animal_type === "Otros" ? formData.custom_animal_type : formData.animal_type;
-    
-    if (formData.animal_type === "Otros" && !finalAnimalType.trim()) {
-      setMessage("Por favor, especifica el tipo de animal.");
+
+    if (formData.animal_type === "other" && !formData.other_type.trim()) {
+      setMessage("Please specify the animal type.");
       setSubmitting(false);
       return;
     }
 
-    if ((formData.animal_type === "Perro" || formData.animal_type === "Gato") && !formData.race_id) {
-        setMessage("Por favor, selecciona una raza.");
-        setSubmitting(false);
-        return;
+    if ((formData.animal_type === "dog" || formData.animal_type === "cat") && !formData.race_id) {
+      setMessage("Please select a race.");
+      setSubmitting(false);
+      return;
     }
 
     let imageUrl = formData.url;
@@ -174,14 +176,15 @@ const EditPet = () => {
         imageUrl = await uploadImage();
       }
     } catch (error) {
-      setMessage("Error al subir la imagen. Por favor, intenta de nuevo.");
+      setMessage("Error uploading the image. Please try again.");
       setSubmitting(false);
       return;
     }
 
     const payload = {
       name: formData.name,
-      animal_type: finalAnimalType,
+      animal_type: formData.animal_type,
+      other_type: formData.animal_type === "other" ? formData.other_type.trim() : null,
       size: formData.size,
       race_id: formData.race_id || null,
       url: imageUrl
@@ -191,7 +194,7 @@ const EditPet = () => {
       const backendUrl = import.meta.env.VITE_BACKEND_URL;
       const response = await fetch(`${backendUrl}/api/pets/${id}`, {
         method: "PUT",
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${localStorage.getItem("tokenUser")}`
         },
@@ -201,18 +204,18 @@ const EditPet = () => {
         navigate("/private/user/pets");
       } else {
         const errorData = await response.json();
-        setMessage(errorData.msg || "Error al actualizar la mascota");
+        setMessage(errorData.msg || "Error updating the pet");
       }
     } catch (error) {
-      console.error("Error al actualizar mascota:", error);
-      setMessage("Error al conectar con el servidor");
+      console.error("Error updating pet:", error);
+      setMessage("Error connecting to the server");
     } finally {
       setSubmitting(false);
     }
   };
 
   if (loading) {
-    return <div className="text-center mt-5"><p>Cargando datos de la mascota...</p></div>;
+    return <div className="text-center mt-5"><p>Loading pet data...</p></div>;
   }
 
   return (
@@ -221,14 +224,14 @@ const EditPet = () => {
         <div className="col-md-8">
           <div className="card shadow-sm">
             <div className="card-header bg-primary text-white">
-              <h3 className="mb-0">Editar Mascota</h3>
+              <h3 className="mb-0">Edit Pet</h3>
             </div>
             <div className="card-body">
               {message && <div className="alert alert-danger">{message}</div>}
 
               <form onSubmit={handleSubmit}>
                 <div className="mb-3">
-                  <label className="form-label">Nombre de la Mascota</label>
+                  <label className="form-label">Pet Name</label>
                   <input
                     type="text"
                     className="form-control"
@@ -236,15 +239,15 @@ const EditPet = () => {
                     value={formData.name}
                     onChange={handleInputChange}
                     required
-                    placeholder="Ej. Rex, Pelusa..."
+                    placeholder="Ex. Rex, Fluffy..."
                   />
                 </div>
 
                 <div className="mb-3">
-                  <label className="form-label">Foto de la Mascota</label>
-                  {formData.url && !imageFile && (
+                  <label className="form-label">Pet Photo</label>
+                  {previewImage && (
                     <div className="mb-2">
-                        <img src={formData.url} alt="Mascota" className="img-thumbnail" style={{ height: "100px" }} />
+                      <img src={previewImage} alt="Pet preview" className="img-thumbnail" style={{ height: "100px" }} />
                     </div>
                   )}
                   <input
@@ -253,84 +256,86 @@ const EditPet = () => {
                     accept="image/*"
                     onChange={handleImageChange}
                   />
-                  <small className="text-muted">Sube una nueva foto si quieres cambiar la actual (opcional).</small>
+                  <small className="text-muted">Upload a new photo if you want to replace the current one (optional).</small>
                 </div>
 
                 <div className="mb-3">
-                  <label className="form-label">Tipo de Animal</label>
-                  <select 
-                    className="form-select" 
-                    name="animal_type" 
-                    value={formData.animal_type} 
+                  <label className="form-label">Animal Type</label>
+                  <select
+                    className="form-select"
+                    name="animal_type"
+                    value={formData.animal_type}
                     onChange={handleAnimalTypeChange}
                   >
-                    <option value="Perro">Perro</option>
-                    <option value="Gato">Gato</option>
-                    <option value="Otros">Otros</option>
+                    <option value="dog">Dog</option>
+                    <option value="cat">Cat</option>
+                    <option value="other">Other</option>
                   </select>
                 </div>
 
-                {formData.animal_type === "Otros" && (
+                {formData.animal_type === "other" && (
                   <div className="mb-3">
-                    <label className="form-label">Especificar Tipo de Animal</label>
+                    <label className="form-label">Specify Animal Type</label>
                     <input
                       type="text"
                       className="form-control"
-                      name="custom_animal_type"
-                      value={formData.custom_animal_type}
+                      name="other_type"
+                      value={formData.other_type}
                       onChange={handleInputChange}
-                      placeholder="Ej. Loro, Hurón, Conejo..."
-                      required={formData.animal_type === "Otros"}
+                      placeholder="Ex. Parrot, Ferret, Rabbit..."
+                      required
                     />
                   </div>
                 )}
 
-                {(formData.animal_type === "Perro" || formData.animal_type === "Gato") && (
+                {(formData.animal_type === "dog" || formData.animal_type === "cat") && (
                   <div className="mb-3">
                     <label className="form-label d-flex justify-content-between align-items-center">
-                      Raza
-                      <button 
-                        type="button" 
+                      Race
+                      <button
+                        type="button"
                         className="btn btn-sm btn-outline-primary"
                         onClick={handleImportRaces}
                       >
-                        Importar Razas
+                        Import Races
                       </button>
                     </label>
-                    <select 
-                      className="form-select" 
-                      name="race_id" 
-                      value={formData.race_id} 
+                    <select
+                      className="form-select"
+                      name="race_id"
+                      value={formData.race_id}
                       onChange={handleInputChange}
                       required
                     >
-                      <option value="">-- Selecciona una raza --</option>
-                      {filteredRaces.map(r => (
-                        <option key={r.id} value={r.id}>{r.name}</option>
+                      <option value="">-- Select a race --</option>
+                      {filteredRaces.map((race) => (
+                        <option key={race.id} value={race.id}>{race.name}</option>
                       ))}
                     </select>
                   </div>
                 )}
 
                 <div className="mb-3">
-                  <label className="form-label">Tamaño / Peso aproximado</label>
-                  <input
-                    type="text"
-                    className="form-control"
+                  <label className="form-label">Size</label>
+                  <select
+                    className="form-select"
                     name="size"
                     value={formData.size}
                     onChange={handleInputChange}
                     required
-                    placeholder="Ej. Pequeño (5kg), Grande (30kg)..."
-                  />
+                  >
+                    <option value="small">Small</option>
+                    <option value="medium">Medium</option>
+                    <option value="large">Large</option>
+                  </select>
                 </div>
 
                 <div className="d-flex justify-content-between mt-4">
                   <Link to="/private/user/pets" className="btn btn-outline-secondary">
-                    Cancelar
+                    Cancel
                   </Link>
                   <button type="submit" className="btn btn-primary" disabled={submitting}>
-                    {submitting ? "Guardando..." : "Guardar Cambios"}
+                    {submitting ? "Saving..." : "Save Changes"}
                   </button>
                 </div>
               </form>

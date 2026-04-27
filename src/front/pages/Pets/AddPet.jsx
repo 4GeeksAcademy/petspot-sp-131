@@ -4,10 +4,10 @@ import { Link, useNavigate } from "react-router-dom";
 const AddPet = () => {
   const [formData, setFormData] = useState({
     name: "",
-    animal_type: "Perro",
-    custom_animal_type: "",
+    animal_type: "dog",
+    other_type: "",
     race_id: "",
-    size: ""
+    size: "medium"
   });
   const [races, setRaces] = useState([]);
   const [filteredRaces, setFilteredRaces] = useState([]);
@@ -19,8 +19,8 @@ const AddPet = () => {
   useEffect(() => {
     const token = localStorage.getItem("tokenUser");
     if (!token) {
-        navigate("/login/user");
-        return;
+      navigate("/login/user");
+      return;
     }
     fetchRaces();
   }, []);
@@ -32,11 +32,10 @@ const AddPet = () => {
       const data = await response.json();
       if (response.ok) {
         setRaces(data);
-        // By default, filter for "Perro" since it's the initial state
-        setFilteredRaces(data.filter(r => r.animal_type.toLowerCase() === "perro"));
+        setFilteredRaces(data.filter((race) => race.animal_type.toLowerCase() === "perro"));
       }
     } catch (error) {
-      console.error("Error al cargar razas:", error);
+      console.error("Error loading races:", error);
     }
   };
 
@@ -52,36 +51,37 @@ const AddPet = () => {
       });
       const data = await response.json();
       if (response.ok) {
-        alert(data.msg || "Razas importadas correctamente");
+        alert(data.msg || "Races imported successfully");
         fetchRaces();
       } else {
-        alert("Error al importar razas: " + data.msg);
+        alert("Error importing races: " + data.msg);
       }
     } catch (error) {
-      console.error("Error importando razas:", error);
-      alert("Error al conectar con el servidor");
+      console.error("Error importing races:", error);
+      alert("Error connecting to the server");
     }
   };
 
-  const handleAnimalTypeChange = (e) => {
-    const type = e.target.value;
-    setFormData({ ...formData, animal_type: type, race_id: "", custom_animal_type: "" });
-    
-    if (type === "Perro" || type === "Gato") {
-      setFilteredRaces(races.filter(r => r.animal_type.toLowerCase() === type.toLowerCase()));
+  const handleAnimalTypeChange = (event) => {
+    const type = event.target.value;
+    setFormData({ ...formData, animal_type: type, race_id: "", other_type: "" });
+
+    if (type === "dog" || type === "cat") {
+      const raceType = type === "dog" ? "perro" : "gato";
+      setFilteredRaces(races.filter((race) => race.animal_type.toLowerCase() === raceType));
     } else {
       setFilteredRaces([]);
     }
   };
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
+  const handleInputChange = (event) => {
+    const { name, value } = event.target;
     setFormData({ ...formData, [name]: value });
   };
 
-  const handleImageChange = (e) => {
-    if (e.target.files && e.target.files[0]) {
-      setImageFile(e.target.files[0]);
+  const handleImageChange = (event) => {
+    if (event.target.files && event.target.files[0]) {
+      setImageFile(event.target.files[0]);
     }
   };
 
@@ -89,7 +89,7 @@ const AddPet = () => {
     if (!imageFile) return null;
     const uploadData = new FormData();
     uploadData.append("image", imageFile);
-    
+
     try {
       const backendUrl = import.meta.env.VITE_BACKEND_URL;
       const response = await fetch(`${backendUrl}/api/upload`, {
@@ -102,32 +102,28 @@ const AddPet = () => {
       const data = await response.json();
       if (response.ok) {
         return data.url;
-      } else {
-        throw new Error(data.msg || "Error subiendo imagen");
       }
+      throw new Error(data.msg || "Error uploading image");
     } catch (error) {
       console.error("Upload error:", error);
       throw error;
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
     setSubmitting(true);
-    
-    // Determine the final animal_type to send
-    const finalAnimalType = formData.animal_type === "Otros" ? formData.custom_animal_type : formData.animal_type;
-    
-    if (formData.animal_type === "Otros" && !finalAnimalType.trim()) {
-      setMessage("Por favor, especifica el tipo de animal.");
+
+    if (formData.animal_type === "other" && !formData.other_type.trim()) {
+      setMessage("Please specify the animal type.");
       setSubmitting(false);
       return;
     }
 
-    if ((formData.animal_type === "Perro" || formData.animal_type === "Gato") && !formData.race_id) {
-        setMessage("Por favor, selecciona una raza.");
-        setSubmitting(false);
-        return;
+    if ((formData.animal_type === "dog" || formData.animal_type === "cat") && !formData.race_id) {
+      setMessage("Please select a race.");
+      setSubmitting(false);
+      return;
     }
 
     let imageUrl = null;
@@ -136,14 +132,15 @@ const AddPet = () => {
         imageUrl = await uploadImage();
       }
     } catch (error) {
-      setMessage("Error al subir la imagen. Por favor, intenta de nuevo.");
+      setMessage("Error uploading the image. Please try again.");
       setSubmitting(false);
       return;
     }
 
     const payload = {
       name: formData.name,
-      animal_type: finalAnimalType,
+      animal_type: formData.animal_type,
+      other_type: formData.animal_type === "other" ? formData.other_type.trim() : null,
       size: formData.size,
       race_id: formData.race_id || null,
       url: imageUrl
@@ -153,7 +150,7 @@ const AddPet = () => {
       const backendUrl = import.meta.env.VITE_BACKEND_URL;
       const response = await fetch(`${backendUrl}/api/pets`, {
         method: "POST",
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${localStorage.getItem("tokenUser")}`
         },
@@ -163,11 +160,11 @@ const AddPet = () => {
         navigate("/private/user/pets");
       } else {
         const errorData = await response.json();
-        setMessage(errorData.msg || "Error al crear la mascota");
+        setMessage(errorData.msg || "Error creating the pet");
       }
     } catch (error) {
-      console.error("Error al crear mascota:", error);
-      setMessage("Error al conectar con el servidor");
+      console.error("Error creating pet:", error);
+      setMessage("Error connecting to the server");
     } finally {
       setSubmitting(false);
     }
@@ -179,14 +176,14 @@ const AddPet = () => {
         <div className="col-md-8">
           <div className="card shadow-sm">
             <div className="card-header bg-success text-white">
-              <h3 className="mb-0">Añadir Nueva Mascota</h3>
+              <h3 className="mb-0">Add New Pet</h3>
             </div>
             <div className="card-body">
               {message && <div className="alert alert-danger">{message}</div>}
 
               <form onSubmit={handleSubmit}>
                 <div className="mb-3">
-                  <label className="form-label">Nombre de la Mascota</label>
+                  <label className="form-label">Pet Name</label>
                   <input
                     type="text"
                     className="form-control"
@@ -194,12 +191,12 @@ const AddPet = () => {
                     value={formData.name}
                     onChange={handleInputChange}
                     required
-                    placeholder="Ej. Rex, Pelusa..."
+                    placeholder="Ex. Rex, Fluffy..."
                   />
                 </div>
 
                 <div className="mb-3">
-                  <label className="form-label">Foto de la Mascota (Opcional)</label>
+                  <label className="form-label">Pet Photo (Optional)</label>
                   <input
                     type="file"
                     className="form-control"
@@ -209,80 +206,82 @@ const AddPet = () => {
                 </div>
 
                 <div className="mb-3">
-                  <label className="form-label">Tipo de Animal</label>
-                  <select 
-                    className="form-select" 
-                    name="animal_type" 
-                    value={formData.animal_type} 
+                  <label className="form-label">Animal Type</label>
+                  <select
+                    className="form-select"
+                    name="animal_type"
+                    value={formData.animal_type}
                     onChange={handleAnimalTypeChange}
                   >
-                    <option value="Perro">Perro</option>
-                    <option value="Gato">Gato</option>
-                    <option value="Otros">Otros</option>
+                    <option value="dog">Dog</option>
+                    <option value="cat">Cat</option>
+                    <option value="other">Other</option>
                   </select>
                 </div>
 
-                {formData.animal_type === "Otros" && (
+                {formData.animal_type === "other" && (
                   <div className="mb-3">
-                    <label className="form-label">Especificar Tipo de Animal</label>
+                    <label className="form-label">Specify Animal Type</label>
                     <input
                       type="text"
                       className="form-control"
-                      name="custom_animal_type"
-                      value={formData.custom_animal_type}
+                      name="other_type"
+                      value={formData.other_type}
                       onChange={handleInputChange}
-                      placeholder="Ej. Loro, Hurón, Conejo..."
-                      required={formData.animal_type === "Otros"}
+                      placeholder="Ex. Parrot, Ferret, Rabbit..."
+                      required
                     />
                   </div>
                 )}
 
-                {(formData.animal_type === "Perro" || formData.animal_type === "Gato") && (
+                {(formData.animal_type === "dog" || formData.animal_type === "cat") && (
                   <div className="mb-3">
                     <label className="form-label d-flex justify-content-between align-items-center">
-                      Raza
-                      <button 
-                        type="button" 
+                      Race
+                      <button
+                        type="button"
                         className="btn btn-sm btn-outline-primary"
                         onClick={handleImportRaces}
                       >
-                        Importar Razas
+                        Import Races
                       </button>
                     </label>
-                    <select 
-                      className="form-select" 
-                      name="race_id" 
-                      value={formData.race_id} 
+                    <select
+                      className="form-select"
+                      name="race_id"
+                      value={formData.race_id}
                       onChange={handleInputChange}
                       required
                     >
-                      <option value="">-- Selecciona una raza --</option>
-                      {filteredRaces.map(r => (
-                        <option key={r.id} value={r.id}>{r.name}</option>
+                      <option value="">-- Select a race --</option>
+                      {filteredRaces.map((race) => (
+                        <option key={race.id} value={race.id}>{race.name}</option>
                       ))}
                     </select>
                   </div>
                 )}
 
                 <div className="mb-3">
-                  <label className="form-label">Tamaño / Peso aproximado</label>
-                  <input
-                    type="text"
-                    className="form-control"
+                  <label className="form-label">Size</label>
+                  <select
+                    className="form-select"
                     name="size"
                     value={formData.size}
                     onChange={handleInputChange}
                     required
-                    placeholder="Ej. Pequeño (5kg), Grande (30kg)..."
-                  />
+                  >
+                    <option value="small">Small</option>
+                    <option value="medium">Medium</option>
+                    <option value="large">Large</option>
+                  </select>
                 </div>
 
                 <div className="d-flex justify-content-between mt-4">
                   <Link to="/private/user/pets" className="btn btn-outline-secondary">
-                    Cancelar
+                    Cancel
                   </Link>
                   <button type="submit" className="btn btn-success" disabled={submitting}>
-                    {submitting ? "Guardando..." : "Guardar Mascota"}
+                    {submitting ? "Saving..." : "Save Pet"}
                   </button>
                 </div>
               </form>
