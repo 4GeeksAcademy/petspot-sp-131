@@ -886,19 +886,20 @@ def create_chat():
     message = data.get("message")
     sender = data.get("sender")
 
-    # If identity is available from JWT, we can use it to validate or set the sender
+    # If identity is available from JWT, we can use it to set the missing ID
     identity = get_jwt_identity()
     if identity:
-        # Check if sender is user or place based on the token context if possible
-        # For simplicity, if they pass user_id/place_id we trust it for now but check presence
-        pass
+        if sender == "user" and not user_id:
+            user_id = identity
+        if sender == "place" and not place_id:
+            place_id = identity
 
     if not all([user_id, place_id, message, sender]):
         return jsonify({"msg": "Missing required fields: user_id, place_id, message, sender"}), 400
 
     new_chat = Chat(
-        user_id=user_id,
-        place_id=place_id,
+        user_id=int(user_id),
+        place_id=int(place_id),
         message=message,
         sender=sender
     )

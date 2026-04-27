@@ -5,7 +5,7 @@ const PrivateUser = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        const token = localStorage.getItem("tokenUser");
+        const token = localStorage.getItem("userToken");
 
         if (!token) {
             navigate("/login/user");
