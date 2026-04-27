@@ -838,7 +838,31 @@ def delete_news(news_id):
 
 @api.route('/chat', methods=['GET'])
 def get_chats():
-    chats = db.session.execute(select(Chat)).scalars().all()
+    chats = db.session.execute(select(Chat).order_by(Chat.created_at.desc())).scalars().all()
+    return jsonify([chat.serialize() for chat in chats]), 200
+
+
+@api.route('/chat/user', methods=['GET'])
+@jwt_required()
+def get_user_chats():
+    user_id = get_jwt_identity()
+    chats = db.session.execute(
+        select(Chat)
+        .where(Chat.user_id == user_id)
+        .order_by(Chat.created_at.desc())
+    ).scalars().all()
+    return jsonify([chat.serialize() for chat in chats]), 200
+
+
+@api.route('/chat/place', methods=['GET'])
+@jwt_required()
+def get_place_chats():
+    place_id = get_jwt_identity()
+    chats = db.session.execute(
+        select(Chat)
+        .where(Chat.place_id == place_id)
+        .order_by(Chat.created_at.desc())
+    ).scalars().all()
     return jsonify([chat.serialize() for chat in chats]), 200
 
 
@@ -851,14 +875,32 @@ def get_chat(chat_id):
 
 
 @api.route('/chat', methods=['POST'])
+@jwt_required(optional=True)
 def create_chat():
     data = request.json
+    if not data:
+        return jsonify({"msg": "Missing body"}), 400
+
+    user_id = data.get("user_id")
+    place_id = data.get("place_id")
+    message = data.get("message")
+    sender = data.get("sender")
+
+    # If identity is available from JWT, we can use it to validate or set the sender
+    identity = get_jwt_identity()
+    if identity:
+        # Check if sender is user or place based on the token context if possible
+        # For simplicity, if they pass user_id/place_id we trust it for now but check presence
+        pass
+
+    if not all([user_id, place_id, message, sender]):
+        return jsonify({"msg": "Missing required fields: user_id, place_id, message, sender"}), 400
 
     new_chat = Chat(
-        user_id=data.get("user_id"),
-        place_id=data.get("place_id"),
-        message=data.get("message"),
-        sender=data.get("sender")
+        user_id=user_id,
+        place_id=place_id,
+        message=message,
+        sender=sender
     )
 
     db.session.add(new_chat)
