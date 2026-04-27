@@ -70,8 +70,8 @@ function UserFavoritesList() {
 
     return (
         <>
-            {favoritePlaces.length > 0
-                ? favoritePlaces.map((favoritePlace) => {
+            {favoritePlaces && favoritePlaces.length > 0
+                ? favoritePlaces.map((favoritePlace, i) => {
                     return <UserFavoriteCard favPlaceObj={favoritePlace} key={favoritePlace.id} />
                 })
                 : (

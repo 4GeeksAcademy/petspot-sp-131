@@ -1,33 +1,70 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import useGlobalReducer from "../../../hooks/useGlobalReducer";
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 function UserAddReviewForm() {
+    const { store, dispatch } = useGlobalReducer();
     const { id } = useParams();
     const navigate = useNavigate();
     const [rating, setRating] = useState("");
     const [title, setTitle] = useState("");
     const [content, setContent] = useState("");
-    const [reservation, setReservation] = useState(null);
+    const [reservation, setReservation] = useState(store.privateUser?.reservations?.find((reservation) => reservation.id === Number(id)) || null);
+
+    
+    // useEffect(() => {
+    //     async function getReservation() {
+    //         try {
+        //             const response = await fetch(`${backendUrl}/api/reservations/${id}`);
+        //             if (!response.ok) {
+            //                 throw new Error(`Reservation request failed with status ${response.status}`);
+    //             }
+    
+    //             const reservationData = await response.json();
+    //             setReservation(reservationData);
+    //         } catch (error) {
+        //             console.error("Unable to load reservation:", error);
+    //         }
+    //     }
+
+    //     getReservation();
+    // }, [id]);
 
     useEffect(() => {
-        async function getReservation() {
-            try {
-                const response = await fetch(`${backendUrl}/api/reservations/${id}`);
-                if (!response.ok) {
-                    throw new Error(`Reservation request failed with status ${response.status}`);
-                }
+        async function getPrivateUser() {
+            if (store.privateUser?.id) {
+                return;
+            }
 
-                const reservationData = await response.json();
-                setReservation(reservationData);
+            try {
+                const userToken = localStorage.getItem("userToken");
+                
+                const response = await fetch(`${backendUrl}/api/users/private`, {
+                    headers: {
+                        Authorization: `Bearer ${userToken}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Request failed with status ${response.status}`);
+                }
+                
+                const responseJSON = await response.json();
+                dispatch({
+                    type: "GET_PRIVATE_USER",
+                    payload: responseJSON
+                });
+
             } catch (error) {
-                console.error("Unable to load reservation:", error);
+                alert("Unable to load your profile right now. Please try again.");
             }
         }
+        
+        getPrivateUser();
+    }, [dispatch, store.privateUser?.id]);
 
-        getReservation();
-    }, [id]);
 
     async function handleSubmit(event) {
         event.preventDefault();

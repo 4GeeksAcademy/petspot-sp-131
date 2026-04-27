@@ -1,11 +1,44 @@
 import { Link, useNavigate } from "react-router-dom";
 import useGlobalReducer from "../../../hooks/useGlobalReducer";
+import { useEffect } from "react";
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 function UserDeleteProfile() {
-    const { dispatch } = useGlobalReducer();
+    const { store, dispatch } = useGlobalReducer();
     const navigate = useNavigate();
+
+    useEffect(() => {
+        async function getPrivateUser() {
+            if (store.privateUser?.id) {
+                return;
+            }
+
+            try {
+                const userToken = localStorage.getItem("userToken");
+
+                const response = await fetch(`${backendUrl}/api/users/private`, {
+                    headers: {
+                        Authorization: `Bearer ${userToken}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Request failed with status ${response.status}`);
+                }
+
+                const responseJSON = await response.json();
+                dispatch({
+                    type: "GET_PRIVATE_USER",
+                    payload: responseJSON
+                });
+            } catch (error) {
+                alert("Unable to load your profile right now. Please try again.");
+            }
+        }
+
+        getPrivateUser();
+    }, [dispatch, store.privateUser?.id]);
 
     async function handleDeleteAccount() {
         try {

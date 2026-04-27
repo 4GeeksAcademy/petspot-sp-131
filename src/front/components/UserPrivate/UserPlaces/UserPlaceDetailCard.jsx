@@ -9,12 +9,13 @@ function UserPlaceDetailCard() {
 
     const { store, dispatch } = useGlobalReducer();
     const { id } = useParams();
-    const [placeReviews, setPlaceReviews] = useState([]);
+    // const [placeReviews, setPlaceReviews] = useState([]);
     const activePlace = store.places.find((place) => place.id === Number(id))
+    const placeReviews = activePlace.reviews
     const isFavorite = (store.privateUser?.favorite_places || []).includes(Number(id));
 
     useEffect(() => {
-            async function getPlaces() {
+            async function getPlaces() {    
                 try {
                     const response = await fetch(`${backendUrl}/api/places`)
                     if (!response.ok) {
@@ -33,23 +34,23 @@ function UserPlaceDetailCard() {
             getPlaces()
         }, [])
 
-    useEffect(() => {
-        async function getPlaceReviews() {
-            try {
-                const response = await fetch(`${backendUrl}/api/places/${id}/reviews`);
-                if (!response.ok) {
-                    throw new Error(`Request failed with status ${response.status}`);
-                }
+    // useEffect(() => {
+    //     async function getPlaceReviews() {
+    //         try {
+    //             const response = await fetch(`${backendUrl}/api/places/${id}/reviews`);
+    //             if (!response.ok) {
+    //                 throw new Error(`Request failed with status ${response.status}`);
+    //             }
 
-                const reviews = await response.json();
-                setPlaceReviews(reviews);
-            } catch (error) {
-                console.error("Unable to load place reviews:", error);
-            }
-        }
+    //             const reviews = await response.json();
+    //             setPlaceReviews(reviews);
+    //         } catch (error) {
+    //             console.error("Unable to load place reviews:", error);
+    //         }
+    //     }
 
-        getPlaceReviews();
-    }, [id]);
+    //     getPlaceReviews();
+    // }, [id]);
 
     async function handleAddToFavorites() {
         try {

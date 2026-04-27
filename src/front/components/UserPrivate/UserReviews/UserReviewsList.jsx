@@ -1,38 +1,74 @@
 import { useEffect, useState } from "react";
 import UserReviewCard from "./UserReviewCard";
+import useGlobalReducer from "../../../hooks/useGlobalReducer";
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 function UserReviewsList() {
-    const [reviews, setReviews] = useState([]);
+    // const [reviews, setReviews] = useState([]);
+    const { store, dispatch } = useGlobalReducer();
+    const reviews = store.privateUser.reviews || []
+    
+
+    // useEffect(() => {
+    //     async function getPrivateUserReviews() {
+    //         try {
+    //             const userToken = localStorage.getItem("userToken");
+    //             if (!userToken) {
+    //                 return;
+    //             }
+
+    //             const response = await fetch(`${backendUrl}/api/users/private/reviews`, {
+    //                 headers: {
+    //                     Authorization: `Bearer ${userToken}`
+    //                 }
+    //             });
+
+    //             if (!response.ok) {
+    //                 throw new Error(`Reviews request failed with status ${response.status}`);
+    //             }
+
+    //             const privateReviews = await response.json();
+    //             setReviews(privateReviews);
+    //         } catch (error) {
+    //             console.error("Unable to load private reviews:", error);
+    //         }
+    //     }
+
+    //     getPrivateUserReviews();
+    // }, []);
 
     useEffect(() => {
-        async function getPrivateUserReviews() {
+        async function getPrivateUser() {
+            // if (store.privateUser?.id) {
+            //     return;
+            // }
+
             try {
                 const userToken = localStorage.getItem("userToken");
-                if (!userToken) {
-                    return;
-                }
 
-                const response = await fetch(`${backendUrl}/api/users/private/reviews`, {
+                const response = await fetch(`${backendUrl}/api/users/private`, {
                     headers: {
                         Authorization: `Bearer ${userToken}`
                     }
                 });
 
                 if (!response.ok) {
-                    throw new Error(`Reviews request failed with status ${response.status}`);
+                    throw new Error(`Request failed with status ${response.status}`);
                 }
 
-                const privateReviews = await response.json();
-                setReviews(privateReviews);
+                const responseJSON = await response.json();
+                dispatch({
+                    type: "GET_PRIVATE_USER",
+                    payload: responseJSON
+                });
             } catch (error) {
-                console.error("Unable to load private reviews:", error);
+                alert("Unable to load your profile right now. Please try again.");
             }
         }
 
-        getPrivateUserReviews();
-    }, []);
+        getPrivateUser();
+    }, [dispatch, store.privateUser?.id]);
 
     return (
         <>

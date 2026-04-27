@@ -1926,14 +1926,14 @@ def add_private_user_review():
     if reservation.status != ReservationStatus.CONFIRMED:
         return jsonify(response="Only confirmed reservations can be reviewed"), 400
 
-    existing_review = db.session.execute(
-        select(Review).where(
-            Review.user_id == user_id,
-            Review.reservation_id == reservation_id
-        )
-    ).scalar_one_or_none()
-    if existing_review is not None:
-        return jsonify(response="A review for this reservation already exists"), 400
+    # existing_review = db.session.execute(
+    #     select(Review).where(
+    #         Review.user_id == user_id,
+    #         Review.reservation_id == reservation_id
+    #     )
+    # ).scalar_one_or_none()
+    # if existing_review is not None:
+    #     return jsonify(response="A review for this reservation already exists"), 400
 
     new_review = Review(
         user_id=user_id,
