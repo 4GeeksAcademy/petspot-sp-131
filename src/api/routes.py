@@ -848,7 +848,7 @@ def get_user_chats():
     user_id = get_jwt_identity()
     chats = db.session.execute(
         select(Chat)
-        .where(Chat.user_id == user_id)
+        .where(Chat.user_id == int(user_id))
         .order_by(Chat.created_at.desc())
     ).scalars().all()
     return jsonify([chat.serialize() for chat in chats]), 200
@@ -860,7 +860,7 @@ def get_place_chats():
     place_id = get_jwt_identity()
     chats = db.session.execute(
         select(Chat)
-        .where(Chat.place_id == place_id)
+        .where(Chat.place_id == int(place_id))
         .order_by(Chat.created_at.desc())
     ).scalars().all()
     return jsonify([chat.serialize() for chat in chats]), 200
@@ -909,7 +909,8 @@ def create_chat():
 
     # Emit socket event for real-time update
     try:
-        from ..app import socketio
+        # Use a dynamic import to avoid circular dependency
+        from app import socketio
         serialized_chat = new_chat.serialize()
         socketio.emit('new_message', serialized_chat, room=f"user_{user_id}")
         socketio.emit('new_message', serialized_chat, room=f"place_{place_id}")
