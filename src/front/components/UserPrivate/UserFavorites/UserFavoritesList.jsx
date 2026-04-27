@@ -1,21 +1,15 @@
 import UserFavoriteCard from "./UserFavoriteCard";
 import useGlobalReducer from "../../../hooks/useGlobalReducer";
 import { useEffect } from "react";
-
-const backendUrl = import.meta.env.VITE_BACKEND_URL;
+import { getPlaces, getPrivateUser } from "../../../services/userPrivateService";
 
 function UserFavoritesList() {
     const { store, dispatch } = useGlobalReducer();
 
     useEffect(() => {
-        async function getPlaces() {
+        async function loadPlaces() {
             try {
-                const response = await fetch(`${backendUrl}/api/places`);
-                if (!response.ok) {
-                    throw new Error(`Places request failed with status ${response.status}`);
-                }
-
-                const places = await response.json();
+                const places = await getPlaces();
                 dispatch({
                     type: "GET_PLACES",
                     payload: places
@@ -25,28 +19,17 @@ function UserFavoritesList() {
             }
         }
 
-        getPlaces();
+        loadPlaces();
     }, [dispatch, store.places.length]);
 
     useEffect(() => {
-        async function getPrivateUser() {
+        async function loadPrivateUser() {
             try {
-                const userToken = localStorage.getItem("userToken");
-                if (!userToken) {
+                const privateUser = await getPrivateUser();
+                if (!privateUser) {
                     return;
                 }
 
-                const response = await fetch(`${backendUrl}/api/users/private`, {
-                    headers: {
-                        Authorization: `Bearer ${userToken}`
-                    }
-                });
-
-                if (!response.ok) {
-                    throw new Error(`User request failed with status ${response.status}`);
-                }
-
-                const privateUser = await response.json();
                 dispatch({
                     type: "GET_PRIVATE_USER",
                     payload: privateUser
@@ -56,7 +39,7 @@ function UserFavoritesList() {
             }
         }
 
-        getPrivateUser();
+        loadPrivateUser();
     }, [dispatch, store.privateUser?.id]);
 
     const allPlaces = store.places;

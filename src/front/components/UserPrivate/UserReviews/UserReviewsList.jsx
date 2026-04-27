@@ -1,8 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import UserReviewCard from "./UserReviewCard";
 import useGlobalReducer from "../../../hooks/useGlobalReducer";
-
-const backendUrl = import.meta.env.VITE_BACKEND_URL;
+import { getPrivateUser } from "../../../services/userPrivateService";
 
 function UserReviewsList() {
     // const [reviews, setReviews] = useState([]);
@@ -39,25 +38,13 @@ function UserReviewsList() {
     // }, []);
 
     useEffect(() => {
-        async function getPrivateUser() {
+        async function loadPrivateUser() {
             // if (store.privateUser?.id) {
             //     return;
             // }
 
             try {
-                const userToken = localStorage.getItem("userToken");
-
-                const response = await fetch(`${backendUrl}/api/users/private`, {
-                    headers: {
-                        Authorization: `Bearer ${userToken}`
-                    }
-                });
-
-                if (!response.ok) {
-                    throw new Error(`Request failed with status ${response.status}`);
-                }
-
-                const responseJSON = await response.json();
+                const responseJSON = await getPrivateUser();
                 dispatch({
                     type: "GET_PRIVATE_USER",
                     payload: responseJSON
@@ -67,7 +54,7 @@ function UserReviewsList() {
             }
         }
 
-        getPrivateUser();
+        loadPrivateUser();
     }, [dispatch, store.privateUser?.id]);
 
     return (

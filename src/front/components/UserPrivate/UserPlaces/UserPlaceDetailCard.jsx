@@ -1,9 +1,8 @@
 import useGlobalReducer from "../../../hooks/useGlobalReducer";
 import { useParams } from "react-router-dom";
 import { Link } from "react-router-dom";
-import { useEffect, useState } from "react";
-
-const backendUrl = import.meta.env.VITE_BACKEND_URL;
+import { useEffect } from "react";
+import { getPlaces, getPrivateUser } from "../../../services/userPrivateService";
 
 function UserPlaceDetailCard() {
 
@@ -11,17 +10,13 @@ function UserPlaceDetailCard() {
     const { id } = useParams();
     // const [placeReviews, setPlaceReviews] = useState([]);
     const activePlace = store.places.find((place) => place.id === Number(id))
-    const placeReviews = activePlace.reviews
+    const placeReviews = activePlace?.reviews || []
     const isFavorite = (store.privateUser?.favorite_places || []).includes(Number(id));
 
     useEffect(() => {
-            async function getPlaces() {    
+            async function loadPlaces() {
                 try {
-                    const response = await fetch(`${backendUrl}/api/places`)
-                    if (!response.ok) {
-                        throw new Error(`Request failed with status ${response.status}`)
-                    }
-                    const responseJSON = await response.json()
+                    const responseJSON = await getPlaces();
                     dispatch({
                         type: "GET_PLACES",
                         payload: responseJSON
@@ -31,7 +26,7 @@ function UserPlaceDetailCard() {
                     alert("Unable to load places right now. Please try again.")
                 }
             }
-            getPlaces()
+            loadPlaces()
         }, [])
 
     // useEffect(() => {
@@ -98,17 +93,7 @@ function UserPlaceDetailCard() {
                 throw new Error(`Request failed with status ${response.status}`);
             }
 
-            const userResponse = await fetch(`${backendUrl}/api/users/private`, {
-                headers: {
-                    Authorization: `Bearer ${userToken}`
-                }
-            });
-
-            if (!userResponse.ok) {
-                throw new Error(`User request failed with status ${userResponse.status}`);
-            }
-
-            const updatedPrivateUser = await userResponse.json();
+            const updatedPrivateUser = await getPrivateUser();
             dispatch({
                 type: "GET_PRIVATE_USER",
                 payload: updatedPrivateUser

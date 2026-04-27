@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import useGlobalReducer from "../../../hooks/useGlobalReducer";
+import { getPlaces, getPrivateUser } from "../../../services/userPrivateService";
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
@@ -17,18 +18,13 @@ function UserAddReservationForm() {
     const [notes, setNotes] = useState("");
 
     useEffect(() => {
-        async function getPlaces() {
+        async function loadPlaces() {
             try {
                 if (store.places.length > 0) {
                     return;
                 }
 
-                const response = await fetch(`${backendUrl}/api/places`);
-                if (!response.ok) {
-                    throw new Error(`Places request failed with status ${response.status}`);
-                }
-
-                const places = await response.json();
+                const places = await getPlaces();
                 dispatch({
                     type: "GET_PLACES",
                     payload: places
@@ -38,29 +34,18 @@ function UserAddReservationForm() {
             }
         }
 
-        getPlaces();
+        loadPlaces();
     }, [dispatch, store.places.length]);
 
     const selectedPlace = store.places.find((place) => place.id === Number(id));
 
-    async function getPrivateUser() {
+    async function loadPrivateUser() {
         try {
-            const userToken = localStorage.getItem("userToken");
-            if (!userToken) {
+            const privateUser = await getPrivateUser();
+            if (!privateUser) {
                 return;
             }
 
-            const response = await fetch(`${backendUrl}/api/users/private`, {
-                headers: {
-                    Authorization: `Bearer ${userToken}`
-                }
-            });
-
-            if (!response.ok) {
-                throw new Error(`User request failed with status ${response.status}`);
-            }
-
-            const privateUser = await response.json();
             dispatch({
                 type: "GET_PRIVATE_USER",
                 payload: privateUser
@@ -107,7 +92,7 @@ function UserAddReservationForm() {
                 return;
             }
 
-            await getPrivateUser();
+            await loadPrivateUser();
             navigate("/user/private/reservations");
         } catch (error) {
             alert("Unable to add the reservation right now. Please try again.");
