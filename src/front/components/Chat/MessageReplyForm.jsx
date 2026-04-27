@@ -11,7 +11,9 @@ const MessageReplyForm = ({ recipient, type, onMessageSent, onCancel }) => {
         setLoading(true);
         try {
             const backendUrl = import.meta.env.VITE_BACKEND_URL;
-            const token = type === "user" ? localStorage.getItem("userToken") : localStorage.getItem("token_place");
+            const token = type === "user" 
+                ? (localStorage.getItem("userToken") || localStorage.getItem("tokenUser")) 
+                : localStorage.getItem("token_place");
             
             const response = await fetch(`${backendUrl}/api/chat`, {
                 method: "POST",

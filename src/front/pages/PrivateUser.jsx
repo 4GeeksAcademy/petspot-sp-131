@@ -16,9 +16,12 @@ const PrivateUser = () => {
         <div className="text-center mt-5">
             <h1>Private User Area</h1>
             <p>You are logged in.</p>
-            <div className="mt-4">
+            <div className="mt-4 d-flex justify-content-center gap-2">
                 <Link to="/private/user/pets" className="btn btn-primary">
                     Gestionar mis Mascotas
+                </Link>
+                <Link to="/private/user/chats" className="btn btn-outline-primary">
+                    Mis Mensajes
                 </Link>
             </div>
         </div>

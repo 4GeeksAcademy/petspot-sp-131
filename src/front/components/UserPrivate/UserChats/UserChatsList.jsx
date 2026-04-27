@@ -10,7 +10,7 @@ function UserChatsList() {
     const fetchMessages = async () => {
         try {
             const backendUrl = import.meta.env.VITE_BACKEND_URL;
-            const token = localStorage.getItem("userToken");
+            const token = localStorage.getItem("userToken") || localStorage.getItem("tokenUser");
             const response = await fetch(`${backendUrl}/api/chat/user`, {
                 headers: {
                     "Authorization": `Bearer ${token}`
