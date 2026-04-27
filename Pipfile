@@ -24,6 +24,8 @@ colorama = "*"
 google-generativeai = "*"
 pillow = "*"
 requests = "*"
+flask-socketio = "*"
+eventlet = "*"
 
 [requires]
 python_version = "3.13"

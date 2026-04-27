@@ -907,6 +907,15 @@ def create_chat():
     db.session.add(new_chat)
     db.session.commit()
 
+    # Emit socket event for real-time update
+    try:
+        from ..app import socketio
+        serialized_chat = new_chat.serialize()
+        socketio.emit('new_message', serialized_chat, room=f"user_{user_id}")
+        socketio.emit('new_message', serialized_chat, room=f"place_{place_id}")
+    except Exception as e:
+        print(f"Error emitting socket event: {e}")
+
     return jsonify(new_chat.serialize()), 201
 
 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { io } from "socket.io-client";
 import "../../styles/chatMdb.css";
 
 const ChatPanelMDB = ({ type }) => {
@@ -6,18 +7,32 @@ const ChatPanelMDB = ({ type }) => {
     const [loading, setLoading] = useState(true);
     const [conversations, setConversations] = useState([]);
     const [selectedConvId, setSelectedConvId] = useState(null);
-    const selectedConvIdRef = useRef(null); // Ref to avoid stale closures in setInterval
+    const selectedConvIdRef = useRef(null); 
+    const socketRef = useRef(null);
+
+    const [unreadCounts, setUnreadCounts] = useState({});
 
     const updateSelectedConvId = (id) => {
         setSelectedConvId(id);
         selectedConvIdRef.current = id;
+        // Reset unread count for the selected conversation
+        setUnreadCounts(prev => ({ ...prev, [id]: 0 }));
     };
 
     const [newMessage, setNewMessage] = useState("");
     const [sending, setSending] = useState(false);
     const scrollRef = useRef(null);
 
+    const decodeToken = (token) => {
+        try {
+            return JSON.parse(atob(token.split('.')[1]));
+        } catch (e) {
+            return null;
+        }
+    };
+
     const fetchMessages = async (isInitial = false) => {
+        // ... (rest of the function remains same)
         try {
             if (isInitial) setLoading(true);
             const backendUrl = import.meta.env.VITE_BACKEND_URL;
@@ -35,7 +50,7 @@ const ChatPanelMDB = ({ type }) => {
             if (response.ok) {
                 const data = await response.json();
                 setMessages(data);
-                groupConversations(data, isInitial);
+                groupConversations(data);
             }
         } catch (error) {
             console.error("Error fetching messages:", error);
@@ -44,7 +59,7 @@ const ChatPanelMDB = ({ type }) => {
         }
     };
 
-    const groupConversations = (allMessages, isInitial) => {
+    const groupConversations = (allMessages) => {
         const convMap = {};
         const sorted = [...allMessages].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
         
@@ -66,7 +81,6 @@ const ChatPanelMDB = ({ type }) => {
         const convList = Object.values(convMap);
         setConversations(convList);
         
-        // Only set initial conversation if none is selected yet
         if (convList.length > 0 && selectedConvIdRef.current === null) {
             updateSelectedConvId(convList[0].id);
         }
@@ -74,13 +88,46 @@ const ChatPanelMDB = ({ type }) => {
 
     useEffect(() => {
         fetchMessages(true);
-        
-        // Polling interval for auto-refresh (3 seconds)
-        const intervalId = setInterval(() => {
-            fetchMessages(false);
-        }, 3000);
 
-        return () => clearInterval(intervalId);
+        const backendUrl = import.meta.env.VITE_BACKEND_URL;
+        const socket = io(backendUrl);
+        socketRef.current = socket;
+
+        const tokenKey = type === "user" ? (localStorage.getItem("tokenUser") ? "tokenUser" : "userToken") : "token_place";
+        const token = localStorage.getItem(tokenKey);
+        const decoded = decodeToken(token);
+
+        if (decoded && decoded.sub) {
+            socket.emit("join", { id: decoded.sub, type: type });
+        }
+
+        socket.on("new_message", (msg) => {
+            console.log("New real-time message received:", msg);
+            
+            const senderId = msg.sender === "user" ? msg.user_id : msg.place_id;
+            const otherId = type === "user" ? msg.place_id : msg.user_id;
+
+            setMessages(prev => {
+                if (prev.find(m => m.id === msg.id)) return prev;
+                const updated = [msg, ...prev];
+                groupConversations(updated);
+                return updated;
+            });
+
+            // Increment unread count if message is from the other person and not the selected conversation
+            if (msg.sender !== type && otherId !== selectedConvIdRef.current) {
+                setUnreadCounts(prev => ({
+                    ...prev,
+                    [otherId]: (prev[otherId] || 0) + 1
+                }));
+            }
+        });
+
+        return () => {
+            if (socketRef.current) {
+                socketRef.current.disconnect();
+            }
+        };
     }, [type]);
 
     useEffect(() => {
@@ -179,10 +226,15 @@ const ChatPanelMDB = ({ type }) => {
                                                         </p>
                                                     </div>
                                                 </div>
-                                                <div className="pt-1">
+                                                <div className="pt-1 text-end">
                                                     <p className="small text-muted opacity-50 mb-1">
                                                         {new Date(conv.lastMessage.created_at).toLocaleDateString([], { day: '2-digit', month: '2-digit' })}
                                                     </p>
+                                                    {unreadCounts[conv.id] > 0 && (
+                                                        <span className="badge bg-danger rounded-pill">
+                                                            {unreadCounts[conv.id] > 99 ? '99+' : unreadCounts[conv.id]}
+                                                        </span>
+                                                    )}
                                                 </div>
                                             </div>
                                         </li>
