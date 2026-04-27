@@ -83,6 +83,8 @@ import UserDeleteProfile from "./components/UserPrivate/UserProfile/UserDeletePr
 import UserEditProfile from "./components/UserPrivate/UserProfile/UserEditProfile.jsx";
 import UserReservations from "./pages/UserPrivate/UserReservations/UserReservations.jsx";
 import UserAddReservationForm from "./components/UserPrivate/UserReservations/UserAddReservationForm.jsx";
+import UserReviews from "./pages/UserPrivate/UserReviews/UserReviews.jsx";
+import UserAddReviewForm from "./components/UserPrivate/UserReviews/UserAddReviewForm.jsx";
 import RequireUserAuth from "./components/UserPrivate/RequireUserAuth.jsx";
 import UserPlaceDetailCard from "./components/UserPrivate/UserPlaces/UserPlaceDetailCard.jsx";
 import UserNewsDetail from "./components/UserPrivate/UserNews/UserNewsDetail.jsx";
@@ -112,6 +114,8 @@ export const router = createBrowserRouter(
           <Route path="favorites" element={<UserFavorites />} />
           <Route path="reservations" element={<UserReservations />} />
           <Route path="reservations/add/:id" element={<UserAddReservationForm />} />
+          <Route path="reviews" element={<UserReviews />} />
+          <Route path="reviews/add/:id" element={<UserAddReviewForm />} />
           <Route path="news" element={<UserNews />} />
           <Route path="news/:id" element={<UserNewsDetail />} />
           <Route path="places/view/:id" element={<UserPlaceDetailCard />} />

@@ -48,6 +48,9 @@ function UserReservationCard({ reservationObj, onCancelReservation }) {
                     )}
                     <div className="mt-4 d-grid d-sm-flex gap-2 justify-content-sm-end">
                         <Link to={`/user/private/places/view/${place_id}`} className="btn btn-outline-primary">View</Link>
+                        {status === "confirmed" && (
+                            <Link to={`/user/private/reviews/add/${id}`} className="btn btn-outline-warning">Write a review</Link>
+                        )}
                         <button type="button" className="btn btn-outline-success">
                             Open Chat
                         </button>
