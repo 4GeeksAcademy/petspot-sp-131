@@ -47,6 +47,10 @@ setup_admin(app)
 # add the commands
 setup_commands(app)
 
+# Import sockets to register events
+from api.sockets import setup_sockets
+setup_sockets(socketio)
+
 # Add all endpoints from the API with a "api" prefix
 app.register_blueprint(api, url_prefix='/api')
 

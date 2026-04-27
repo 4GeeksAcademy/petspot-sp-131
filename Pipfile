@@ -31,7 +31,7 @@ eventlet = "*"
 python_version = "3.13"
 
 [scripts]
-start="flask run -p 3001 -h 0.0.0.0"
+start="python src/app.py"
 init="flask db init"
 migrate="flask db migrate"
 local="heroku local"
