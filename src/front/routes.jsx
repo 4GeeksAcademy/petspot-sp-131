@@ -46,7 +46,6 @@ import CityDetail from "./pages/Cities/CityDetail";
 import { LoginUser } from "./pages/LoginUser";
 import { SignupUser } from "./pages/SignupUser";
 import PrivateUser from "./pages/PrivateUser";
-import PrivateUserChats from "./pages/PrivateUserChats";
 import AdminPets from "./pages/Pets/AdminPets";
 import UserPets from "./pages/Pets/UserPets";
 import AddPet from "./pages/Pets/AddPet";
@@ -125,7 +124,6 @@ export const router = createBrowserRouter(
       </Route>
 
       <Route path="private/user" element={<PrivateUser />} />
-      <Route path="private/user/chats" element={<PrivateUserChats />} />
       <Route path="private/user/pets" element={<UserPets />} />
       <Route path="private/user/pets/add" element={<AddPet />} />
       <Route path="private/user/pets/edit/:id" element={<EditPet />} />

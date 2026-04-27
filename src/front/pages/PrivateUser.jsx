@@ -20,7 +20,7 @@ const PrivateUser = () => {
                 <Link to="/private/user/pets" className="btn btn-primary">
                     Gestionar mis Mascotas
                 </Link>
-                <Link to="/private/user/chats" className="btn btn-outline-primary">
+                <Link to="/user/private/chats" className="btn btn-outline-primary">
                     Mis Mensajes
                 </Link>
                 <Link to="/user/private" className="btn btn-outline-success">
