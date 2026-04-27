@@ -1443,8 +1443,8 @@ def get_pets():
 @api.route('/users/pets', methods=['GET'])
 @jwt_required()
 def get_user_pets():
-    email = get_jwt_identity()
-    user = db.session.execute(db.select(User).filter_by(email=email)).scalar_one_or_none()
+    user_id = get_jwt_identity()
+    user = db.session.execute(db.select(User).where(User.id == user_id)).scalar_one_or_none()
     if not user:
         return jsonify({"msg": "User not found"}), 404
         
@@ -1461,8 +1461,8 @@ def get_pet(pet_id):
 @api.route('/pets', methods=['POST'])
 @jwt_required()
 def create_pet():
-    email = get_jwt_identity()
-    user = db.session.execute(db.select(User).filter_by(email=email)).scalar_one_or_none()
+    user_id = get_jwt_identity()
+    user = db.session.execute(db.select(User).where(User.id == user_id)).scalar_one_or_none()
     if not user:
         return jsonify({"msg": "User not found"}), 404
 
@@ -1510,8 +1510,8 @@ def create_pet():
 @api.route('/pets/<int:pet_id>', methods=['PUT'])
 @jwt_required()
 def update_pet(pet_id):
-    email = get_jwt_identity()
-    user = db.session.execute(db.select(User).filter_by(email=email)).scalar_one_or_none()
+    user_id = get_jwt_identity()
+    user = db.session.execute(db.select(User).where(User.id == user_id)).scalar_one_or_none()
     if not user:
         return jsonify({"msg": "User not found"}), 404
 
@@ -1553,8 +1553,8 @@ def update_pet(pet_id):
 @api.route('/pets/<int:pet_id>', methods=['DELETE'])
 @jwt_required()
 def delete_pet(pet_id):
-    email = get_jwt_identity()
-    user = db.session.execute(db.select(User).filter_by(email=email)).scalar_one_or_none()
+    user_id = get_jwt_identity()
+    user = db.session.execute(db.select(User).where(User.id == user_id)).scalar_one_or_none()
     if not user:
         return jsonify({"msg": "User not found"}), 404
 
