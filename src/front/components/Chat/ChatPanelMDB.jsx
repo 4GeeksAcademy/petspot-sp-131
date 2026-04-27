@@ -125,7 +125,7 @@ const ChatPanelMDB = ({ type }) => {
     if (loading && messages.length === 0) {
         return (
             <div className="gradient-custom-chat d-flex align-items-center justify-content-center">
-                <div className="spinner-border text-light" role="status">
+                <div className="spinner-border text-dark" role="status">
                     <span className="visually-hidden">Loading...</span>
                 </div>
             </div>
@@ -138,44 +138,44 @@ const ChatPanelMDB = ({ type }) => {
                 <div className="row">
                     {/* Sidebar: Conversations List */}
                     <div className="col-md-6 col-lg-5 col-xl-5 mb-4 mb-md-0">
-                        <h5 className="font-weight-bold mb-3 text-center text-white">
+                        <h5 className="font-weight-bold mb-3 text-center text-dark opacity-75">
                             {type === "user" ? "Mensajes con Locales" : "Mensajes de Usuarios"}
                         </h5>
                         <div className="card mask-custom">
                             <div className="card-body">
                                 <ul className="list-unstyled mb-0 chat-scroll">
                                     {conversations.length === 0 && (
-                                        <li className="text-white text-center p-3 opacity-50">No hay conversaciones aún.</li>
+                                        <li className="text-dark text-center p-3 opacity-50">No hay conversaciones aún.</li>
                                     )}
                                     {conversations.map((conv) => (
                                         <li 
                                             key={conv.id} 
                                             className="p-2 border-bottom" 
                                             style={{ 
-                                                borderBottom: "1px solid rgba(255,255,255,.1) !important",
+                                                borderBottom: "1px solid rgba(0,0,0,.05) !important",
                                                 cursor: "pointer",
-                                                backgroundColor: selectedConvId === conv.id ? "rgba(255,255,255,0.1)" : "transparent",
+                                                backgroundColor: selectedConvId === conv.id ? "rgba(0,0,0,0.05)" : "transparent",
                                                 borderRadius: "10px"
                                             }}
                                             onClick={() => setSelectedConvId(conv.id)}
                                         >
-                                            <div className="d-flex justify-content-between link-light">
+                                            <div className="d-flex justify-content-between text-dark">
                                                 <div className="d-flex flex-row">
                                                     <img 
-                                                        src={`https://ui-avatars.com/api/?name=${conv.name}&background=64748b&color=fff`} 
+                                                        src={`https://ui-avatars.com/api/?name=${conv.name}&background=cbd5e1&color=0f172a`} 
                                                         alt="avatar"
                                                         className="rounded-circle d-flex align-self-center me-3 shadow-1-strong" 
                                                         width="60" 
                                                     />
                                                     <div className="pt-1">
-                                                        <p className="fw-bold mb-0 text-white">{conv.name}</p>
-                                                        <p className="small text-white opacity-75 text-truncate" style={{ maxWidth: "150px" }}>
+                                                        <p className="fw-bold mb-0">{conv.name}</p>
+                                                        <p className="small text-muted text-truncate" style={{ maxWidth: "150px" }}>
                                                             {conv.lastMessage.message}
                                                         </p>
                                                     </div>
                                                 </div>
                                                 <div className="pt-1">
-                                                    <p className="small text-white opacity-50 mb-1">
+                                                    <p className="small text-muted opacity-50 mb-1">
                                                         {new Date(conv.lastMessage.created_at).toLocaleDateString([], { day: '2-digit', month: '2-digit' })}
                                                     </p>
                                                 </div>
@@ -189,22 +189,22 @@ const ChatPanelMDB = ({ type }) => {
 
                     {/* Chat Window */}
                     <div className="col-md-6 col-lg-7 col-xl-7">
-                        <ul className="list-unstyled text-white chat-scroll" ref={scrollRef}>
+                        <ul className="list-unstyled text-dark chat-scroll" ref={scrollRef}>
                             {displayMessages.map((msg) => {
                                 const isMe = msg.sender === type;
                                 return (
                                     <li key={msg.id} className={`d-flex justify-content-between mb-4 ${isMe ? 'flex-row-reverse' : ''}`}>
                                         <img 
-                                            src={`https://ui-avatars.com/api/?name=${isMe ? "Yo" : (type === "user" ? msg.place_name : msg.user_name)}&background=${isMe ? '0f172a' : '64748b'}&color=fff`} 
+                                            src={`https://ui-avatars.com/api/?name=${isMe ? "Yo" : (type === "user" ? msg.place_name : msg.user_name)}&background=${isMe ? '0f172a' : 'cbd5e1'}&color=${isMe ? 'fff' : '0f172a'}`} 
                                             alt="avatar"
                                             className={`rounded-circle d-flex align-self-start shadow-1-strong ${isMe ? 'ms-3' : 'me-3'}`} 
                                             width="60" 
                                         />
-                                        <div className="card mask-custom w-100">
+                                        <div className="card mask-custom w-100 shadow-sm">
                                             <div className="card-header d-flex justify-content-between p-3"
-                                                style={{ borderBottom: "1px solid rgba(255,255,255,.1)" }}>
+                                                style={{ borderBottom: "1px solid rgba(0,0,0,.05)" }}>
                                                 <p className="fw-bold mb-0">{isMe ? "Tú" : (type === "user" ? msg.place_name : msg.user_name)}</p>
-                                                <p className="text-light small mb-0 opacity-50">
+                                                <p className="text-muted small mb-0 opacity-50">
                                                     <i className="far fa-clock"></i> {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                 </p>
                                             </div>
@@ -230,8 +230,8 @@ const ChatPanelMDB = ({ type }) => {
                             <div className="mt-3">
                                 <div className="form-outline form-white mb-3">
                                     <textarea 
-                                        className="form-control bg-transparent text-white border-white" 
-                                        style={{ border: "1px solid rgba(255,255,255,0.2)", borderRadius: "15px" }}
+                                        className="form-control bg-white text-dark shadow-sm" 
+                                        style={{ border: "1px solid rgba(0,0,0,0.1)", borderRadius: "15px" }}
                                         id="chatInput" 
                                         rows="4"
                                         value={newMessage}
@@ -242,12 +242,12 @@ const ChatPanelMDB = ({ type }) => {
                                 <div className="d-flex justify-content-end">
                                     <button 
                                         type="button" 
-                                        className="btn btn-primary btn-lg btn-rounded px-5" 
-                                        style={{ backgroundColor: "#38bdf8", borderColor: "#38bdf8", color: "#000", fontWeight: "bold" }}
+                                        className="btn btn-dark btn-lg px-5 shadow-sm" 
+                                        style={{ borderRadius: "12px", fontWeight: "600" }}
                                         onClick={handleSend}
                                         disabled={sending}
                                     >
-                                        {sending ? "..." : "SEND"}
+                                        {sending ? "..." : "Enviar"}
                                     </button>
                                 </div>
                             </div>

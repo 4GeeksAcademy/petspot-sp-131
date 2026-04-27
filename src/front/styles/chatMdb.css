@@ -1,21 +1,21 @@
 .gradient-custom-chat {
-    /* Professional dark slate/deep navy gradient */
-    background: #1e293b;
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    /* Professional light slate/gray gradient */
+    background: #f1f5f9;
+    background: linear-gradient(135deg, #f8fafc 0%, #cbd5e1 100%);
     min-height: 100vh;
 }
 
 .mask-custom {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.4);
     border-radius: 1.5rem;
     backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     background-clip: padding-box;
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
 }
 
 .link-light:hover {
-    color: #38bdf8 !important; /* Muted blue accent */
+    color: #0f172a !important; /* Dark slate accent */
 }
 
 .chat-scroll {
@@ -23,14 +23,17 @@
     overflow-y: auto;
 }
 
-/* Custom scrollbar for glassmorphism look */
+/* Custom scrollbar matching the professional theme */
 .chat-scroll::-webkit-scrollbar {
     width: 6px;
 }
 .chat-scroll::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.05);
 }
 .chat-scroll::-webkit-scrollbar-thumb {
-    background: rgba(57, 255, 20, 0.5);
+    background: rgba(71, 85, 105, 0.2);
     border-radius: 10px;
+}
+.chat-scroll::-webkit-scrollbar-thumb:hover {
+    background: rgba(71, 85, 105, 0.4);
 }
