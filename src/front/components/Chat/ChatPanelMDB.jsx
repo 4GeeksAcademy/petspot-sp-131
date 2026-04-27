@@ -11,9 +11,9 @@ const ChatPanelMDB = ({ type }) => {
     
     const scrollRef = useRef(null);
 
-    const fetchMessages = async () => {
+    const fetchMessages = async (isInitial = false) => {
         try {
-            setLoading(true);
+            if (isInitial) setLoading(true);
             const backendUrl = import.meta.env.VITE_BACKEND_URL;
             const tokenKey = type === "user" ? (localStorage.getItem("tokenUser") ? "tokenUser" : "userToken") : "token_place";
             const token = localStorage.getItem(tokenKey);
@@ -34,7 +34,7 @@ const ChatPanelMDB = ({ type }) => {
         } catch (error) {
             console.error("Error fetching messages:", error);
         } finally {
-            setLoading(false);
+            if (isInitial) setLoading(false);
         }
     };
 
@@ -68,7 +68,14 @@ const ChatPanelMDB = ({ type }) => {
     };
 
     useEffect(() => {
-        fetchMessages();
+        fetchMessages(true);
+        
+        // Polling interval for auto-refresh (3 seconds)
+        const intervalId = setInterval(() => {
+            fetchMessages(false);
+        }, 3000);
+
+        return () => clearInterval(intervalId);
     }, [type]);
 
     useEffect(() => {
@@ -103,7 +110,7 @@ const ChatPanelMDB = ({ type }) => {
             
             if (response.ok) {
                 setNewMessage("");
-                await fetchMessages();
+                await fetchMessages(false);
             }
         } catch (error) {
             console.error("Error sending message:", error);
@@ -132,43 +139,44 @@ const ChatPanelMDB = ({ type }) => {
                     {/* Sidebar: Conversations List */}
                     <div className="col-md-6 col-lg-5 col-xl-5 mb-4 mb-md-0">
                         <h5 className="font-weight-bold mb-3 text-center text-white">
-                            {type === "user" ? "Mis Conversaciones" : "Mensajes de Usuarios"}
+                            {type === "user" ? "Mensajes con Locales" : "Mensajes de Usuarios"}
                         </h5>
                         <div className="card mask-custom">
                             <div className="card-body">
                                 <ul className="list-unstyled mb-0 chat-scroll">
                                     {conversations.length === 0 && (
-                                        <li className="text-white text-center p-3">No hay conversaciones aún.</li>
+                                        <li className="text-white text-center p-3 opacity-50">No hay conversaciones aún.</li>
                                     )}
                                     {conversations.map((conv) => (
                                         <li 
                                             key={conv.id} 
                                             className="p-2 border-bottom" 
                                             style={{ 
-                                                borderBottom: "1px solid rgba(255,255,255,.3) !important",
+                                                borderBottom: "1px solid rgba(255,255,255,.1) !important",
                                                 cursor: "pointer",
-                                                backgroundColor: selectedConvId === conv.id ? "rgba(255,255,255,0.1)" : "transparent"
+                                                backgroundColor: selectedConvId === conv.id ? "rgba(255,255,255,0.1)" : "transparent",
+                                                borderRadius: "10px"
                                             }}
                                             onClick={() => setSelectedConvId(conv.id)}
                                         >
                                             <div className="d-flex justify-content-between link-light">
                                                 <div className="d-flex flex-row">
                                                     <img 
-                                                        src={`https://ui-avatars.com/api/?name=${conv.name}&background=random`} 
+                                                        src={`https://ui-avatars.com/api/?name=${conv.name}&background=64748b&color=fff`} 
                                                         alt="avatar"
                                                         className="rounded-circle d-flex align-self-center me-3 shadow-1-strong" 
                                                         width="60" 
                                                     />
                                                     <div className="pt-1">
                                                         <p className="fw-bold mb-0 text-white">{conv.name}</p>
-                                                        <p className="small text-white text-truncate" style={{ maxWidth: "150px" }}>
+                                                        <p className="small text-white opacity-75 text-truncate" style={{ maxWidth: "150px" }}>
                                                             {conv.lastMessage.message}
                                                         </p>
                                                     </div>
                                                 </div>
                                                 <div className="pt-1">
-                                                    <p className="small text-white mb-1">
-                                                        {new Date(conv.lastMessage.created_at).toLocaleDateString()}
+                                                    <p className="small text-white opacity-50 mb-1">
+                                                        {new Date(conv.lastMessage.created_at).toLocaleDateString([], { day: '2-digit', month: '2-digit' })}
                                                     </p>
                                                 </div>
                                             </div>
@@ -187,21 +195,21 @@ const ChatPanelMDB = ({ type }) => {
                                 return (
                                     <li key={msg.id} className={`d-flex justify-content-between mb-4 ${isMe ? 'flex-row-reverse' : ''}`}>
                                         <img 
-                                            src={`https://ui-avatars.com/api/?name=${isMe ? "Yo" : (type === "user" ? msg.place_name : msg.user_name)}&background=${isMe ? '39FF14' : 'random'}`} 
+                                            src={`https://ui-avatars.com/api/?name=${isMe ? "Yo" : (type === "user" ? msg.place_name : msg.user_name)}&background=${isMe ? '0f172a' : '64748b'}&color=fff`} 
                                             alt="avatar"
                                             className={`rounded-circle d-flex align-self-start shadow-1-strong ${isMe ? 'ms-3' : 'me-3'}`} 
                                             width="60" 
                                         />
                                         <div className="card mask-custom w-100">
                                             <div className="card-header d-flex justify-content-between p-3"
-                                                style={{ borderBottom: "1px solid rgba(255,255,255,.3)" }}>
+                                                style={{ borderBottom: "1px solid rgba(255,255,255,.1)" }}>
                                                 <p className="fw-bold mb-0">{isMe ? "Tú" : (type === "user" ? msg.place_name : msg.user_name)}</p>
-                                                <p className="text-light small mb-0">
+                                                <p className="text-light small mb-0 opacity-50">
                                                     <i className="far fa-clock"></i> {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                 </p>
                                             </div>
                                             <div className="card-body">
-                                                <p className="mb-0">{msg.message}</p>
+                                                <p className="mb-0 opacity-90">{msg.message}</p>
                                             </div>
                                         </div>
                                     </li>
@@ -209,11 +217,11 @@ const ChatPanelMDB = ({ type }) => {
                             })}
                             
                             {!selectedConvId && conversations.length > 0 && (
-                                <li className="text-center p-5">Selecciona una conversación para empezar</li>
+                                <li className="text-center p-5 opacity-50">Selecciona una conversación para empezar</li>
                             )}
                             
                             {conversations.length === 0 && (
-                                <li className="text-center p-5">No tienes mensajes todavía. ¡Contacta con un local para empezar!</li>
+                                <li className="text-center p-5 opacity-50">No tienes mensajes todavía.</li>
                             )}
                         </ul>
 
@@ -223,7 +231,7 @@ const ChatPanelMDB = ({ type }) => {
                                 <div className="form-outline form-white mb-3">
                                     <textarea 
                                         className="form-control bg-transparent text-white border-white" 
-                                        style={{ border: "1px solid rgba(255,255,255,0.3)" }}
+                                        style={{ border: "1px solid rgba(255,255,255,0.2)", borderRadius: "15px" }}
                                         id="chatInput" 
                                         rows="4"
                                         value={newMessage}
@@ -231,18 +239,11 @@ const ChatPanelMDB = ({ type }) => {
                                         placeholder="Escribe tu mensaje..."
                                     ></textarea>
                                 </div>
-                                <div className="d-flex justify-content-end gap-2">
+                                <div className="d-flex justify-content-end">
                                     <button 
                                         type="button" 
-                                        className="btn btn-light btn-lg btn-rounded"
-                                        onClick={fetchMessages}
-                                    >
-                                        GET CHAT
-                                    </button>
-                                    <button 
-                                        type="button" 
-                                        className="btn btn-primary btn-lg btn-rounded" 
-                                        style={{ backgroundColor: "#39FF14", borderColor: "#39FF14", color: "#000" }}
+                                        className="btn btn-primary btn-lg btn-rounded px-5" 
+                                        style={{ backgroundColor: "#38bdf8", borderColor: "#38bdf8", color: "#000", fontWeight: "bold" }}
                                         onClick={handleSend}
                                         disabled={sending}
                                     >
