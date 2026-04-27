@@ -32,7 +32,7 @@ export const LoginUser = () => {
             .then(({ status, data }) => {
                 if (status === 200 && data.access_token) {
                     dispatch({ type: "set_auth_user", payload: true });
-                    localStorage.setItem("userToken", data.access_token);
+                    localStorage.setItem("tokenUser", data.access_token);
                     setError("");
                     navigate("/private/user");
                 } else {
