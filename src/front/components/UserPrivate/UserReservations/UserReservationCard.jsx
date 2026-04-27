@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 function UserReservationCard({ reservationObj, onCancelReservation }) {
 
     const {
@@ -9,7 +11,8 @@ function UserReservationCard({ reservationObj, onCancelReservation }) {
         pet_count,
         reservation_date,
         reservation_time,
-        status
+        status,
+        place_id
     } = reservationObj
 
     return (
@@ -44,6 +47,10 @@ function UserReservationCard({ reservationObj, onCancelReservation }) {
                         </div>
                     )}
                     <div className="mt-4 d-grid d-sm-flex gap-2 justify-content-sm-end">
+                        <Link to={`/user/private/places/view/${place_id}`} className="btn btn-outline-primary">View</Link>
+                        <button type="button" className="btn btn-outline-success">
+                            Open Chat
+                        </button>
                         {status !== "cancelled" && (
                             <button
                                 type="button"
@@ -53,9 +60,7 @@ function UserReservationCard({ reservationObj, onCancelReservation }) {
                                 Cancel Reservation
                             </button>
                         )}
-                        <button type="button" className="btn btn-outline-primary">
-                            Open Chat
-                        </button>
+                        
                     </div>
                 </div>
             </div>

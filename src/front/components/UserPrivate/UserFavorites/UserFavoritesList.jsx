@@ -10,10 +10,6 @@ function UserFavoritesList() {
     useEffect(() => {
         async function getPlaces() {
             try {
-                if (store.places.length > 0) {
-                    return;
-                }
-
                 const response = await fetch(`${backendUrl}/api/places`);
                 if (!response.ok) {
                     throw new Error(`Places request failed with status ${response.status}`);
@@ -35,10 +31,6 @@ function UserFavoritesList() {
     useEffect(() => {
         async function getPrivateUser() {
             try {
-                if (store.privateUser?.id) {
-                    return;
-                }
-
                 const userToken = localStorage.getItem("userToken");
                 if (!userToken) {
                     return;

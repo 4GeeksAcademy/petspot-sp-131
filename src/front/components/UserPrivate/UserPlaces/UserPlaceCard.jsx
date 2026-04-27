@@ -5,7 +5,7 @@ const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 function UserPlaceCard({ placeObj }) {
     const { store, dispatch } = useGlobalReducer();
-    const { name, pet_rules, city, establishment_type, id } = placeObj
+    const { name, pet_rules, city, establishment_type, id, image_url } = placeObj
     const isFavorite = (store.privateUser?.favorite_places || []).includes(id);
 
     const establishmentTypeEmoji = {
@@ -83,6 +83,14 @@ function UserPlaceCard({ placeObj }) {
     return (
         <>
             <div className="card mb-3 mx-auto w-100 bg-secondary-subtle border-0" style={{ maxWidth: 800 }}>
+                {image_url && (
+                <img
+                    src={image_url}
+                    className="card-img-top"
+                    alt={name}
+                    style={{ height: "260px", objectFit: "cover" }}
+                />
+            )}
                 <div className="card-body">
                     <h5 className="card-title card-header bg-secondary-subtle mb-3 ps-0 h2">{name}</h5>
                     <h6 className="card-subtitle mb-2 text-body-secondary">
