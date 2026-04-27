@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import MessageInbox from "../../components/Chat/MessageInbox";
+import MessageInbox from "../components/Chat/MessageInbox";
 
 const PrivateUserChats = () => {
     return (
