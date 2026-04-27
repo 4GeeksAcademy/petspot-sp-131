@@ -6,9 +6,15 @@ const ChatPanelMDB = ({ type }) => {
     const [loading, setLoading] = useState(true);
     const [conversations, setConversations] = useState([]);
     const [selectedConvId, setSelectedConvId] = useState(null);
+    const selectedConvIdRef = useRef(null); // Ref to avoid stale closures in setInterval
+
+    const updateSelectedConvId = (id) => {
+        setSelectedConvId(id);
+        selectedConvIdRef.current = id;
+    };
+
     const [newMessage, setNewMessage] = useState("");
     const [sending, setSending] = useState(false);
-    
     const scrollRef = useRef(null);
 
     const fetchMessages = async (isInitial = false) => {
@@ -29,7 +35,7 @@ const ChatPanelMDB = ({ type }) => {
             if (response.ok) {
                 const data = await response.json();
                 setMessages(data);
-                groupConversations(data);
+                groupConversations(data, isInitial);
             }
         } catch (error) {
             console.error("Error fetching messages:", error);
@@ -38,10 +44,8 @@ const ChatPanelMDB = ({ type }) => {
         }
     };
 
-    const groupConversations = (allMessages) => {
+    const groupConversations = (allMessages, isInitial) => {
         const convMap = {};
-        
-        // Sort by date desc to get last message easily
         const sorted = [...allMessages].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
         
         sorted.forEach(msg => {
@@ -62,8 +66,9 @@ const ChatPanelMDB = ({ type }) => {
         const convList = Object.values(convMap);
         setConversations(convList);
         
-        if (convList.length > 0 && !selectedConvId) {
-            setSelectedConvId(convList[0].id);
+        // Only set initial conversation if none is selected yet
+        if (convList.length > 0 && selectedConvIdRef.current === null) {
+            updateSelectedConvId(convList[0].id);
         }
     };
 
@@ -157,7 +162,7 @@ const ChatPanelMDB = ({ type }) => {
                                                 backgroundColor: selectedConvId === conv.id ? "rgba(0,0,0,0.05)" : "transparent",
                                                 borderRadius: "10px"
                                             }}
-                                            onClick={() => setSelectedConvId(conv.id)}
+                                            onClick={() => updateSelectedConvId(conv.id)}
                                         >
                                             <div className="d-flex justify-content-between text-dark">
                                                 <div className="d-flex flex-row">
