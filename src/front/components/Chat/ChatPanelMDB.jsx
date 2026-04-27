@@ -90,7 +90,9 @@ const ChatPanelMDB = ({ type }) => {
         fetchMessages(true);
 
         const backendUrl = import.meta.env.VITE_BACKEND_URL;
-        const socket = io(backendUrl);
+        const socket = io(backendUrl, {
+            transports: ["websocket", "polling"]
+        });
         socketRef.current = socket;
 
         const tokenKey = type === "user" ? (localStorage.getItem("tokenUser") ? "tokenUser" : "userToken") : "token_place";
