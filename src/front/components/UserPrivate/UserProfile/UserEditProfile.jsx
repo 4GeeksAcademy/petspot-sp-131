@@ -11,7 +11,9 @@ function UserEditProfile() {
     const [formData, setFormData] = useState({
         name: "",
         email: "",
-        password: ""
+        password: "",
+        latitude: "",
+        longitude: ""
     });
     const navigate = useNavigate()
 
@@ -20,8 +22,10 @@ function UserEditProfile() {
             if (store.privateUser?.id) {
                 setFormData((currentData) => ({
                     ...currentData,
-                    name: store.privateUser.name || "",
-                    email: store.privateUser.email || ""
+                    name: store.privateUser.name,
+                    email: store.privateUser.email,
+                    latitude: store.privateUser.latitude || "",
+                    longitude: store.privateUser.longitude || ""
                 }));
                 return;
             }
@@ -35,7 +39,9 @@ function UserEditProfile() {
                 setFormData((currentData) => ({
                     ...currentData,
                     name: responseJSON.name || "",
-                    email: responseJSON.email || ""
+                    email: responseJSON.email || "",
+                    latitude: store.privateUser.latitude,
+                    longitude: store.privateUser.longitude
                 }));
             } catch (error) {
                 alert("Unable to load your profile right now. Please try again.");
@@ -53,6 +59,15 @@ function UserEditProfile() {
         }));
     }
 
+    function handleRemoveLocation(event) {
+        event.preventDefault()
+        setFormData((currentData) => ({
+            ...currentData,
+            latitude: "",
+            longitude: ""
+        }))
+    }
+
     function handleSubmit(event) {
         event.preventDefault();
         const userToken = localStorage.getItem("userToken");
@@ -60,6 +75,9 @@ function UserEditProfile() {
         async function updatePrivateUser() {
             try {
                 const trimmedPassword = formData.password.trim();
+                const trimmedLatitude = formData.latitude.toString().trim();
+                const trimmedLongitude = formData.longitude.toString().trim();
+
                 const body = {
                     name: formData.name.trim(),
                     email: formData.email.trim()
@@ -67,6 +85,17 @@ function UserEditProfile() {
 
                 if (trimmedPassword) {
                     body.password = trimmedPassword;
+                }
+
+                if (trimmedLatitude && trimmedLongitude) {
+                    body.latitude = trimmedLatitude
+                    body.longitude = trimmedLongitude
+                } else if (trimmedLatitude || trimmedLongitude) {
+                    alert("Latitude and longitude must both exist")
+                    return
+                } else {
+                    body.latitude = ""
+                    body.longitude = ""
                 }
 
                 const response = await fetch(`${backendUrl}/api/users/private`, {
@@ -81,7 +110,7 @@ function UserEditProfile() {
                 const responseJSON = await response.json();
 
                 if (!response.ok) {
-                    alert(responseJSON.msg || responseJSON.message || "Unable to update your profile.");
+                    alert(responseJSON.response || "Unable to update your profile.");
                     return;
                 }
 
@@ -157,6 +186,36 @@ function UserEditProfile() {
                             onChange={handleChange}
                             placeholder="Enter a new password"
                         />
+                    </div>
+
+                    <div className="p-3 bg-white d-flex flex-column mb-3">
+                        <div className="row mb-3 ">
+                            <div className="col">
+                                <label htmlFor="userEditLatitude" className="form-label">Latitude</label>
+                                <input
+                                    id="userEditLatitude"
+                                    name="latitude"
+                                    type="number"
+                                    className="form-control bg-secondary-subtle border-0"
+                                    value={formData.latitude}
+                                    onChange={handleChange}
+                                    placeholder="Enter latitude"
+                                />
+                            </div>
+                            <div className="col">
+                                <label htmlFor="userEditLongitude" className="form-label">Longitude</label>
+                                <input
+                                    id="userEditLongitude"
+                                    name="longitude"
+                                    type="number"
+                                    className="form-control bg-secondary-subtle border-0"
+                                    value={formData.longitude}
+                                    onChange={handleChange}
+                                    placeholder="Enter longitude"
+                                />
+                            </div>
+                        </div>
+                        <button className="btn btn-sm btn-outline-secondary mt-2" onClick={handleRemoveLocation}>Remove location</button>
                     </div>
 
                     <p className="text-body-secondary small mb-4">* Required fields</p>

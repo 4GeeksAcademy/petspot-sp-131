@@ -36,10 +36,10 @@ function UserProfileCard() {
 
     return (
         <div className="mx-auto p-5 bg-secondary-subtle border-0 rounded text-start" style={{ maxWidth: 700 }}>
-            <div className="mb-3">
+            <div className="mb-2">
                 <span className="fw-bold">Name: </span>{store.privateUser.name}
             </div>
-            <div className="mb-4">
+            <div className="mb-2">
                 <span className="fw-bold">Email: </span>{store.privateUser.email}
             </div>
             <div className="mb-4">
@@ -54,6 +54,14 @@ function UserProfileCard() {
                     </div>
                 )}
             </div>
+            {(store.privateUser.latitude && store.privateUser.longitude)
+                &&
+                <div className="mb-4">
+                    <p className="fw-bold mb-0">Location</p>
+                    <p className="mb-0">Latitude: {store.privateUser.latitude}</p>
+                    <p className="mb-0">Longitude: {store.privateUser.longitude}</p>
+                </div>
+            }
             <div className="d-grid d-sm-flex gap-2 justify-content-sm-center mt-5">
                 <Link to="/user/private/pets" className="btn btn-outline-primary">Manage pets</Link>
                 <Link to="/user/private/profile/edit" className="btn btn-outline-success">Edit profile</Link>
