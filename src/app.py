@@ -1,6 +1,6 @@
+import os
 import eventlet
 eventlet.monkey_patch()
-import os
 from flask import Flask, request, jsonify, url_for, send_from_directory
 from flask_migrate import Migrate
 from flask_swagger import swagger
@@ -51,7 +51,8 @@ app.register_blueprint(api, url_prefix='/api')
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
 
 # Import sockets events
-from api import sockets
+from api.sockets import setup_sockets
+setup_sockets(socketio)
 
 # Handle/serialize errors like a JSON object
 @app.errorhandler(APIException)
