@@ -18,6 +18,16 @@ class PostType(Enum):
     NEWS = "news"
     EVENT = "event"
 
+class PetAnimalType(Enum):
+    DOG = "dog"
+    CAT = "cat"
+    OTHER = "other"
+
+class PetSize(Enum):
+    SMALL = "small"
+    MEDIUM = "medium"
+    LARGE = "large"
+
 class User(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(120), nullable=False)
@@ -44,7 +54,8 @@ class User(db.Model):
             "email": self.email,
             "favorite_places": [favorite.place_id for favorite in self.favorite_places],
             "reservations": [reservation.serialize() for reservation in self.reservations],
-            "reviews": [review.serialize() for review in self.reviews]
+            "reviews": [review.serialize() for review in self.reviews],
+            "pets": [pet.serialize() for pet in self.pets]
         }
 
 class Place(db.Model):
@@ -292,6 +303,9 @@ class Race(db.Model):
 
     pets: Mapped[list["Pet"]] = relationship("Pet", back_populates="race", cascade="all, delete-orphan")
 
+    def __repr__(self):
+        return self.name
+
     def serialize(self):
         return {
             "id": self.id,
@@ -307,23 +321,43 @@ class Pet(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(120), nullable=False)
     user_id: Mapped[int] = mapped_column(ForeignKey("user.id"), nullable=False)
-    animal_type: Mapped[str] = mapped_column(String(120), nullable=False)
+    animal_type: Mapped[PetAnimalType] = mapped_column(
+        SQLEnum(
+            PetAnimalType,
+            name="pet_animal_type",
+            values_callable=lambda enum_cls: [member.value for member in enum_cls]
+        ),
+        nullable=False
+    )
+    other_type: Mapped[str | None] = mapped_column(String(120), nullable=True)
     race_id: Mapped[int | None] = mapped_column(ForeignKey("races.id"), nullable=True)
-    size: Mapped[str] = mapped_column(String(120), nullable=False)
+    size: Mapped[PetSize] = mapped_column(
+        SQLEnum(
+            PetSize,
+            name="pet_size",
+            values_callable=lambda enum_cls: [member.value for member in enum_cls]
+        ),
+        nullable=False
+    )
     url: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
     user: Mapped["User"] = relationship("User", back_populates="pets")
     race: Mapped["Race"] = relationship("Race", back_populates="pets")
+
+    def __repr__(self):
+        return self.name
+
 
     def serialize(self):
         return {
             "id": self.id,
             "name": self.name,
             "user_id": self.user_id,
-            "animal_type": self.animal_type,
+            "animal_type": self.animal_type.value,
+            "other_type": self.other_type,
             "race_id": self.race_id,
             "race_name": self.race.name if self.race else None,
             "race_url": self.race.url if self.race else None,
-            "size": self.size,
+            "size": self.size.value,
             "url": self.url
         }

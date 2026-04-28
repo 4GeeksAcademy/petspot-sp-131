@@ -2,76 +2,59 @@ import useGlobalReducer from "../../../hooks/useGlobalReducer";
 import { useParams } from "react-router-dom";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
-
-const backendUrl = import.meta.env.VITE_BACKEND_URL;
+import {
+    getPlaces,
+    handleAddToFavorites,
+    handleRemoveFromFavorites
+} from "../../../services/userPrivateService";
 
 function UserPlaceDetailCard() {
 
     const { store, dispatch } = useGlobalReducer();
     const { id } = useParams();
-    const [placeReviews, setPlaceReviews] = useState([]);
     const [showContactForm, setShowContactForm] = useState(false);
     const [contactMessage, setContactMessage] = useState("");
     const activePlace = store.places.find((place) => place.id === Number(id))
+    const placeReviews = activePlace?.reviews || []
     const isFavorite = (store.privateUser?.favorite_places || []).includes(Number(id));
 
     useEffect(() => {
-            async function getPlaces() {
-                try {
-                    const response = await fetch(`${backendUrl}/api/places`)
-                    if (!response.ok) {
-                        throw new Error(`Request failed with status ${response.status}`)
-                    }
-                    const responseJSON = await response.json()
-                    dispatch({
-                        type: "GET_PLACES",
-                        payload: responseJSON
-                    })
-    
-                } catch (error) {
-                    alert("Unable to load places right now. Please try again.")
-                }
-            }
-            getPlaces()
-        }, [])
-
-    useEffect(() => {
-        async function getPlaceReviews() {
+        async function loadPlaces() {
             try {
-                const response = await fetch(`${backendUrl}/api/places/${id}/reviews`);
-                if (!response.ok) {
-                    throw new Error(`Request failed with status ${response.status}`);
-                }
+                const responseJSON = await getPlaces();
+                dispatch({
+                    type: "GET_PLACES",
+                    payload: responseJSON
+                })
 
-                const reviews = await response.json();
-                setPlaceReviews(reviews);
             } catch (error) {
-                console.error("Unable to load place reviews:", error);
+                alert("Unable to load places right now. Please try again.")
             }
         }
+        loadPlaces()
+    }, [])
 
-        getPlaceReviews();
-    }, [id]);
+    // useEffect(() => {
+    //     async function getPlaceReviews() {
+    //         try {
+    //             const response = await fetch(`${backendUrl}/api/places/${id}/reviews`);
+    //             if (!response.ok) {
+    //                 throw new Error(`Request failed with status ${response.status}`);
+    //             }
 
-    async function handleAddToFavorites() {
+    //             const reviews = await response.json();
+    //             setPlaceReviews(reviews);
+    //         } catch (error) {
+    //             console.error("Unable to load place reviews:", error);
+    //         }
+    //     }
+
+    //     getPlaceReviews();
+    // }, [id]);
+
+    async function addToFavorites() {
         try {
-            const userToken = store.userToken;
-            const response = await fetch(`${backendUrl}/api/users/private/favorites`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${userToken}`
-                },
-                body: JSON.stringify({
-                    place_id: id.toString()
-                })
-            });
-
-            if (!response.ok) {
-                throw new Error(`Request failed with status ${response.status}`);
-            }
-
-            const updatedPrivateUser = await response.json();
+            const updatedPrivateUser = await handleAddToFavorites(id);
             dispatch({
                 type: "GET_PRIVATE_USER",
                 payload: updatedPrivateUser
@@ -81,35 +64,9 @@ function UserPlaceDetailCard() {
         }
     }
 
-    async function handleRemoveFromFavorites() {
+    async function removeFromFavorites() {
         try {
-            const userToken = store.userToken;
-            const response = await fetch(`${backendUrl}/api/users/private/favorites`, {
-                method: "DELETE",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${userToken}`
-                },
-                body: JSON.stringify({
-                    place_id: id.toString()
-                })
-            });
-
-            if (!response.ok) {
-                throw new Error(`Request failed with status ${response.status}`);
-            }
-
-            const userResponse = await fetch(`${backendUrl}/api/users/private`, {
-                headers: {
-                    Authorization: `Bearer ${userToken}`
-                }
-            });
-
-            if (!userResponse.ok) {
-                throw new Error(`User request failed with status ${userResponse.status}`);
-            }
-
-            const updatedPrivateUser = await userResponse.json();
+            const updatedPrivateUser = await handleRemoveFromFavorites(id);
             dispatch({
                 type: "GET_PRIVATE_USER",
                 payload: updatedPrivateUser
@@ -195,7 +152,7 @@ function UserPlaceDetailCard() {
                     <button
                         type="button"
                         className={`btn ${isFavorite ? "btn-warning" : "btn-outline-warning"}`}
-                        onClick={isFavorite ? handleRemoveFromFavorites : handleAddToFavorites}
+                        onClick={isFavorite ? removeFromFavorites : addToFavorites}
                     >
                         ❤︎
                     </button>

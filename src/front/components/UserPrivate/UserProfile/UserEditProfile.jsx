@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import useGlobalReducer from "../../../hooks/useGlobalReducer";
 import { useNavigate } from "react-router-dom";
+import { getPrivateUser } from "../../../services/userPrivateService";
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
@@ -15,7 +16,7 @@ function UserEditProfile() {
     const navigate = useNavigate()
 
     useEffect(() => {
-        async function getPrivateUser() {
+        async function loadPrivateUser() {
             if (store.privateUser?.id) {
                 setFormData((currentData) => ({
                     ...currentData,
@@ -26,19 +27,7 @@ function UserEditProfile() {
             }
 
             try {
-                const userToken = localStorage.getItem("userToken");
-
-                const response = await fetch(`${backendUrl}/api/users/private`, {
-                    headers: {
-                        Authorization: `Bearer ${userToken}`
-                    }
-                });
-
-                if (!response.ok) {
-                    throw new Error(`Request failed with status ${response.status}`);
-                }
-
-                const responseJSON = await response.json();
+                const responseJSON = await getPrivateUser();
                 dispatch({
                     type: "GET_PRIVATE_USER",
                     payload: responseJSON
@@ -53,7 +42,7 @@ function UserEditProfile() {
             }
         }
 
-        getPrivateUser();
+        loadPrivateUser();
     }, [dispatch, store.privateUser]);
 
     function handleChange(event) {

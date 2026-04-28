@@ -1,7 +1,9 @@
 import { Link } from "react-router-dom";
 import useGlobalReducer from "../../../hooks/useGlobalReducer";
-
-const backendUrl = import.meta.env.VITE_BACKEND_URL;
+import {
+    handleAddToFavorites,
+    handleRemoveFromFavorites
+} from "../../../services/userPrivateService";
 
 function UserPlaceCard({ placeObj }) {
     const { store, dispatch } = useGlobalReducer();
@@ -14,25 +16,9 @@ function UserPlaceCard({ placeObj }) {
         cafe: "\u{2615}"
     }
 
-    async function handleAddToFavorites() {
+    async function addToFavorites() {
         try {
-            const userToken = store.userToken;
-            const response = await fetch(`${backendUrl}/api/users/private/favorites`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${userToken}`
-                },
-                body: JSON.stringify({
-                    place_id: id.toString()
-                })
-            });
-
-            if (!response.ok) {
-                throw new Error(`Request failed with status ${response.status}`);
-            }
-
-            const updatedPrivateUser = await response.json();
+            const updatedPrivateUser = await handleAddToFavorites(id);
             dispatch({
                 type: "GET_PRIVATE_USER",
                 payload: updatedPrivateUser
@@ -42,35 +28,9 @@ function UserPlaceCard({ placeObj }) {
         }
     }
 
-    async function handleRemoveFromFavorites() {
+    async function removeFromFavorites() {
         try {
-            const userToken = store.userToken;
-            const response = await fetch(`${backendUrl}/api/users/private/favorites`, {
-                method: "DELETE",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${userToken}`
-                },
-                body: JSON.stringify({
-                    place_id: id.toString()
-                })
-            });
-
-            if (!response.ok) {
-                throw new Error(`Request failed with status ${response.status}`);
-            }
-
-            const userResponse = await fetch(`${backendUrl}/api/users/private`, {
-                headers: {
-                    Authorization: `Bearer ${userToken}`
-                }
-            });
-
-            if (!userResponse.ok) {
-                throw new Error(`User request failed with status ${userResponse.status}`);
-            }
-
-            const updatedPrivateUser = await userResponse.json();
+            const updatedPrivateUser = await handleRemoveFromFavorites(id);
             dispatch({
                 type: "GET_PRIVATE_USER",
                 payload: updatedPrivateUser
@@ -84,13 +44,13 @@ function UserPlaceCard({ placeObj }) {
         <>
             <div className="card mb-3 mx-auto w-100 bg-secondary-subtle border-0" style={{ maxWidth: 800 }}>
                 {image_url && (
-                <img
-                    src={image_url}
-                    className="card-img-top"
-                    alt={name}
-                    style={{ height: "260px", objectFit: "cover" }}
-                />
-            )}
+                    <img
+                        src={image_url}
+                        className="card-img-top"
+                        alt={name}
+                        style={{ height: "260px", objectFit: "cover" }}
+                    />
+                )}
                 <div className="card-body">
                     <h5 className="card-title card-header bg-secondary-subtle mb-3 ps-0 h2">{name}</h5>
                     <h6 className="card-subtitle mb-2 text-body-secondary">
@@ -108,7 +68,7 @@ function UserPlaceCard({ placeObj }) {
                             <button
                                 type="button"
                                 className={`btn ${isFavorite ? "btn-warning" : "btn-outline-warning"} `}
-                                onClick={isFavorite ? handleRemoveFromFavorites : handleAddToFavorites}
+                                onClick={isFavorite ? removeFromFavorites : addToFavorites}
                             >
                                 ❤︎
                             </button>

@@ -1,32 +1,19 @@
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import useGlobalReducer from "../../../hooks/useGlobalReducer";
-
-const backendUrl = import.meta.env.VITE_BACKEND_URL;
+import { getPrivateUser } from "../../../services/userPrivateService";
 
 function UserProfileCard() {
     const { store, dispatch } = useGlobalReducer();
 
     useEffect(() => {
-        async function getPrivateUser() {
+        async function loadPrivateUser() {
             if (store.privateUser?.id) {
                 return;
             }
 
             try {
-                const userToken = localStorage.getItem("userToken");
-
-                const response = await fetch(`${backendUrl}/api/users/private`, {
-                    headers: {
-                        Authorization: `Bearer ${userToken}`
-                    }
-                });
-
-                if (!response.ok) {
-                    throw new Error(`Request failed with status ${response.status}`);
-                }
-
-                const responseJSON = await response.json();
+                const responseJSON = await getPrivateUser();
                 dispatch({
                     type: "GET_PRIVATE_USER",
                     payload: responseJSON
@@ -36,7 +23,7 @@ function UserProfileCard() {
             }
         }
 
-        getPrivateUser();
+        loadPrivateUser();
     }, [dispatch, store.privateUser?.id]);
 
     if (!store.privateUser?.id) {
@@ -55,7 +42,20 @@ function UserProfileCard() {
             <div className="mb-4">
                 <span className="fw-bold">Email: </span>{store.privateUser.email}
             </div>
+            <div className="mb-4">
+                <span className="fw-bold">Pets: </span>{store.privateUser.pets?.length || 0}
+                {store.privateUser.pets?.length > 0 && (
+                    <div className="mt-2">
+                        {store.privateUser.pets.map((pet) => (
+                            <div key={pet.id} className="small text-body-secondary">
+                                {pet.animal_type} · {pet.name} · {pet.race_name || pet.other_type || pet.animal_type}
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
             <div className="d-grid d-sm-flex gap-2 justify-content-sm-center mt-5">
+                <Link to="/user/private/pets" className="btn btn-outline-primary">Manage pets</Link>
                 <Link to="/user/private/profile/edit" className="btn btn-outline-success">Edit profile</Link>
                 <Link to="/user/private/profile/delete" className="btn btn-outline-danger">Delete account</Link>
             </div>
