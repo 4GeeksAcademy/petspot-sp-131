@@ -31,7 +31,7 @@ export const SignupUser = () => {
             })
             .then(({ status, data }) => {
                 if (status === 201) {
-                    navigate("/login/user");
+                    navigate("/user/login");
                 } else {
                     setError(data.msg || "Error al registrar usuario");
                 }
@@ -103,7 +103,7 @@ export const SignupUser = () => {
                 </form>
 
                 <p className="auth-link">
-                    ¿Ya tienes cuenta? <Link to="/login/user">Inicia sesión</Link>
+                    ¿Ya tienes cuenta? <Link to="/user/login">Inicia sesión</Link>
                 </p>
             </div>
         </div>

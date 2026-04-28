@@ -26,7 +26,7 @@ function UserDashboard() {
                     dispatch({
                         type: "USER_LOGOUT"
                     })
-                    navigate("/login/user", { replace: true })
+                    navigate("/user/login", { replace: true })
                     return
                 }
                 const responseJSON = await response.json()

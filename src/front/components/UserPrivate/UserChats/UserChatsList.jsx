@@ -1,6 +1,4 @@
-import React, { useEffect, useState } from "react";
-import MessageInbox from "../../Chat/MessageInbox";
-import MessageReplyForm from "../../Chat/MessageReplyForm";
+import { useState, useEffect } from "react";
 
 function UserChatsList() {
     const [messages, setMessages] = useState([]);
@@ -44,22 +42,22 @@ function UserChatsList() {
     if (loading) return <div className="text-center p-5">Loading your messages...</div>;
 
     return (
-        <div className="mx-auto p-4" style={{ maxWidth: 800 }}>
-            {replyTo && (
-                <div className="mb-4">
-                    <MessageReplyForm 
-                        recipient={replyTo} 
-                        type="user" 
-                        onMessageSent={handleMessageSent} 
-                        onCancel={() => setReplyTo(null)}
-                    />
-                </div>
-            )}
-            <MessageInbox 
-                messages={messages} 
-                type="user" 
-                onReply={handleReply} 
-            />
+        <div className="mx-auto p-5 bg-secondary-subtle border-0 rounded text-start" style={{ maxWidth: 700 }}>
+             <div className="d-flex flex-column gap-3">
+                {messages.length > 0 ? (
+                    messages.map((msg) => (
+                        <div key={msg.id} className="bg-white p-3 rounded shadow-sm border">
+                            <div className="d-flex justify-content-between align-items-center mb-2">
+                                <span className="fw-bold text-primary">From: {msg.place_name}</span>
+                                <small className="text-muted">{new Date(msg.created_at).toLocaleString()}</small>
+                            </div>
+                            <p className="mb-2">{msg.message}</p>
+                        </div>
+                    ))
+                ) : (
+                    <p className="mb-0">No messages yet.</p>
+                )}
+            </div>
         </div>
     );
 }

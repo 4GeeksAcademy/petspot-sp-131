@@ -29,7 +29,7 @@ function RequireUserAuth() {
 
         // Por si lo borran desde otra pestaña
         const handleStorage = () => {
-            const currentToken = localStorage.getItem("userToken") || localStorage.getItem("tokenUser");
+            const currentToken = localStorage.getItem("userToken");
             setToken(currentToken);
             if (!currentToken) dispatch({ type: "USER_LOGOUT" });
         };
@@ -43,7 +43,7 @@ function RequireUserAuth() {
     }, [token, store.userToken, dispatch]);
 
     if (!token) {
-        return <Navigate to="/login/user" replace />;
+        return <Navigate to="/user/login" replace />;
     }
 
     return <Outlet />;

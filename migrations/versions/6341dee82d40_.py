@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 4c3e8b8ef99d
+Revision ID: 6341dee82d40
 Revises: 
-Create Date: 2026-04-25 18:38:23.216886
+Create Date: 2026-04-28 12:15:48.061005
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '4c3e8b8ef99d'
+revision = '6341dee82d40'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -63,9 +63,10 @@ def upgrade():
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(length=120), nullable=False),
     sa.Column('user_id', sa.Integer(), nullable=False),
-    sa.Column('animal_type', sa.String(length=120), nullable=False),
+    sa.Column('animal_type', sa.Enum('dog', 'cat', 'other', name='pet_animal_type'), nullable=False),
+    sa.Column('other_type', sa.String(length=120), nullable=True),
     sa.Column('race_id', sa.Integer(), nullable=True),
-    sa.Column('size', sa.String(length=120), nullable=False),
+    sa.Column('size', sa.Enum('small', 'medium', 'large', name='pet_size'), nullable=False),
     sa.Column('url', sa.String(length=500), nullable=True),
     sa.ForeignKeyConstraint(['race_id'], ['races.id'], ),
     sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
@@ -80,6 +81,7 @@ def upgrade():
     sa.Column('establishment_type', sa.Enum('BAR', 'RESTAURANT', 'CAFE', name='establishment_type'), nullable=False),
     sa.Column('pet_rules', sa.Text(), nullable=True),
     sa.Column('city_id', sa.Integer(), nullable=False),
+    sa.Column('image_url', sa.String(length=500), nullable=True),
     sa.ForeignKeyConstraint(['city_id'], ['cities.id'], ),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('email')
@@ -90,6 +92,8 @@ def upgrade():
     sa.Column('place_id', sa.Integer(), nullable=False),
     sa.Column('message', sa.Text(), nullable=False),
     sa.Column('sender', sa.String(length=20), nullable=False),
+    sa.Column('is_read', sa.Boolean(), nullable=True),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.ForeignKeyConstraint(['place_id'], ['places.id'], ),
     sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
     sa.PrimaryKeyConstraint('id')
