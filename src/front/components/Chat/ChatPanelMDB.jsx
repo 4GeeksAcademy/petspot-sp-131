@@ -124,7 +124,7 @@ const ChatPanelMDB = ({ type }) => {
             
             setMessages(prev => {
                 if (prev.find(m => m.id === msg.id)) return prev;
-                return [msg, ...prev];
+                return [...prev, msg];
             });
 
             // Increment unread count if message is not for the active conversation
@@ -206,7 +206,7 @@ const ChatPanelMDB = ({ type }) => {
             
             if (response.ok) {
                 const sentMsg = await response.json();
-                setMessages(prev => [sentMsg, ...prev]);
+                setMessages(prev => [...prev, sentMsg]);
                 setNewMessage("");
             }
         } catch (error) {
