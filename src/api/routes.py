@@ -925,6 +925,33 @@ def create_chat():
 
     return jsonify(new_chat.serialize()), 201
 
+@api.route('/chat/read', methods=['PUT'])
+@jwt_required()
+def mark_as_read():
+    identity = get_jwt_identity()
+    data = request.json
+    if not data:
+        return jsonify({"msg": "Missing body"}), 400
+    
+    other_id = data.get("other_id")
+    type = data.get("type") # 'user' or 'place' (who is marking as read)
+    
+    if not other_id or not type:
+        return jsonify({"msg": "Missing other_id or type"}), 400
+    
+    if type == "user":
+        # User is marking messages from Place as read
+        chats = Chat.query.filter_by(user_id=int(identity), place_id=int(other_id), sender="place", is_read=False).all()
+    else:
+        # Place is marking messages from User as read
+        chats = Chat.query.filter_by(place_id=int(identity), user_id=int(other_id), sender="user", is_read=False).all()
+        
+    for chat in chats:
+        chat.is_read = True
+    
+    db.session.commit()
+    return jsonify({"msg": "Messages marked as read", "count": len(chats)}), 200
+
 
 @api.route('/chat/<int:chat_id>', methods=['PUT'])
 def update_chat(chat_id):
