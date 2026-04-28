@@ -43,7 +43,7 @@ function RequireUserAuth() {
     }, [token, store.userToken, dispatch]);
 
     if (!token) {
-        return <Navigate to="/user/login" replace />;
+        return <Navigate to="/login/user" replace />;
     }
 
     return <Outlet />;

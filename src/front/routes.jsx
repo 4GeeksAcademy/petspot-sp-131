@@ -100,7 +100,7 @@ export const router = createBrowserRouter(
       <Route path="single/:theId" element={<Single />} />
       
       <Route path="signup/user" element={<SignupUser />} />
-      <Route path="user/login" element={<UserLogin />} />
+      <Route path="login/user" element={<UserLogin />} />
       <Route element={<RequireUserAuth/>}>
         <Route path="user/private" element={<UserLayout />}>
           <Route index element={<UserDashboard />} />

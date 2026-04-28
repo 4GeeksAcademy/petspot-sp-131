@@ -47,7 +47,7 @@ function UserLogin() {
         };
 
         try {
-            const response = await fetch(`${backendUrl}/api/user/login`, {
+            const response = await fetch(`${backendUrl}/api/login/user`, {
                 method: "POST",
                 body: JSON.stringify(body),
                 headers: {
