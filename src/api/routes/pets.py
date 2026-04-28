@@ -84,19 +84,44 @@ def get_races():
     races = db.session.execute(db.select(Race)).scalars().all()
     return jsonify([race.serialize() for race in races]), 200
 
-@pets_api.route('/races/<int:race_id>', methods=['GET'])
-def get_race(race_id):
-    race = db.session.get(Race, race_id)
-    if not race: return jsonify({"msg": "Race not found"}), 404
-    return jsonify(race.serialize()), 200
+@pets_api.route('/races', methods=['POST'])
+@jwt_required()
+def create_race():
+    identity = get_jwt_identity()
+    if not isinstance(identity, dict) or identity.get("role") != "admin":
+        return jsonify({"msg": "Admin only"}), 403
+    body = request.get_json(silent=True) or {}
+    if "name" not in body or "animal_type" not in body:
+        return jsonify({"msg": "Missing name or animal_type"}), 400
+    new_race = Race(name=body['name'], animal_type=body['animal_type'], url=body.get('url'))
+    db.session.add(new_race)
+    db.session.commit()
+    return jsonify(new_race.serialize()), 201
 
 @pets_api.route('/races/import', methods=['POST'])
 @jwt_required()
 def import_external_races():
-    # ... logic from original routes.py ...
-    # Simplified for brevity in this step, but I'll port the full logic if needed.
-    # Actually, I should port it correctly.
-    pass
+    identity = get_jwt_identity()
+    if not isinstance(identity, dict) or identity.get("role") != "admin":
+        return jsonify({"msg": "Admin only"}), 403
+    
+    # Import logic from commands.py
+    dog_res = http_requests.get('https://api.thedogapi.com/v1/breeds')
+    if dog_res.ok:
+        for dog in dog_res.json():
+            name = dog.get('name')
+            if name and not db.session.execute(select(Race).where(Race.name == name, Race.animal_type == "Perro")).scalars().first():
+                db.session.add(Race(name=name, animal_type="Perro"))
+    
+    cat_res = http_requests.get('https://api.thecatapi.com/v1/breeds')
+    if cat_res.ok:
+        for cat in cat_res.json():
+            name = cat.get('name')
+            if name and not db.session.execute(select(Race).where(Race.name == name, Race.animal_type == "Gato")).scalars().first():
+                db.session.add(Race(name=name, animal_type="Gato"))
+    
+    db.session.commit()
+    return jsonify({"msg": "External races imported successfully"}), 200
 
 @pets_api.route('/pets', methods=['GET'])
 def get_pets():
@@ -122,24 +147,23 @@ def get_pet(pet_id):
 def create_pet():
     identity = get_jwt_identity()
     user_id = identity["id"] if isinstance(identity, dict) else identity
-    body = request.get_json(silent=True)
-    if not body: return jsonify({"msg": "Missing JSON"}), 400
+    body = request.get_json(silent=True) or {}
     
     try:
         new_pet = Pet(
-            name=body['name'],
+            name=body.get('name'),
             user_id=user_id,
-            animal_type=normalize_pet_animal_type(body['animal_type']),
+            animal_type=normalize_pet_animal_type(body.get('animal_type', 'other')),
             other_type=body.get("other_type"),
             race_id=body.get('race_id'),
-            size=normalize_pet_size(body['size']),
+            size=normalize_pet_size(body.get('size', 'medium')),
             url=body.get('url')
         )
         db.session.add(new_pet)
         db.session.commit()
         return jsonify(new_pet.serialize()), 201
     except Exception as e:
-        return jsonify({"msg": str(e)}), 500
+        return jsonify({"msg": str(e)}), 400
 
 @pets_api.route('/pets/<int:pet_id>', methods=['PUT'])
 @jwt_required()
@@ -150,14 +174,9 @@ def update_pet(pet_id):
     
     pet = db.session.get(Pet, pet_id)
     if not pet: return jsonify({"msg": "Pet not found"}), 404
+    if pet.user_id != user_id and role != "admin": return jsonify({"msg": "Unauthorized"}), 403
 
-    # Authorization: Owner or Admin
-    if pet.user_id != user_id and role != "admin":
-        return jsonify({"msg": "Unauthorized"}), 403
-
-    body = request.get_json(silent=True)
-    if not body: return jsonify({"msg": "Missing JSON"}), 400
-
+    body = request.get_json(silent=True) or {}
     if "name" in body: pet.name = body["name"]
     if "animal_type" in body: pet.animal_type = normalize_pet_animal_type(body["animal_type"])
     if "size" in body: pet.size = normalize_pet_size(body["size"])
@@ -176,10 +195,7 @@ def delete_pet(pet_id):
 
     pet = db.session.get(Pet, pet_id)
     if not pet: return jsonify({"msg": "Pet not found"}), 404
-
-    # Authorization: Owner or Admin
-    if pet.user_id != user_id and role != "admin":
-        return jsonify({"msg": "Unauthorized"}), 403
+    if pet.user_id != user_id and role != "admin": return jsonify({"msg": "Unauthorized"}), 403
 
     db.session.delete(pet)
     db.session.commit()

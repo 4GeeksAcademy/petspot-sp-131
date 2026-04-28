@@ -35,7 +35,7 @@ def admin_login():
         }
     }), 200
 
-@auth_api.route("/login/user", methods=["POST"])
+@auth_api.route("/user/login", methods=["POST"])
 def login_user():
     email = request.json.get("email", None)
     password = request.json.get("password", None)
