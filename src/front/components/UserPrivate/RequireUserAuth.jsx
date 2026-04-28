@@ -6,7 +6,7 @@ import useGlobalReducer from "../../hooks/useGlobalReducer";
 function RequireUserAuth() {
 
     const { store, dispatch } = useGlobalReducer();
-    const [token, setToken] = useState(() => localStorage.getItem("userToken"));
+    const [token, setToken] = useState(() => localStorage.getItem("userToken") || localStorage.getItem("tokenUser"));
 
     useEffect(() => {
 
@@ -17,7 +17,7 @@ function RequireUserAuth() {
 
         // Revisa cada 500ms si el token sigue ahí
         const interval = setInterval(() => {
-            const currentToken = localStorage.getItem("userToken");
+            const currentToken = localStorage.getItem("userToken") || localStorage.getItem("tokenUser");
             if (currentToken !== token) {
                 setToken(currentToken); // <- esto fuerza el re-render
                 if (!currentToken) {
@@ -29,7 +29,7 @@ function RequireUserAuth() {
 
         // Por si lo borran desde otra pestaña
         const handleStorage = () => {
-            const currentToken = localStorage.getItem("userToken");
+            const currentToken = localStorage.getItem("userToken") || localStorage.getItem("tokenUser");
             setToken(currentToken);
             if (!currentToken) dispatch({ type: "USER_LOGOUT" });
         };
@@ -43,7 +43,7 @@ function RequireUserAuth() {
     }, [token, store.userToken, dispatch]);
 
     if (!token) {
-        return <Navigate to="/user/login" replace />;
+        return <Navigate to="/login/user" replace />;
     }
 
     return <Outlet />;

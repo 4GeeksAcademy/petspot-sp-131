@@ -1,16 +1,15 @@
-import UserChatsList from "../../../components/UserPrivate/UserChats/UserChatsList";
+import ChatPanelMDB from "../../../components/Chat/ChatPanelMDB";
 import { Link } from "react-router-dom";
 
 function UserChats() {
     return (
         <div className="text-center mx-auto">
-            <h1 className="text-center my-5 display-3">My Chats</h1>
-            <div className="text-center my-5">
+            <ChatPanelMDB type="user" />
+            <div className="text-center my-4">
                 <Link to="/user/private" className="btn btn-secondary">
-                    Go Back to Dashboard
+                    Volver al Panel
                 </Link>
             </div>
-            <UserChatsList />
         </div>
     );
 }

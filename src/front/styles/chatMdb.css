@@ -1,0 +1,80 @@
+.gradient-custom {
+    background: #f1f5f9;
+    background: linear-gradient(135deg, #f8fafc 0%, #cbd5e1 100%);
+    min-height: 100vh;
+}
+
+.mask-custom {
+    background: rgba(255, 255, 255, 0.4);
+    border-radius: 2em;
+    backdrop-filter: blur(15px);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    background-clip: padding-box;
+    box-shadow: 10px 10px 10px rgba(0, 0, 0, 0.05);
+}
+
+.chat-scroll {
+    max-height: 500px;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+/* Custom scrollbar */
+.chat-scroll::-webkit-scrollbar {
+    width: 6px;
+}
+.chat-scroll::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+}
+.chat-scroll::-webkit-scrollbar-thumb {
+    background: rgba(15, 23, 42, 0.2);
+    border-radius: 10px;
+}
+.chat-scroll::-webkit-scrollbar-thumb:hover {
+    background: rgba(15, 23, 42, 0.4);
+}
+
+.link-light {
+    color: #0f172a !important;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    display: block;
+    border-radius: 15px;
+}
+
+.link-light:hover {
+    background: rgba(15, 23, 42, 0.05);
+}
+
+.conversation-active {
+    background: rgba(15, 23, 42, 0.1) !important;
+}
+
+.text-white {
+    color: #0f172a !important; /* Overriding MDB text-white for our slate theme */
+}
+
+.text-light {
+    color: #475569 !important;
+}
+
+.btn-light {
+    background-color: #0f172a !important;
+    color: white !important;
+    border: none !important;
+}
+
+.btn-light:hover {
+    background-color: #1e293b !important;
+}
+
+.form-white .form-control {
+    background-color: rgba(255, 255, 255, 0.8) !important;
+    color: #0f172a !important;
+    border: 1px solid rgba(15, 23, 42, 0.1) !important;
+    border-radius: 1.5rem !important;
+}
+
+.form-white .form-label {
+    color: #475569 !important;
+}

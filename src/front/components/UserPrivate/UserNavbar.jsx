@@ -23,7 +23,7 @@ function UserNavbar() {
                     <NavLink
                         end
                         className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
-                        to="/user/private"
+                        to={localStorage.getItem("tokenUser") ? "/private/user" : "/user/private"}
                     >
                         Home
                     </NavLink>
