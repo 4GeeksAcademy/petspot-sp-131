@@ -913,13 +913,17 @@ def create_chat():
         from flask import current_app
         sio = current_app.extensions['socketio']
         serialized_chat = new_chat.serialize()
+        print(f"DEBUG: Data received - User: {user_id}, Place: {place_id}, Sender: {sender}, Identity: {identity}")
         
-        print(f"DEBUG: Emitting new_message to room 'user_{user_id}' and 'place_{place_id}'")
+        user_room = f"user_{str(user_id)}"
+        place_room = f"place_{str(place_id)}"
         
-        sio.emit('new_message', serialized_chat, room=f"user_{user_id}")
-        sio.emit('new_message', serialized_chat, room=f"place_{place_id}")
+        print(f"DEBUG: Emitting to rooms: {user_room} and {place_room}")
         
-        print(f"DEBUG: Emission to rooms user_{user_id} and place_{place_id} done.")
+        sio.emit('new_message', serialized_chat, room=user_room)
+        sio.emit('new_message', serialized_chat, room=place_room)
+        
+        print(f"DEBUG: Emission to {user_room} and {place_room} finished.")
     except Exception as e:
         print(f"Error emitting socket event: {e}")
 

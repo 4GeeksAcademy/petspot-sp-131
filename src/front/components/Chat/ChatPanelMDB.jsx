@@ -92,8 +92,8 @@ const ChatPanelMDB = ({ type }) => {
         fetchMessages(true);
 
         const backendUrl = import.meta.env.VITE_BACKEND_URL;
-        console.log("DEBUG: Connecting to socket at", backendUrl);
-        const socket = io(backendUrl, { transports: ["websocket", "polling"] });
+        console.log("DEBUG: Connecting to socket (Polling only) at", backendUrl);
+        const socket = io(backendUrl, { transports: ["polling"] });
         socketRef.current = socket;
 
         const { identity } = getAuth();
