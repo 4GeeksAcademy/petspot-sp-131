@@ -31,7 +31,7 @@ function EditPrivatePlace() {
 
     function handleSubmit(event) {
         event.preventDefault();
-        
+
         const trimmedPlaceName = placeName.trim();
         const trimmedPetRules = petRules.trim();
         const trimmedCity = city.trim();
@@ -76,7 +76,26 @@ function EditPrivatePlace() {
                     alert(`Error ${response.status}: ${backendMessage}`);
                     return;
                 }
-                
+
+                const updatePlaceResponse = await fetch(`${backendUrl}/api/places/private`, {
+                    headers: {
+                        Authorization: `Bearer ${tokenPlace}`
+                    }
+                })
+
+                const updatePlaceResponseJSON = await response.json()
+
+                if (!response.ok) {
+                    const backendMessage = updatePlaceResponseJSON.response || updatePlaceResponseJSON.message || "Unknown backend error"
+                    alert(`Error ${response.status}: ${backendMessage}`)
+                    return
+                }
+
+                dispatch({
+                    type: "GET_PRIVATE_PLACE",
+                    payload: updatePlaceResponseJSON
+                })
+
                 alert("Profile updated successfully!");
                 navigate("/places/private");
 
