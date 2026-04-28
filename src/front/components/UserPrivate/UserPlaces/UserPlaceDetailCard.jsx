@@ -1,18 +1,21 @@
 import useGlobalReducer from "../../../hooks/useGlobalReducer";
 import { useParams } from "react-router-dom";
 import { Link } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
     getPlaces,
     handleAddToFavorites,
     handleRemoveFromFavorites
 } from "../../../services/userPrivateService";
 
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
+
 function UserPlaceDetailCard() {
 
     const { store, dispatch } = useGlobalReducer();
     const { id } = useParams();
-    // const [placeReviews, setPlaceReviews] = useState([]);
+    const [showContactForm, setShowContactForm] = useState(false);
+    const [contactMessage, setContactMessage] = useState("");
     const activePlace = store.places.find((place) => place.id === Number(id))
     const placeReviews = activePlace?.reviews || []
     const isFavorite = (store.privateUser?.favorite_places || []).includes(Number(id));
@@ -32,24 +35,6 @@ function UserPlaceDetailCard() {
         }
         loadPlaces()
     }, [])
-
-    // useEffect(() => {
-    //     async function getPlaceReviews() {
-    //         try {
-    //             const response = await fetch(`${backendUrl}/api/places/${id}/reviews`);
-    //             if (!response.ok) {
-    //                 throw new Error(`Request failed with status ${response.status}`);
-    //             }
-
-    //             const reviews = await response.json();
-    //             setPlaceReviews(reviews);
-    //         } catch (error) {
-    //             console.error("Unable to load place reviews:", error);
-    //         }
-    //     }
-
-    //     getPlaceReviews();
-    // }, [id]);
 
     async function addToFavorites() {
         try {
@@ -72,6 +57,35 @@ function UserPlaceDetailCard() {
             });
         } catch (error) {
             alert("Unable to remove favorite right now. Please try again.");
+        }
+    }
+
+    async function handleSendMessage() {
+        if (!contactMessage.trim()) return;
+        try {
+            const userToken = localStorage.getItem("userToken");
+            const response = await fetch(`${backendUrl}/api/chat`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${userToken}`
+                },
+                body: JSON.stringify({
+                    place_id: id,
+                    message: contactMessage,
+                    sender: "user"
+                })
+            });
+
+            if (response.ok) {
+                alert("Message sent successfully!");
+                setContactMessage("");
+                setShowContactForm(false);
+            } else {
+                alert("Failed to send message.");
+            }
+        } catch (error) {
+            alert("Error sending message.");
         }
     }
 
@@ -113,6 +127,12 @@ function UserPlaceDetailCard() {
                 </div>
                 <div className="d-grid d-sm-flex gap-2 justify-content-sm-center mt-5 mb-3">
                     <Link to={`/user/private/reservations/add/${id}`} className="btn btn-outline-success">Make a reservation</Link>
+                    <button 
+                        className="btn btn-primary"
+                        onClick={() => setShowContactForm(!showContactForm)}
+                    >
+                        Contact Place
+                    </button>
                     <button
                         type="button"
                         className={`btn ${isFavorite ? "btn-warning" : "btn-outline-warning"}`}
@@ -121,7 +141,23 @@ function UserPlaceDetailCard() {
                         ❤︎
                     </button>
                 </div>
-                <div className="mb-3">
+
+                {showContactForm && (
+                    <div className="mt-4 p-3 bg-white border rounded">
+                        <textarea
+                            className="form-control mb-2"
+                            placeholder="Type your message to the establishment..."
+                            value={contactMessage}
+                            onChange={(e) => setContactMessage(e.target.value)}
+                        />
+                        <div className="d-flex justify-content-end gap-2">
+                            <button className="btn btn-secondary btn-sm" onClick={() => setShowContactForm(false)}>Cancel</button>
+                            <button className="btn btn-primary btn-sm" onClick={handleSendMessage} disabled={!contactMessage.trim()}>Send</button>
+                        </div>
+                    </div>
+                )}
+
+                <div className="mb-3 mt-4">
                     <span className="fw-bold">Reviews:</span>
                     {placeReviews.length > 0 ? (
                         <div className="mt-3 d-flex flex-column gap-3">
