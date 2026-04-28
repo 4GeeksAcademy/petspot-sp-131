@@ -914,12 +914,12 @@ def create_chat():
         sio = current_app.extensions['socketio']
         serialized_chat = new_chat.serialize()
         
-        print(f"DEBUG: Emitting new_message to user_{user_id} and place_{place_id}")
+        print(f"DEBUG: Emitting new_message to room 'user_{user_id}' and 'place_{place_id}'")
         
         sio.emit('new_message', serialized_chat, room=f"user_{user_id}")
         sio.emit('new_message', serialized_chat, room=f"place_{place_id}")
         
-        print("DEBUG: Emission successful")
+        print(f"DEBUG: Emission to rooms user_{user_id} and place_{place_id} done.")
     except Exception as e:
         print(f"Error emitting socket event: {e}")
 
