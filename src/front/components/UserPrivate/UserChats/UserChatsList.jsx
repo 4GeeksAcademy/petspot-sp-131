@@ -1,9 +1,9 @@
-import ChatPanelMDB from "../../Chat/ChatPanelMDB";
+import ChatPanel from "../../Chat/ChatPanel";
 
 function UserChatsList() {
     return (
-        <div className="container-fluid p-0">
-            <ChatPanelMDB type="user" premium={true} />
+        <div className="container-fluid p-0 bg-white">
+            <ChatPanel type="user" />
         </div>
     );
 }
