@@ -107,6 +107,13 @@ const ChatPanelMDB = ({ type }) => {
             }
         });
 
+        socket.on("reconnect", () => {
+            console.log("DEBUG: Socket reconnected!");
+            if (identity) {
+                socket.emit("join", { id: identity, type: type });
+            }
+        });
+
         socket.on("connect_error", (err) => {
             console.error("DEBUG: Socket connection error:", err);
         });
@@ -186,6 +193,7 @@ const ChatPanelMDB = ({ type }) => {
                 sender: type,
                 [type === "user" ? "place_id" : "user_id"]: selectedConvId
             };
+            console.log("DEBUG: Sending message with payload:", payload);
             
             const response = await fetch(`${backendUrl}/api/chat`, {
                 method: "POST",
