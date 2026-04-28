@@ -7,12 +7,12 @@ import {
     handleAddToFavorites,
     handleRemoveFromFavorites
 } from "../../../services/userPrivateService";
+import UserPlaceMap from "./UserPlaceMap";
 
 function UserPlaceDetailCard() {
 
     const { store, dispatch } = useGlobalReducer();
     const { id } = useParams();
-    // const [placeReviews, setPlaceReviews] = useState([]);
     const activePlace = store.places.find((place) => place.id === Number(id))
     const placeReviews = activePlace?.reviews || []
     const isFavorite = (store.privateUser?.favorite_places || []).includes(Number(id));
@@ -32,24 +32,6 @@ function UserPlaceDetailCard() {
         }
         loadPlaces()
     }, [])
-
-    // useEffect(() => {
-    //     async function getPlaceReviews() {
-    //         try {
-    //             const response = await fetch(`${backendUrl}/api/places/${id}/reviews`);
-    //             if (!response.ok) {
-    //                 throw new Error(`Request failed with status ${response.status}`);
-    //             }
-
-    //             const reviews = await response.json();
-    //             setPlaceReviews(reviews);
-    //         } catch (error) {
-    //             console.error("Unable to load place reviews:", error);
-    //         }
-    //     }
-
-    //     getPlaceReviews();
-    // }, [id]);
 
     async function addToFavorites() {
         try {
@@ -111,6 +93,7 @@ function UserPlaceDetailCard() {
                 <div className="mb-3">
                     <span className="fw-bold">Pet rules: </span>{activePlace.pet_rules ? activePlace.pet_rules : "-"}
                 </div>
+                <UserPlaceMap latitude={activePlace.city.latitude} longitude={activePlace.city.longitude} />
                 <div className="d-grid d-sm-flex gap-2 justify-content-sm-center mt-5 mb-3">
                     <Link to={`/user/private/reservations/add/${id}`} className="btn btn-outline-success">Make a reservation</Link>
                     <button
