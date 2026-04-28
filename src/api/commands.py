@@ -49,6 +49,45 @@ def setup_commands(app):
 
         print("All test users created")
 
+    @app.cli.command("insert-test-users-with-location") # name of our command
+    @click.argument("count") # argument of out command
+    def insert_test_users_with_location(count):
+        print("Creating test users")
+        added_count = 0
+        next_index = 1
+
+        while added_count < int(count):
+            email = "test_user" + str(next_index) + "@test.com"
+            existing_user = db.session.execute(
+                select(User).where(User.email == email)
+            ).scalar_one_or_none()
+
+            if existing_user:
+                print("User: ", email, " already exists. Skipping.")
+                next_index += 1
+                continue
+
+            cities_exist = db.session.execute(select(City)).scalars().all() or None
+            if cities_exist is None:
+                return print("Unable to add users. Cities must exist first in the database")
+            
+            city = random.choice(cities_exist)
+
+            user = User()
+            user.email = email
+            user.password = generate_password_hash("123456")
+            user.is_active = True
+            user.name = "Name_User_" + str(next_index)
+            user.latitude = city.latitude
+            user.longitude = city.longitude
+            db.session.add(user)
+            db.session.commit()
+            print("User: ", user.email, " created.")
+            added_count += 1
+            next_index += 1
+
+        print("All test users created")
+
     @app.cli.command("insert-test-places") # name of our command
     @click.argument("count") # argument of out command
     def insert_test_places(count):
