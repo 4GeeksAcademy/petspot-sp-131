@@ -14,7 +14,7 @@ function UserDashboard() {
     useEffect(() => {
         async function getPrivateUser() {
             try {
-                const userToken = localStorage.getItem("userToken") || localStorage.getItem("tokenUser")
+                const userToken = localStorage.getItem("userToken")
                 const response = await fetch(`${backendUrl}/api/users/private`, {
                     headers: {
                         Authorization: `Bearer ${userToken}`
@@ -22,11 +22,11 @@ function UserDashboard() {
                 })
                 if (response.status === 401) {
                     localStorage.removeItem("userToken")
-                    localStorage.removeItem("tokenUser")
+                    // legacy tokenUser removed
                     dispatch({
                         type: "USER_LOGOUT"
                     })
-                    navigate("/login/user", { replace: true })
+                    navigate("/user/login", { replace: true })
                     return
                 }
                 const responseJSON = await response.json()

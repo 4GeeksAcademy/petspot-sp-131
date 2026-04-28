@@ -79,7 +79,7 @@ function UserPlaceDetailCard() {
     async function handleSendMessage() {
         if (!contactMessage.trim()) return;
         try {
-            const userToken = localStorage.getItem("userToken") || localStorage.getItem("tokenUser");
+            const userToken = localStorage.getItem("userToken");
             const response = await fetch(`${backendUrl}/api/chat`, {
                 method: "POST",
                 headers: {

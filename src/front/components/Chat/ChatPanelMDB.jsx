@@ -16,7 +16,7 @@ const ChatPanelMDB = ({ type }) => {
 
     // Helper to get current token and identity
     const getAuth = () => {
-        const tokenKey = type === "user" ? (localStorage.getItem("tokenUser") ? "tokenUser" : "userToken") : "token_place";
+        const tokenKey = type === "user" ? "userToken" : "token_place";
         const token = localStorage.getItem(tokenKey);
         let identity = null;
         if (token) {

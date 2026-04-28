@@ -6,7 +6,7 @@ import useGlobalReducer from "../../hooks/useGlobalReducer";
 function RequireUserAuth() {
 
     const { store, dispatch } = useGlobalReducer();
-    const [token, setToken] = useState(() => localStorage.getItem("userToken") || localStorage.getItem("tokenUser"));
+    const [token, setToken] = useState(() => localStorage.getItem("userToken"));
 
     useEffect(() => {
 
@@ -17,7 +17,7 @@ function RequireUserAuth() {
 
         // Revisa cada 500ms si el token sigue ahí
         const interval = setInterval(() => {
-            const currentToken = localStorage.getItem("userToken") || localStorage.getItem("tokenUser");
+            const currentToken = localStorage.getItem("userToken");
             if (currentToken !== token) {
                 setToken(currentToken); // <- esto fuerza el re-render
                 if (!currentToken) {
@@ -43,7 +43,7 @@ function RequireUserAuth() {
     }, [token, store.userToken, dispatch]);
 
     if (!token) {
-        return <Navigate to="/login/user" replace />;
+        return <Navigate to="/user/login" replace />;
     }
 
     return <Outlet />;
