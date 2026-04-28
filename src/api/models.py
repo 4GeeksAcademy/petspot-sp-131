@@ -107,6 +107,8 @@ class City(db.Model):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     city: Mapped[str] = mapped_column(String(120), unique=True, nullable=False)
+    latitude: Mapped[float] = mapped_column(Float, nullable=True)
+    longitude: Mapped[float] = mapped_column(Float, nullable=True)
 
     places: Mapped[list["Place"]] = relationship("Place", back_populates="city", cascade="all, delete-orphan")
 
@@ -116,7 +118,9 @@ class City(db.Model):
     def serialize(self):
         return {
             "id": self.id,
-            "city": self.city
+            "city": self.city,
+            "latitude": self.latitude,
+            "longitude": self.longitude
         }
     
 
