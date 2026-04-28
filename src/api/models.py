@@ -281,6 +281,7 @@ class Chat(db.Model):
     place_id: Mapped[int] = mapped_column(ForeignKey("places.id"), nullable=False)
     message: Mapped[str] = mapped_column(Text, nullable=False)
     sender: Mapped[str] = mapped_column(String(20), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(default=datetime.now)
 
     user: Mapped["User"] = relationship("User", back_populates="chats")
     place: Mapped["Place"] = relationship("Place", back_populates="chats")
@@ -293,7 +294,8 @@ class Chat(db.Model):
             "place_id": self.place_id,
             "place_name": self.place.name,
             "message": self.message,
-            "sender": self.sender
+            "sender": self.sender,
+            "created_at": self.created_at.isoformat()
         }
 
 
