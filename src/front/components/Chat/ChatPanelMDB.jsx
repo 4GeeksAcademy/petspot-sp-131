@@ -8,6 +8,7 @@ const ChatPanelMDB = ({ type }) => {
     const [selectedConvId, setSelectedConvId] = useState(null);
     const [newMessage, setNewMessage] = useState("");
     const [sending, setSending] = useState(false);
+    const [unreadCounts, setUnreadCounts] = useState({});
     
     const socketRef = useRef(null);
     const scrollRef = useRef(null);
@@ -20,11 +21,10 @@ const ChatPanelMDB = ({ type }) => {
         let identity = null;
         if (token) {
             try {
-                // Better decode of JWT identity
                 const payload = JSON.parse(atob(token.split('.')[1]));
                 identity = payload.sub;
             } catch (e) {
-                console.error("Error decoding token", e);
+                console.error("DEBUG: Error decoding token", e);
             }
         }
         return { token, identity };
@@ -37,16 +37,18 @@ const ChatPanelMDB = ({ type }) => {
             const backendUrl = import.meta.env.VITE_BACKEND_URL;
             const endpoint = type === "user" ? "/api/chat/user" : "/api/chat/place";
             
+            console.log(`DEBUG: Fetching messages from ${endpoint}...`);
             const response = await fetch(`${backendUrl}${endpoint}`, {
                 headers: { "Authorization": `Bearer ${token}` }
             });
             
             if (response.ok) {
                 const data = await response.json();
+                console.log(`DEBUG: Loaded ${data.length} messages.`);
                 setMessages(data);
             }
         } catch (error) {
-            console.error("Error fetching messages:", error);
+            console.error("DEBUG: Error fetching messages:", error);
         } finally {
             if (isInitial) setLoading(false);
         }
@@ -56,34 +58,49 @@ const ChatPanelMDB = ({ type }) => {
         fetchMessages(true);
 
         const backendUrl = import.meta.env.VITE_BACKEND_URL;
+        console.log("DEBUG: Initializing socket connection to", backendUrl);
         const socket = io(backendUrl, { transports: ["polling"] });
         socketRef.current = socket;
 
-        const { identity } = getAuth();
-
         socket.on("connect", () => {
+            console.log("DEBUG: Socket connected with ID:", socket.id);
+            const { identity } = getAuth();
             if (identity) {
-                console.log("DEBUG: Joining room", `${type}_${identity}`);
+                const room = `${type}_${identity}`;
+                console.log("DEBUG: Emitting join for room:", room);
                 socket.emit("join", { id: identity, type: type });
             }
         });
 
+        socket.on("joined", (data) => {
+            console.log("DEBUG: Successfully joined room:", data.room);
+        });
+
         socket.on("new_message", (msg) => {
-            console.log("DEBUG: Received new_message in socket:", msg);
+            console.log("DEBUG: Socket received new_message:", msg);
+            // Verify if the message is for me or from me
             setMessages(prev => {
                 if (prev.find(m => m.id === msg.id)) return prev;
                 return [...prev, msg];
             });
         });
 
+        socket.on("disconnect", () => {
+            console.log("DEBUG: Socket disconnected");
+        });
+
         return () => {
-            if (socketRef.current) socketRef.current.disconnect();
+            if (socketRef.current) {
+                console.log("DEBUG: Disconnecting socket");
+                socketRef.current.disconnect();
+            }
         };
     }, [type]);
 
     // Group messages into conversations
     const conversations = useMemo(() => {
         const convMap = {};
+        // Sort messages by date to find the last message of each conversation
         const sorted = [...messages].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
         
         sorted.forEach(msg => {
@@ -110,6 +127,7 @@ const ChatPanelMDB = ({ type }) => {
     }, [messages, type]);
 
     const handleSelectConversation = (id) => {
+        console.log("DEBUG: Selecting conversation with ID:", id);
         setSelectedConvId(id);
         selectedConvIdRef.current = id;
     };
@@ -127,6 +145,7 @@ const ChatPanelMDB = ({ type }) => {
                 [type === "user" ? "place_id" : "user_id"]: selectedConvId
             };
             
+            console.log("DEBUG: Sending message via API...", payload);
             const response = await fetch(`${backendUrl}/api/chat`, {
                 method: "POST",
                 headers: {
@@ -138,11 +157,16 @@ const ChatPanelMDB = ({ type }) => {
             
             if (response.ok) {
                 const sentMsg = await response.json();
-                setMessages(prev => [...prev, sentMsg]);
+                console.log("DEBUG: Message sent successfully via API:", sentMsg);
+                // We add it locally to be immediate, but the socket should also send it
+                setMessages(prev => {
+                    if (prev.find(m => m.id === sentMsg.id)) return prev;
+                    return [...prev, sentMsg];
+                });
                 setNewMessage("");
             }
         } catch (error) {
-            console.error("Error sending message:", error);
+            console.error("DEBUG: Error sending message:", error);
         } finally {
             setSending(false);
         }
@@ -155,11 +179,13 @@ const ChatPanelMDB = ({ type }) => {
     }, [selectedConvId, messages]);
 
     const formatTime = (dateStr) => {
+        if (!dateStr) return "Just now";
         const date = new Date(dateStr);
         return isNaN(date.getTime()) ? "Just now" : date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     };
 
     const activeConv = conversations.find(c => c.id === selectedConvId);
+    // Sort messages chronologically for display
     const displayMessages = activeConv ? [...activeConv.messages].sort((a, b) => new Date(a.created_at) - new Date(b.created_at)) : [];
 
     if (loading && messages.length === 0) {
