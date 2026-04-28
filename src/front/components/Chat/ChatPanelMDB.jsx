@@ -8,7 +8,6 @@ const ChatPanelMDB = ({ type }) => {
     const [selectedConvId, setSelectedConvId] = useState(null);
     const [newMessage, setNewMessage] = useState("");
     const [sending, setSending] = useState(false);
-    const [unreadCounts, setUnreadCounts] = useState({});
     
     const socketRef = useRef(null);
     const scrollRef = useRef(null);
@@ -21,7 +20,9 @@ const ChatPanelMDB = ({ type }) => {
         let identity = null;
         if (token) {
             try {
-                identity = JSON.parse(atob(token.split('.')[1])).sub;
+                // Better decode of JWT identity
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                identity = payload.sub;
             } catch (e) {
                 console.error("Error decoding token", e);
             }
@@ -43,16 +44,6 @@ const ChatPanelMDB = ({ type }) => {
             if (response.ok) {
                 const data = await response.json();
                 setMessages(data);
-                
-                // Calculate initial unread counts
-                const counts = {};
-                data.forEach(msg => {
-                    if (!msg.is_read && msg.sender !== type) {
-                        const otherId = type === "user" ? msg.place_id : msg.user_id;
-                        counts[otherId] = (counts[otherId] || 0) + 1;
-                    }
-                });
-                setUnreadCounts(counts);
             }
         } catch (error) {
             console.error("Error fetching messages:", error);
@@ -61,84 +52,28 @@ const ChatPanelMDB = ({ type }) => {
         }
     };
 
-    const markAsRead = async (otherId) => {
-        try {
-            const { token } = getAuth();
-            const backendUrl = import.meta.env.VITE_BACKEND_URL;
-            await fetch(`${backendUrl}/api/chat/read`, {
-                method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                },
-                body: JSON.stringify({ other_id: otherId, type: type })
-            });
-            
-            // Update local state
-            setUnreadCounts(prev => ({ ...prev, [otherId]: 0 }));
-            setMessages(prev => prev.map(msg => {
-                const msgOtherId = type === "user" ? msg.place_id : msg.user_id;
-                if (msgOtherId === otherId && msg.sender !== type) {
-                    return { ...msg, is_read: true };
-                }
-                return msg;
-            }));
-        } catch (error) {
-            console.error("Error marking messages as read:", error);
-        }
-    };
-
     useEffect(() => {
         fetchMessages(true);
 
         const backendUrl = import.meta.env.VITE_BACKEND_URL;
-        console.log("DEBUG: Connecting to socket (Polling only) at", backendUrl);
         const socket = io(backendUrl, { transports: ["polling"] });
         socketRef.current = socket;
 
         const { identity } = getAuth();
-        console.log("DEBUG: My identity is", identity, "type", type);
 
         socket.on("connect", () => {
-            console.log("DEBUG: Socket connected! ID:", socket.id);
             if (identity) {
-                socket.emit("join", { id: identity, type: type });
-                console.log("DEBUG: Sent join event for", identity);
-            }
-        });
-
-        socket.on("reconnect", () => {
-            console.log("DEBUG: Socket reconnected!");
-            if (identity) {
+                console.log("DEBUG: Joining room", `${type}_${identity}`);
                 socket.emit("join", { id: identity, type: type });
             }
-        });
-
-        socket.on("connect_error", (err) => {
-            console.error("DEBUG: Socket connection error:", err);
         });
 
         socket.on("new_message", (msg) => {
-            console.log("DEBUG: Received new_message:", msg);
-            const otherId = type === "user" ? msg.place_id : msg.user_id;
-            
+            console.log("DEBUG: Received new_message in socket:", msg);
             setMessages(prev => {
                 if (prev.find(m => m.id === msg.id)) return prev;
                 return [...prev, msg];
             });
-
-            // Increment unread count if message is not for the active conversation
-            if (msg.sender !== type) {
-                if (otherId !== selectedConvIdRef.current) {
-                    setUnreadCounts(prev => ({
-                        ...prev,
-                        [otherId]: (prev[otherId] || 0) + 1
-                    }));
-                } else {
-                    // If it is the active conversation, mark as read immediately
-                    markAsRead(otherId);
-                }
-            }
         });
 
         return () => {
@@ -170,7 +105,6 @@ const ChatPanelMDB = ({ type }) => {
         if (list.length > 0 && selectedConvId === null) {
             setSelectedConvId(list[0].id);
             selectedConvIdRef.current = list[0].id;
-            markAsRead(list[0].id);
         }
         return list;
     }, [messages, type]);
@@ -178,7 +112,6 @@ const ChatPanelMDB = ({ type }) => {
     const handleSelectConversation = (id) => {
         setSelectedConvId(id);
         selectedConvIdRef.current = id;
-        markAsRead(id);
     };
 
     const handleSend = async () => {
@@ -193,7 +126,6 @@ const ChatPanelMDB = ({ type }) => {
                 sender: type,
                 [type === "user" ? "place_id" : "user_id"]: selectedConvId
             };
-            console.log("DEBUG: Sending message with payload:", payload);
             
             const response = await fetch(`${backendUrl}/api/chat`, {
                 method: "POST",
@@ -222,13 +154,18 @@ const ChatPanelMDB = ({ type }) => {
         }
     }, [selectedConvId, messages]);
 
+    const formatTime = (dateStr) => {
+        const date = new Date(dateStr);
+        return isNaN(date.getTime()) ? "Just now" : date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    };
+
     const activeConv = conversations.find(c => c.id === selectedConvId);
     const displayMessages = activeConv ? [...activeConv.messages].sort((a, b) => new Date(a.created_at) - new Date(b.created_at)) : [];
 
     if (loading && messages.length === 0) {
         return (
             <div className="gradient-custom d-flex align-items-center justify-content-center">
-                <div className="spinner-border text-dark" role="status">
+                <div className="spinner-border text-white" role="status">
                     <span className="visually-hidden">Cargando...</span>
                 </div>
             </div>
@@ -242,7 +179,7 @@ const ChatPanelMDB = ({ type }) => {
                     {/* Conversations List */}
                     <div className="col-md-6 col-lg-5 col-xl-5 mb-4 mb-md-0">
                         <h5 className="font-weight-bold mb-3 text-center text-white">
-                            {type === "user" ? "Locales" : "Usuarios"}
+                            {type === "user" ? "Places" : "Users"}
                         </h5>
                         <div className="card mask-custom">
                             <div className="card-body">
@@ -250,11 +187,11 @@ const ChatPanelMDB = ({ type }) => {
                                     {conversations.map((conv) => (
                                         <li 
                                             key={conv.id} 
-                                            className={`p-2 border-bottom ${selectedConvId === conv.id ? 'conversation-active' : ''}`}
-                                            style={{ borderBottom: "1px solid rgba(255,255,255,.1) !important", cursor: "pointer" }}
+                                            className={`p-2 border-bottom cursor-pointer ${selectedConvId === conv.id ? 'conversation-active' : ''}`}
+                                            style={{ borderBottom: "1px solid rgba(255,255,255,.1) !important" }}
                                             onClick={() => handleSelectConversation(conv.id)}
                                         >
-                                            <a href="#!" className="d-flex justify-content-between link-light">
+                                            <div className="d-flex justify-content-between link-light">
                                                 <div className="d-flex flex-row">
                                                     <img 
                                                         src={`https://ui-avatars.com/api/?name=${conv.name}&background=0f172a&color=fff`} 
@@ -263,25 +200,22 @@ const ChatPanelMDB = ({ type }) => {
                                                         width="60" 
                                                     />
                                                     <div className="pt-1">
-                                                        <p className="fw-bold mb-0">{conv.name}</p>
-                                                        <p className="small text-muted text-truncate" style={{ maxWidth: "150px" }}>
+                                                        <p className="fw-bold mb-0 text-white">{conv.name}</p>
+                                                        <p className="small text-white text-truncate" style={{ maxWidth: "150px" }}>
                                                             {conv.lastMessage.message}
                                                         </p>
                                                     </div>
                                                 </div>
-                                                <div className="pt-1">
-                                                    <p className="small text-muted mb-1">
-                                                        {new Date(conv.lastMessage.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                <div className="pt-1 text-end">
+                                                    <p className="small text-white mb-1">
+                                                        {formatTime(conv.lastMessage.created_at)}
                                                     </p>
-                                                    {unreadCounts[conv.id] > 0 && (
-                                                        <span className="badge bg-danger float-end">{unreadCounts[conv.id]}</span>
-                                                    )}
                                                 </div>
-                                            </a>
+                                            </div>
                                         </li>
                                     ))}
                                     {conversations.length === 0 && (
-                                        <li className="text-center p-3 text-muted">No hay mensajes aún.</li>
+                                        <li className="text-center p-3 text-white-50">No messages yet.</li>
                                     )}
                                 </ul>
                             </div>
@@ -295,9 +229,9 @@ const ChatPanelMDB = ({ type }) => {
                                 {displayMessages.map((msg, index) => {
                                     const isMe = msg.sender === type;
                                     return (
-                                        <li key={msg.id || index} className={`d-flex justify-content-between mb-4 ${isMe ? 'flex-row-reverse' : ''}`}>
+                                        <li key={msg.id || index} className={`d-flex mb-4 ${isMe ? 'flex-row-reverse' : 'justify-content-between'}`}>
                                             <img 
-                                                src={`https://ui-avatars.com/api/?name=${isMe ? "Yo" : (type === "user" ? msg.place_name : msg.user_name)}&background=${isMe ? '0f172a' : 'cbd5e1'}&color=${isMe ? 'fff' : '0f172a'}`} 
+                                                src={`https://ui-avatars.com/api/?name=${isMe ? "Me" : (type === "user" ? msg.place_name : msg.user_name)}&background=${isMe ? '0f172a' : 'cbd5e1'}&color=${isMe ? 'fff' : '0f172a'}`} 
                                                 alt="avatar"
                                                 className={`rounded-circle d-flex align-self-start shadow-1-strong ${isMe ? 'ms-3' : 'me-3'}`} 
                                                 width="60" 
@@ -305,8 +239,8 @@ const ChatPanelMDB = ({ type }) => {
                                             <div className="card mask-custom w-100">
                                                 <div className="card-header d-flex justify-content-between p-3"
                                                     style={{ borderBottom: "1px solid rgba(255,255,255,.1)" }}>
-                                                    <p className="fw-bold mb-0">{isMe ? "Tú" : (type === "user" ? msg.place_name : msg.user_name)}</p>
-                                                    <p className="text-light small mb-0"><i className="far fa-clock"></i> {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                                                    <p className="fw-bold mb-0">{isMe ? "Me" : (type === "user" ? msg.place_name : msg.user_name)}</p>
+                                                    <p className="text-light small mb-0"><i className="far fa-clock"></i> {formatTime(msg.created_at)}</p>
                                                 </div>
                                                 <div className="card-body">
                                                     <p className="mb-0">{msg.message}</p>
@@ -315,24 +249,21 @@ const ChatPanelMDB = ({ type }) => {
                                         </li>
                                     );
                                 })}
-                                {!selectedConvId && conversations.length > 0 && (
-                                    <li className="text-center p-5 text-muted">Selecciona un chat para empezar</li>
-                                )}
                             </ul>
                         </div>
 
                         {/* Input Area */}
                         {selectedConvId && (
                             <div className="mt-3">
-                                <div data-mdb-input-init className="form-outline form-white mb-3">
+                                <div className="form-outline form-white mb-3">
                                     <textarea 
                                         className="form-control" 
-                                        id="textAreaExample3" 
                                         rows="4"
                                         value={newMessage}
                                         onChange={(e) => setNewMessage(e.target.value)}
                                         onKeyPress={(e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-                                        placeholder="Escribe tu mensaje..."
+                                        placeholder="Type your message..."
+                                        style={{ background: "rgba(255,255,255,0.1)", color: "white", borderRadius: "1em" }}
                                     ></textarea>
                                 </div>
                                 <button 
@@ -341,7 +272,7 @@ const ChatPanelMDB = ({ type }) => {
                                     onClick={handleSend}
                                     disabled={sending}
                                 >
-                                    {sending ? "Enviando..." : "Enviar"}
+                                    {sending ? "Sending..." : "Send"}
                                 </button>
                             </div>
                         )}
