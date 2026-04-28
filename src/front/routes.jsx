@@ -23,7 +23,6 @@ import LoginPlace from "./pages/Places/LoginPlace";
 import PrivatePlace from "./pages/Places/PrivatePlace";
 import SignupPlace from "./pages/Places/SignupPlace";
 import EditPrivatePlace from "./pages/Places/EditPrivatePlace";
-import PlaceChats from "./pages/Places/PlaceChats";
 import RequirePlace from "./components/RequirePlace";
 
 import { Admin } from "./pages/Admin";
@@ -148,7 +147,6 @@ export const router = createBrowserRouter(
       <Route path="places/signup" element={<SignupPlace />} />
       <Route path="places/private" element={<RequirePlace><PrivatePlace /></RequirePlace>} />
       <Route path="places/private/edit" element={<RequirePlace><EditPrivatePlace /></RequirePlace>} />
-      <Route path="places/private/chats" element={<RequirePlace><PlaceChats /></RequirePlace>} />
 
       <Route path="cities" element={<RequireAdmin><Cities /></RequireAdmin>} />
       <Route path="cities/add" element={<RequireAdmin><AddCity /></RequireAdmin>} />

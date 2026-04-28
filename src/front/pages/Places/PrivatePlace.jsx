@@ -69,7 +69,6 @@ function PrivatePlace() {
         <div className="container mt-5">
             <h1 className="text-center mb-4 display-4">Dashboard</h1>
             <div className="d-flex justify-content-center gap-3 mb-5">
-                <Link to="/places/private/chats" className="btn btn-info text-white">My Messages</Link>
                 <Link to="/places/private/edit" className="btn btn-warning">Edit Profile</Link>
                 <button onClick={handleDeleteProfile} className="btn btn-danger">Delete Profile</button>
                 <button onClick={handleLogOutClick} className="btn btn-secondary">Log Out</button>
