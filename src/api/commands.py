@@ -126,10 +126,11 @@ def setup_commands(app):
 
     @app.cli.command("insert-cities") # name of our command
     def insert_cities():
-        for city in cities:
+        for city, coordinates in cities.items():
+            latitude, longitude = coordinates
             city_exists = db.session.execute(select(City).where(City.city == city)).scalar_one_or_none()
             if not city_exists:
-                add_city = City(city=city)
+                add_city = City(city=city, latitude=latitude, longitude=longitude)
                 db.session.add(add_city)
                 db.session.commit()
                 print(f"{city} added")
