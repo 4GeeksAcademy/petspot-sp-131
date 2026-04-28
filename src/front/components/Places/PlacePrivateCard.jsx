@@ -1,6 +1,5 @@
 import { useEffect } from "react";
 import useGlobalReducer from "../../hooks/useGlobalReducer";
-import PlaceMap from "./PlaceMap";
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL
 
@@ -68,7 +67,6 @@ function PlacePrivateCard() {
                 <div className="mb-3">
                     <span className="fw-bold">Pet rules: </span>{activePlace.pet_rules ? activePlace.pet_rules : "-"}
                 </div>
-                <PlaceMap latitude={activePlace.city.latitude} longitude={activePlace.city.longitude}/>
             </div>
         </>
     )
