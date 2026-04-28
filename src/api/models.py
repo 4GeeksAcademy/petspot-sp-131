@@ -1,5 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import String, Boolean, Text, ForeignKey, Date, Time, UniqueConstraint
+from sqlalchemy import String, Boolean, Text, ForeignKey, Date, Time, UniqueConstraint, Float
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from enum import Enum
@@ -34,6 +34,8 @@ class User(db.Model):
     email: Mapped[str] = mapped_column(String(120), unique=True, nullable=False)
     password: Mapped[str] = mapped_column(String(255), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean(), default=True)
+    latitude: Mapped[float] = mapped_column(Float, nullable=True)
+    longitude: Mapped[float] = mapped_column(Float, nullable=True)
 
     reservations: Mapped[list["Reservation"]] = relationship("Reservation", back_populates="user", cascade="all, delete-orphan")
     reviews: Mapped[list["Review"]] = relationship("Review", back_populates="user", cascade="all, delete-orphan")
@@ -55,7 +57,9 @@ class User(db.Model):
             "favorite_places": [favorite.place_id for favorite in self.favorite_places],
             "reservations": [reservation.serialize() for reservation in self.reservations],
             "reviews": [review.serialize() for review in self.reviews],
-            "pets": [pet.serialize() for pet in self.pets]
+            "pets": [pet.serialize() for pet in self.pets],
+            "latitude": self.latitude,
+            "longitude": self.longitude
         }
 
 class Place(db.Model):
