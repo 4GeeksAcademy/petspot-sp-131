@@ -22,6 +22,7 @@ function UserDashboard() {
                 })
                 if (response.status === 401) {
                     localStorage.removeItem("userToken")
+                    // legacy tokenUser removed
                     dispatch({
                         type: "USER_LOGOUT"
                     })

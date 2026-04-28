@@ -697,7 +697,7 @@ def update_city(city_id):
 # USER #
 
 
-@api.route("/login/user", methods=["POST"])
+@api.route("/user/login", methods=["POST"])
 def login_user():
     email = request.json.get("email", None)
     password = request.json.get("password", None)
@@ -868,7 +868,31 @@ def delete_news(news_id):
 
 @api.route('/chat', methods=['GET'])
 def get_chats():
-    chats = db.session.execute(select(Chat)).scalars().all()
+    chats = db.session.execute(select(Chat).order_by(Chat.created_at.desc())).scalars().all()
+    return jsonify([chat.serialize() for chat in chats]), 200
+
+
+@api.route('/chat/user', methods=['GET'])
+@jwt_required()
+def get_user_chats():
+    user_id = get_jwt_identity()
+    chats = db.session.execute(
+        select(Chat)
+        .where(Chat.user_id == int(user_id))
+        .order_by(Chat.created_at.desc())
+    ).scalars().all()
+    return jsonify([chat.serialize() for chat in chats]), 200
+
+
+@api.route('/chat/place', methods=['GET'])
+@jwt_required()
+def get_place_chats():
+    place_id = get_jwt_identity()
+    chats = db.session.execute(
+        select(Chat)
+        .where(Chat.place_id == int(place_id))
+        .order_by(Chat.created_at.desc())
+    ).scalars().all()
     return jsonify([chat.serialize() for chat in chats]), 200
 
 
@@ -881,20 +905,86 @@ def get_chat(chat_id):
 
 
 @api.route('/chat', methods=['POST'])
+@jwt_required(optional=True)
 def create_chat():
     data = request.json
+    if not data:
+        return jsonify({"msg": "Missing body"}), 400
+
+    user_id = data.get("user_id")
+    place_id = data.get("place_id")
+    message = data.get("message")
+    sender = data.get("sender")
+
+    # If identity is available from JWT, we can use it to set the missing ID
+    identity = get_jwt_identity()
+    if identity:
+        if sender == "user" and not user_id:
+            user_id = identity
+        if sender == "place" and not place_id:
+            place_id = identity
+
+    if not all([user_id, place_id, message, sender]):
+        return jsonify({"msg": "Missing required fields: user_id, place_id, message, sender"}), 400
 
     new_chat = Chat(
-        user_id=data.get("user_id"),
-        place_id=data.get("place_id"),
-        message=data.get("message"),
-        sender=data.get("sender")
+        user_id=int(user_id),
+        place_id=int(place_id),
+        message=message,
+        sender=sender
     )
 
     db.session.add(new_chat)
     db.session.commit()
 
+    # Emit socket event for real-time update
+    try:
+        # Get the socketio instance from the current app extensions
+        from flask import current_app
+        sio = current_app.extensions['socketio']
+        serialized_chat = new_chat.serialize()
+        print(f"DEBUG: Data received - User: {user_id}, Place: {place_id}, Sender: {sender}, Identity: {identity}")
+        
+        user_room = f"user_{str(user_id)}"
+        place_room = f"place_{str(place_id)}"
+        
+        print(f"DEBUG: Emitting to rooms: {user_room} and {place_room}")
+        
+        sio.emit('new_message', serialized_chat, room=user_room)
+        sio.emit('new_message', serialized_chat, room=place_room)
+        
+        print(f"DEBUG: Emission to {user_room} and {place_room} finished.")
+    except Exception as e:
+        print(f"Error emitting socket event: {e}")
+
     return jsonify(new_chat.serialize()), 201
+
+@api.route('/chat/read', methods=['PUT'])
+@jwt_required()
+def mark_as_read():
+    identity = get_jwt_identity()
+    data = request.json
+    if not data:
+        return jsonify({"msg": "Missing body"}), 400
+    
+    other_id = data.get("other_id")
+    type = data.get("type") # 'user' or 'place' (who is marking as read)
+    
+    if not other_id or not type:
+        return jsonify({"msg": "Missing other_id or type"}), 400
+    
+    if type == "user":
+        # User is marking messages from Place as read
+        chats = Chat.query.filter_by(user_id=int(identity), place_id=int(other_id), sender="place", is_read=False).all()
+    else:
+        # Place is marking messages from User as read
+        chats = Chat.query.filter_by(place_id=int(identity), user_id=int(other_id), sender="user", is_read=False).all()
+        
+    for chat in chats:
+        chat.is_read = True
+    
+    db.session.commit()
+    return jsonify({"msg": "Messages marked as read", "count": len(chats)}), 200
 
 
 @api.route('/chat/<int:chat_id>', methods=['PUT'])
