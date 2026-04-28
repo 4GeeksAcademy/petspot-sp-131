@@ -1757,6 +1757,10 @@ def update_private_user():
     email = data.get("email")
     name = data.get("name")
     password = data.get("password")
+    latitude_provided = "latitude" in data
+    longitude_provided = "longitude" in data
+    latitude = data.get("latitude")
+    longitude = data.get("longitude")
 
     if email is not None:
         if not isinstance(email, str):
@@ -1793,6 +1797,32 @@ def update_private_user():
         
         hashed_password = generate_password_hash(password)
         user.password = hashed_password
+
+    if latitude_provided and longitude_provided:
+        latitude_is_empty = latitude is None or (isinstance(latitude, str) and len(latitude.strip()) == 0)
+        longitude_is_empty = longitude is None or (isinstance(longitude, str) and len(longitude.strip()) == 0)
+
+        if latitude_is_empty and longitude_is_empty:
+            user.latitude = None
+            user.longitude = None
+        else:
+            if latitude_is_empty or longitude_is_empty:
+                return jsonify(response="Latitude and longitude must both exist"), 400
+
+            try:
+                latitude = float(latitude)
+                longitude = float(longitude)
+            except (TypeError, ValueError):
+                return jsonify(response="Latitude and longitude must be numbers"), 400
+            
+            if not (-90 <= latitude <= 90):
+                return jsonify(response="Invalid latitude"), 400
+
+            if not (-180 <= longitude <= 180):
+                return jsonify(response="Invalid longitude"), 400
+            
+            user.latitude = latitude
+            user.longitude = longitude
     
     db.session.commit()
    

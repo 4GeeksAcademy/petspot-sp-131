@@ -13,6 +13,7 @@ from api.admin import setup_admin
 from api.commands import setup_commands
 from flask_socketio import SocketIO
 from api.sockets import setup_sockets
+from flask_jwt_extended import JWTManager
 load_dotenv()
 
 # from models import Person
