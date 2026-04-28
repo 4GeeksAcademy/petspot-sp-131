@@ -17,12 +17,12 @@ function UserNavbar() {
     }
 
     return (
-        <div className="border-bottom py-3 mb-4 bg-white shadow-sm">
-            <ul className="nav justify-content-center">
+        <>
+            <ul className="nav nav-pills justify-content-center">
                 <li className="nav-item">
                     <NavLink
                         end
-                        className={({ isActive }) => `nav-link px-3 py-2 ${isActive ? "text-primary fw-bold border-bottom border-primary border-3" : "text-secondary"}`}
+                        className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
                         to="/user/private"
                     >
                         Home
@@ -30,8 +30,7 @@ function UserNavbar() {
                 </li>
                 <li className="nav-item">
                     <NavLink
-                        end
-                        className={({ isActive }) => `nav-link px-3 py-2 ${isActive ? "text-primary fw-bold border-bottom border-primary border-3" : "text-secondary"}`}
+                        className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
                         to="/user/private/profile"
                     >
                         Profile
@@ -39,8 +38,7 @@ function UserNavbar() {
                 </li>
                 <li className="nav-item">
                     <NavLink
-                        end
-                        className={({ isActive }) => `nav-link px-3 py-2 ${isActive ? "text-primary fw-bold border-bottom border-primary border-3" : "text-secondary"}`}
+                        className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
                         to="/user/private/favorites"
                     >
                         Favorites
@@ -48,8 +46,7 @@ function UserNavbar() {
                 </li>
                 <li className="nav-item">
                     <NavLink
-                        end
-                        className={({ isActive }) => `nav-link px-3 py-2 ${isActive ? "text-primary fw-bold border-bottom border-primary border-3" : "text-secondary"}`}
+                        className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
                         to="/user/private/pets"
                     >
                         Pets
@@ -57,8 +54,7 @@ function UserNavbar() {
                 </li>
                 <li className="nav-item">
                     <NavLink
-                        end
-                        className={({ isActive }) => `nav-link px-3 py-2 ${isActive ? "text-primary fw-bold border-bottom border-primary border-3" : "text-secondary"}`}
+                        className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
                         to="/user/private/reservations"
                     >
                         Reservations
@@ -66,8 +62,7 @@ function UserNavbar() {
                 </li>
                 <li className="nav-item">
                     <NavLink
-                        end
-                        className={({ isActive }) => `nav-link px-3 py-2 ${isActive ? "text-primary fw-bold border-bottom border-primary border-3" : "text-secondary"}`}
+                        className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
                         to="/user/private/reviews"
                     >
                         Reviews
@@ -75,8 +70,7 @@ function UserNavbar() {
                 </li>
                 <li className="nav-item">
                     <NavLink
-                        end
-                        className={({ isActive }) => `nav-link px-3 py-2 ${isActive ? "text-primary fw-bold border-bottom border-primary border-3" : "text-secondary"}`}
+                        className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
                         to="/user/private/news"
                     >
                         News
@@ -84,8 +78,7 @@ function UserNavbar() {
                 </li>
                 <li className="nav-item">
                     <NavLink
-                        end
-                        className={({ isActive }) => `nav-link px-3 py-2 ${isActive ? "text-primary fw-bold border-bottom border-primary border-3" : "text-secondary"}`}
+                        className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
                         to="/user/private/chats"
                     >
                         Chats
@@ -95,7 +88,7 @@ function UserNavbar() {
                     <button className="btn btn-danger ms-2" onClick={handleLogout}>Log Out</button>
                 </li>
             </ul>
-        </div>
+        </>
     )
 }
 
