@@ -29,6 +29,7 @@ export const Admin = () => {
   };
 
   return (
+    <div className="container py-4">
       <div className="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
         <div>
           <h1 className="display-5 fw-bold text-primary mb-0">Admin Panel</h1>
