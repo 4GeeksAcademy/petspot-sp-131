@@ -12,7 +12,13 @@ function UserReviewCard({ reviewObj }) {
             <div className="card-body">
                 <h5 className="card-title card-header bg-secondary-subtle mb-3 ps-0 h2">{place_name}</h5>
                 <div className="mb-3">
-                    <strong>Rating:</strong> {rating}/5
+                    <strong>Rating:</strong>{" "}
+                    {[1, 2, 3, 4, 5].map((num) => (
+                        <i
+                            key={num}
+                            className={`fa-star ${num <= rating ? "fa-solid text-warning" : "fa-regular text-secondary"}`}
+                        ></i>
+                    ))}
                 </div>
                 <div className="mb-3">
                     <strong>Title:</strong> {title}
