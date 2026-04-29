@@ -239,7 +239,7 @@ const ChatPanelMDB = ({ type }) => {
         <section className="gradient-custom">
             <div className="container py-5">
                 <div className="row">
-                    {/* Conversations List */}
+                    {/* Conversations List (Left Column) */}
                     <div className="col-md-6 col-lg-5 col-xl-5 mb-4 mb-md-0">
                         <h5 className="font-weight-bold mb-3 text-center text-white">
                             {type === "user" ? "Locales" : "Usuarios"}
@@ -251,7 +251,7 @@ const ChatPanelMDB = ({ type }) => {
                                         <li 
                                             key={conv.id} 
                                             className={`p-2 border-bottom ${selectedConvId === conv.id ? 'conversation-active' : ''}`}
-                                            style={{ borderBottom: "1px solid rgba(255,255,255,.1) !important", cursor: "pointer" }}
+                                            style={{ borderBottom: "1px solid rgba(255,255,255,.3) !important", cursor: "pointer" }}
                                             onClick={() => handleSelectConversation(conv.id)}
                                         >
                                             <a href="#!" className="d-flex justify-content-between link-light">
@@ -264,13 +264,13 @@ const ChatPanelMDB = ({ type }) => {
                                                     />
                                                     <div className="pt-1">
                                                         <p className="fw-bold mb-0">{conv.name}</p>
-                                                        <p className="small text-muted text-truncate" style={{ maxWidth: "150px" }}>
+                                                        <p className="small text-white text-truncate" style={{ maxWidth: "150px" }}>
                                                             {conv.lastMessage.message}
                                                         </p>
                                                     </div>
                                                 </div>
-                                                <div className="pt-1">
-                                                    <p className="small text-muted mb-1">
+                                                <div className="pt-1 text-end">
+                                                    <p className="small text-white mb-1">
                                                         {new Date(conv.lastMessage.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                     </p>
                                                     {unreadCounts[conv.id] > 0 && (
@@ -281,45 +281,50 @@ const ChatPanelMDB = ({ type }) => {
                                         </li>
                                     ))}
                                     {conversations.length === 0 && (
-                                        <li className="text-center p-3 text-muted">No hay mensajes aún.</li>
+                                        <li className="text-center p-3 text-white opacity-50">No hay mensajes aún.</li>
                                     )}
                                 </ul>
                             </div>
                         </div>
                     </div>
 
-                    {/* Chat Window */}
+                    {/* Chat Window (Right Column) */}
                     <div className="col-md-6 col-lg-7 col-xl-7">
-                        <div className="chat-scroll pr-2" ref={scrollRef} style={{ height: "450px" }}>
-                            <ul className="list-unstyled text-white">
-                                {displayMessages.map((msg, index) => {
-                                    const isMe = msg.sender === type;
-                                    return (
-                                        <li key={msg.id || index} className={`d-flex justify-content-between mb-4 ${isMe ? 'flex-row-reverse' : ''}`}>
-                                            <img 
-                                                src={`https://ui-avatars.com/api/?name=${isMe ? "Yo" : (type === "user" ? msg.place_name : msg.user_name)}&background=${isMe ? '0f172a' : 'cbd5e1'}&color=${isMe ? 'fff' : '0f172a'}`} 
-                                                alt="avatar"
-                                                className={`rounded-circle d-flex align-self-start shadow-1-strong ${isMe ? 'ms-3' : 'me-3'}`} 
-                                                width="60" 
-                                            />
-                                            <div className="card mask-custom w-100">
-                                                <div className="card-header d-flex justify-content-between p-3"
-                                                    style={{ borderBottom: "1px solid rgba(255,255,255,.1)" }}>
-                                                    <p className="fw-bold mb-0">{isMe ? "Tú" : (type === "user" ? msg.place_name : msg.user_name)}</p>
-                                                    <p className="text-light small mb-0"><i className="far fa-clock"></i> {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
-                                                </div>
-                                                <div className="card-body">
-                                                    <p className="mb-0">{msg.message}</p>
-                                                </div>
+                        <ul className="list-unstyled text-white chat-scroll pr-2" ref={scrollRef} style={{ height: "450px", overflowY: "auto" }}>
+                            {displayMessages.map((msg, index) => {
+                                const isMe = msg.sender === type;
+                                const senderName = isMe ? "Yo" : (type === "user" ? msg.place_name : msg.user_name);
+                                
+                                return (
+                                    <li key={msg.id || index} className={`d-flex justify-content-between mb-4 ${isMe ? 'flex-row-reverse' : ''}`}>
+                                        <img 
+                                            src={`https://ui-avatars.com/api/?name=${senderName}&background=${isMe ? '0f172a' : 'cbd5e1'}&color=${isMe ? 'fff' : '0f172a'}`} 
+                                            alt="avatar"
+                                            className={`rounded-circle d-flex align-self-start shadow-1-strong ${isMe ? 'ms-3' : 'me-3'}`} 
+                                            width="60" 
+                                        />
+                                        <div className="card mask-custom w-100">
+                                            <div className="card-header d-flex justify-content-between p-3"
+                                                style={{ borderBottom: "1px solid rgba(255,255,255,.3)" }}>
+                                                <p className="fw-bold mb-0">{senderName}</p>
+                                                <p className="text-light small mb-0">
+                                                    <i className="far fa-clock"></i> {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                </p>
                                             </div>
-                                        </li>
-                                    );
-                                })}
-                                {!selectedConvId && conversations.length > 0 && (
-                                    <li className="text-center p-5 text-muted">Selecciona un chat para empezar</li>
-                                )}
-                            </ul>
-                        </div>
+                                            <div className="card-body">
+                                                <p className="mb-0">{msg.message}</p>
+                                            </div>
+                                        </div>
+                                    </li>
+                                );
+                            })}
+                            {!selectedConvId && conversations.length > 0 && (
+                                <li className="text-center p-5 text-white opacity-50">Selecciona un chat para empezar</li>
+                            )}
+                            {selectedConvId && displayMessages.length === 0 && (
+                                <li className="text-center p-5 text-white opacity-50">Escribe el primer mensaje...</li>
+                            )}
+                        </ul>
 
                         {/* Input Area */}
                         {selectedConvId && (
@@ -329,17 +334,21 @@ const ChatPanelMDB = ({ type }) => {
                                         className="form-control" 
                                         id="textAreaExample3" 
                                         rows="4"
+                                        style={{ background: "rgba(255,255,255,0.1)", color: "white", borderRadius: "1em" }}
                                         value={newMessage}
                                         onChange={(e) => setNewMessage(e.target.value)}
                                         onKeyPress={(e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
                                         placeholder="Escribe tu mensaje..."
                                     ></textarea>
+                                    <label className="form-label text-white" htmlFor="textAreaExample3">Mensaje</label>
                                 </div>
                                 <button 
                                     type="button" 
+                                    data-mdb-button-init 
+                                    data-mdb-ripple-init 
                                     className="btn btn-light btn-lg btn-rounded float-end"
                                     onClick={handleSend}
-                                    disabled={sending}
+                                    disabled={sending || !newMessage.trim()}
                                 >
                                     {sending ? "Enviando..." : "Enviar"}
                                 </button>
