@@ -81,7 +81,6 @@ function EditPrivatePlace() {
                 navigate("/places/private");
             }
         }
-        }
 
         loadPrivatePlace();
     }, [dispatch, navigate, store.privatePlace]);
