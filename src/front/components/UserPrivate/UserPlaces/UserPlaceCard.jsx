@@ -1,7 +1,14 @@
 import { Link } from "react-router-dom";
+import useGlobalReducer from "../../../hooks/useGlobalReducer";
+import {
+    handleAddToFavorites,
+    handleRemoveFromFavorites
+} from "../../../services/userPrivateService";
 
 function UserPlaceCard({ placeObj }) {
-    const { name, pet_rules, city, establishment_type, id } = placeObj
+    const { store, dispatch } = useGlobalReducer();
+    const { name, pet_rules, city, establishment_type, id, image_url } = placeObj
+    const isFavorite = (store.privateUser?.favorite_places || []).includes(id);
 
     const establishmentTypeEmoji = {
         bar: "\u{1F37A}",
@@ -9,9 +16,41 @@ function UserPlaceCard({ placeObj }) {
         cafe: "\u{2615}"
     }
 
+    async function addToFavorites() {
+        try {
+            const updatedPrivateUser = await handleAddToFavorites(id);
+            dispatch({
+                type: "GET_PRIVATE_USER",
+                payload: updatedPrivateUser
+            });
+        } catch (error) {
+            alert("Unable to add favorite right now. Please try again.");
+        }
+    }
+
+    async function removeFromFavorites() {
+        try {
+            const updatedPrivateUser = await handleRemoveFromFavorites(id);
+            dispatch({
+                type: "GET_PRIVATE_USER",
+                payload: updatedPrivateUser
+            });
+        } catch (error) {
+            alert("Unable to remove favorite right now. Please try again.");
+        }
+    }
+
     return (
         <>
             <div className="card mb-3 mx-auto w-100 bg-secondary-subtle border-0" style={{ maxWidth: 800 }}>
+                {image_url && (
+                    <img
+                        src={image_url}
+                        className="card-img-top"
+                        alt={name}
+                        style={{ height: "260px", objectFit: "cover" }}
+                    />
+                )}
                 <div className="card-body">
                     <h5 className="card-title card-header bg-secondary-subtle mb-3 ps-0 h2">{name}</h5>
                     <h6 className="card-subtitle mb-2 text-body-secondary">
@@ -24,9 +63,15 @@ function UserPlaceCard({ placeObj }) {
                     <div className="d-flex flex-column gap-3">
                         <p className="card-text m-0">{pet_rules}</p>
                         <div className="d-grid d-sm-flex gap-2 justify-content-sm-end">
-                            <Link to={`places/view/${id}`} className="btn btn-outline-primary">View</Link>
-                            <Link to="#" className="btn btn-outline-success">Make a reservation</Link>
-                            <Link to="#" className="btn btn-outline-warning">Add to Favorites</Link>
+                            <Link to={`/user/private/places/view/${id}`} className="btn btn-outline-primary">View</Link>
+                            <Link to={`/user/private/reservations/add/${id}`} className="btn btn-outline-success">Make a reservation</Link>
+                            <button
+                                type="button"
+                                className={`btn ${isFavorite ? "btn-warning" : "btn-outline-warning"} `}
+                                onClick={isFavorite ? removeFromFavorites : addToFavorites}
+                            >
+                                ❤︎
+                            </button>
                         </div>
                     </div>
                 </div>

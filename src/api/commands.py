@@ -2,7 +2,7 @@
 import click, random, requests
 from api.cities import cities
 from datetime import datetime
-from api.models import db, User, Place, EstablishmentType, City, Favorite, AdminUser, Review, Reservation, ReservationStatus, Chat, News, PostType, Race
+from api.models import db, User, Place, EstablishmentType, City, Favorite, AdminUser, Review, Reservation, ReservationStatus, Chat, News, PostType, Race, Pet, PetAnimalType, PetSize
 from werkzeug.security import generate_password_hash
 from sqlalchemy import select
 
@@ -49,6 +49,46 @@ def setup_commands(app):
 
         print("All test users created")
 
+    @app.cli.command("insert-test-users-with-location") # name of our command
+    @click.argument("count") # argument of out command
+    def insert_test_users_with_location(count):
+        print("Creating test users")
+        added_count = 0
+        next_index = 1
+
+        while added_count < int(count):
+            email = "test_user" + str(next_index) + "@test.com"
+            existing_user = db.session.execute(
+                select(User).where(User.email == email)
+            ).scalar_one_or_none()
+
+            if existing_user:
+                print("User: ", email, " already exists. Skipping.")
+                next_index += 1
+                continue
+
+            cities_exist = db.session.execute(select(City)).scalars().all() or None
+            if cities_exist is None:
+                return print("Unable to add users. Cities must exist first in the database")
+            
+            city = random.choice(cities_exist)
+
+            user = User()
+            user.email = email
+            user.password = generate_password_hash("123456")
+            user.is_active = True
+            user.name = "Name_User_" + str(next_index)
+            user.latitude = city.latitude
+            user.longitude = city.longitude
+            user.address = f"{city.city}, Spain"
+            db.session.add(user)
+            db.session.commit()
+            print("User: ", user.email, " created.")
+            added_count += 1
+            next_index += 1
+
+        print("All test users created")
+
     @app.cli.command("insert-test-places") # name of our command
     @click.argument("count") # argument of out command
     def insert_test_places(count):
@@ -56,6 +96,11 @@ def setup_commands(app):
         existing_cities = db.session.execute(select(City)).scalars().all() or None
         if existing_cities is None:
             return print("Unable to add places. Cities must exist first in the database")
+        place_image_urls = {
+            EstablishmentType.RESTAURANT: "https://images.unsplash.com/photo-1755632540801-8eaf8eb22e1d?q=80&w=2064&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+            EstablishmentType.BAR: "https://images.unsplash.com/photo-1659514149185-e8f007131309?q=80&w=1548&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+            EstablishmentType.CAFE: "https://images.unsplash.com/photo-1571168136613-46401b03904e?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+        }
         added_count = 0
         next_index = 1
 
@@ -77,6 +122,7 @@ def setup_commands(app):
             place.establishment_type = random.choice(list(EstablishmentType))
             place.city = random.choice(existing_cities)
             place.pet_rules = "Pets allowed under supervision"
+            place.image_url = place_image_urls[place.establishment_type]
             db.session.add(place)
             db.session.commit()
             print("Place: ", place.email, " created.")
@@ -120,10 +166,11 @@ def setup_commands(app):
 
     @app.cli.command("insert-cities") # name of our command
     def insert_cities():
-        for city in cities:
+        for city, city_data in cities.items():
+            _, latitude, longitude = city_data
             city_exists = db.session.execute(select(City).where(City.city == city)).scalar_one_or_none()
             if not city_exists:
-                add_city = City(city=city)
+                add_city = City(city=city, latitude=latitude, longitude=longitude)
                 db.session.add(add_city)
                 db.session.commit()
                 print(f"{city} added")
@@ -370,7 +417,7 @@ def setup_commands(app):
     @app.cli.command("insert-external-races")
     def insert_external_races():
         import os
-        print("Buscando razas en The Dog API...")
+        print("Fetching races from The Dog API...")
         try:
             api_key = os.getenv("DOG_API_KEY")
             headers = {"x-api-key": api_key} if api_key else {}
@@ -387,9 +434,9 @@ def setup_commands(app):
                             db.session.add(new_race)
                             dog_count += 1
                 db.session.commit()
-                print(f"Insertadas {dog_count} razas de Perro.")
+                print(f"Inserted {dog_count} dog races.")
             else:
-                print(f"Error al conectar con The Dog API ({dog_res.status_code}). Usando lista de respaldo...")
+                print(f"Unable to connect to The Dog API ({dog_res.status_code}). Using fallback list...")
                 fallback_dogs = [
                     "Golden Retriever", "Labrador Retriever", "Bulldog", "Poodle", 
                     "Beagle", "Chihuahua", "German Shepherd", "Yorkshire Terrier", 
@@ -404,11 +451,11 @@ def setup_commands(app):
                         db.session.add(new_race)
                         dog_count += 1
                 db.session.commit()
-                print(f"Insertadas {dog_count} razas de Perro (respaldo).")
+                print(f"Inserted {dog_count} dog races from the fallback list.")
         except Exception as e:
-            print(f"Excepcion The Dog API: {e}")
+            print(f"Dog API exception: {e}")
 
-        print("Buscando razas en The Cat API...")
+        print("Fetching races from The Cat API...")
         try:
             cat_res = requests.get('https://api.thecatapi.com/v1/breeds')
             if cat_res.status_code == 200:
@@ -423,8 +470,84 @@ def setup_commands(app):
                             db.session.add(new_race)
                             cat_count += 1
                 db.session.commit()
-                print(f"Insertadas {cat_count} razas de Gato.")
+                print(f"Inserted {cat_count} cat races.")
             else:
-                print("Error al conectar con The Cat API")
+                print(f"Unable to connect to The Cat API ({cat_res.status_code}).")
         except Exception as e:
-            print(f"Excepcion The Cat API: {e}")
+            print(f"Cat API exception: {e}")
+
+    @app.cli.command('insert-test-pets')
+    @click.argument("count")
+    def insert_test_pets(count):
+        users = db.session.execute(select(User)).scalars().all() or None
+        races = db.session.execute(select(Race)).scalars().all() or None
+
+        if users is None:
+            return print("Unable to insert test pets. Make sure users exist in the database")
+
+        if not users:
+            return print("Unable to insert test pets. Make sure users exist in the database")
+
+        dog_races = [race for race in races if race.animal_type == "Perro"] if races else []
+        cat_races = [race for race in races if race.animal_type == "Gato"] if races else []
+
+        other_pet_types = [
+            "Parrot",
+            "Rabbit",
+            "Hamster",
+            "Turtle",
+            "Ferret"
+        ]
+        other_pet_type_urls = {
+            "parrot": "https://images.unsplash.com/photo-1693218722743-eba71402ab37",
+            "rabbit": "https://images.unsplash.com/photo-1589933767411-38a58367efd7",
+            "turtle": "https://images.unsplash.com/photo-1644776986545-a3b246aa77a0",
+            "hamster": "https://images.unsplash.com/photo-1738486310390-7d5bf189b98a",
+            "ferret": "https://images.unsplash.com/photo-1615087240969-eeff2fa558f2"
+        }
+        pet_names = [
+            "Max",
+            "Luna",
+            "Charlie",
+            "Bella",
+            "Rocky",
+            "Milo",
+            "Coco",
+            "Nala"
+        ]
+
+        for x in range(1, int(count) + 1):
+            user = random.choice(users)
+            animal_type = random.choice(list(PetAnimalType))
+            race_id = None
+            other_type = None
+            pet_url = None
+
+            if animal_type == PetAnimalType.DOG and dog_races:
+                selected_race = random.choice(dog_races)
+                race_id = selected_race.id
+                pet_url = selected_race.url
+            elif animal_type == PetAnimalType.CAT and cat_races:
+                selected_race = random.choice(cat_races)
+                race_id = selected_race.id
+                pet_url = selected_race.url
+            else:
+                animal_type = PetAnimalType.OTHER
+                other_type = random.choice(other_pet_types)
+                pet_url = other_pet_type_urls.get(other_type.lower())
+
+            new_pet = Pet(
+                name=f"{random.choice(pet_names)}_{x}",
+                user_id=user.id,
+                animal_type=animal_type,
+                other_type=other_type,
+                race_id=race_id,
+                size=random.choice(list(PetSize)),
+                url=pet_url
+            )
+
+            db.session.add(new_pet)
+            db.session.commit()
+            print(f"Pet {x} added")
+
+        return print("All test pets added")

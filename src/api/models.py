@@ -1,5 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import String, Boolean, Text, ForeignKey, Date, Time, UniqueConstraint
+from sqlalchemy import String, Boolean, Text, ForeignKey, Date, Time, UniqueConstraint, Float
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from enum import Enum
@@ -18,12 +18,25 @@ class PostType(Enum):
     NEWS = "news"
     EVENT = "event"
 
+class PetAnimalType(Enum):
+    DOG = "dog"
+    CAT = "cat"
+    OTHER = "other"
+
+class PetSize(Enum):
+    SMALL = "small"
+    MEDIUM = "medium"
+    LARGE = "large"
+
 class User(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(120), nullable=False)
     email: Mapped[str] = mapped_column(String(120), unique=True, nullable=False)
     password: Mapped[str] = mapped_column(String(255), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean(), default=True)
+    latitude: Mapped[float] = mapped_column(Float, nullable=True)
+    longitude: Mapped[float] = mapped_column(Float, nullable=True)
+    address: Mapped[str] = mapped_column(String(255), nullable=True)
 
     reservations: Mapped[list["Reservation"]] = relationship("Reservation", back_populates="user", cascade="all, delete-orphan")
     reviews: Mapped[list["Review"]] = relationship("Review", back_populates="user", cascade="all, delete-orphan")
@@ -42,8 +55,13 @@ class User(db.Model):
             "id": self.id,
             "name": self.name,
             "email": self.email,
-            "favorite_places": [favorite.serialize()["place_name"] for favorite in self.favorite_places],
-            "reservations": [reservation.serialize() for reservation in self.reservations]
+            "favorite_places": [favorite.place_id for favorite in self.favorite_places],
+            "reservations": [reservation.serialize() for reservation in self.reservations],
+            "reviews": [review.serialize() for review in self.reviews],
+            "pets": [pet.serialize() for pet in self.pets],
+            "latitude": self.latitude,
+            "longitude": self.longitude,
+            "address": self.address
         }
 
 class Place(db.Model):
@@ -82,7 +100,8 @@ class Place(db.Model):
             "pet_rules": self.pet_rules,
             "city": self.city.serialize(),
             "favorited_by_users": [favorite.user_id for favorite in self.favorites],
-            "image_url": self.image_url
+            "image_url": self.image_url,
+            "reviews": [review.serialize() for reservation in self.reservations for review in reservation.reviews]
         }
 
 class City(db.Model):
@@ -90,6 +109,8 @@ class City(db.Model):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     city: Mapped[str] = mapped_column(String(120), unique=True, nullable=False)
+    latitude: Mapped[float] = mapped_column(Float, nullable=True)
+    longitude: Mapped[float] = mapped_column(Float, nullable=True)
 
     places: Mapped[list["Place"]] = relationship("Place", back_populates="city", cascade="all, delete-orphan")
 
@@ -99,7 +120,9 @@ class City(db.Model):
     def serialize(self):
         return {
             "id": self.id,
-            "city": self.city
+            "city": self.city,
+            "latitude": self.latitude,
+            "longitude": self.longitude
         }
     
 
@@ -145,7 +168,10 @@ class Review(db.Model):
         return {
             "id": self.id,
             "user_id": self.user_id,
+            "user_name": self.user.name,
             "reservation_id": self.reservation_id,
+            "place_id": self.reservation.place_id,
+            "place_name": self.reservation.place.name,
             "rating": self.rating,
             "title": self.title,
             "content": self.content,
@@ -283,6 +309,9 @@ class Race(db.Model):
 
     pets: Mapped[list["Pet"]] = relationship("Pet", back_populates="race", cascade="all, delete-orphan")
 
+    def __repr__(self):
+        return self.name
+
     def serialize(self):
         return {
             "id": self.id,
@@ -298,23 +327,43 @@ class Pet(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(120), nullable=False)
     user_id: Mapped[int] = mapped_column(ForeignKey("user.id"), nullable=False)
-    animal_type: Mapped[str] = mapped_column(String(120), nullable=False)
+    animal_type: Mapped[PetAnimalType] = mapped_column(
+        SQLEnum(
+            PetAnimalType,
+            name="pet_animal_type",
+            values_callable=lambda enum_cls: [member.value for member in enum_cls]
+        ),
+        nullable=False
+    )
+    other_type: Mapped[str | None] = mapped_column(String(120), nullable=True)
     race_id: Mapped[int | None] = mapped_column(ForeignKey("races.id"), nullable=True)
-    size: Mapped[str] = mapped_column(String(120), nullable=False)
+    size: Mapped[PetSize] = mapped_column(
+        SQLEnum(
+            PetSize,
+            name="pet_size",
+            values_callable=lambda enum_cls: [member.value for member in enum_cls]
+        ),
+        nullable=False
+    )
     url: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
     user: Mapped["User"] = relationship("User", back_populates="pets")
     race: Mapped["Race"] = relationship("Race", back_populates="pets")
+
+    def __repr__(self):
+        return self.name
+
 
     def serialize(self):
         return {
             "id": self.id,
             "name": self.name,
             "user_id": self.user_id,
-            "animal_type": self.animal_type,
+            "animal_type": self.animal_type.value,
+            "other_type": self.other_type,
             "race_id": self.race_id,
             "race_name": self.race.name if self.race else None,
             "race_url": self.race.url if self.race else None,
-            "size": self.size,
+            "size": self.size.value,
             "url": self.url
         }

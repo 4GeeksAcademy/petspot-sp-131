@@ -43,6 +43,7 @@ function RequireUserAuth() {
     }, [token, store.userToken, dispatch]);
 
     if (!token) {
+        dispatch({ type: "USER_LOGOUT" });
         return <Navigate to="/user/login" replace />;
     }
 

@@ -1,21 +1,16 @@
 import UserPlaceCard from "./UserPlaceCard"
 import useGlobalReducer from "../../../hooks/useGlobalReducer";
 import { useEffect } from "react";
-
-const backendUrl = import.meta.env.VITE_BACKEND_URL
+import { getPlaces } from "../../../services/userPrivateService";
 
 function UserPlacesList() {
 
     const { store, dispatch } = useGlobalReducer();
 
     useEffect(() => {
-        async function getPlaces() {
+        async function loadPlaces() {
             try {
-                const response = await fetch(`${backendUrl}/api/places`)
-                if (!response.ok) {
-                    throw new Error(`Request failed with status ${response.status}`)
-                }
-                const responseJSON = await response.json()
+                const responseJSON = await getPlaces();
                 dispatch({
                     type: "GET_PLACES",
                     payload: responseJSON
@@ -25,7 +20,7 @@ function UserPlacesList() {
                 alert("Unable to load places right now. Please try again.")
             }
         }
-        getPlaces()
+        loadPlaces()
     }, [])
 
 
@@ -35,7 +30,9 @@ function UserPlacesList() {
                 ? store.places.map((place) => {
                     return <UserPlaceCard placeObj={place} key={place.id} />
                 })
-                : "No places registered yet."}
+                : (
+                    <p className="text-center">No places yet</p>
+                    )}
         </>
     )
 }

@@ -6,7 +6,7 @@ import io
 import json
 import re
 from flask import Flask, request, jsonify, url_for, Blueprint
-from api.models import db, User, Place, EstablishmentType, AdminUser, Review, City, Chat, Reservation, ReservationStatus, Favorite, News, PostType, Race, Pet
+from api.models import db, User, Place, EstablishmentType, AdminUser, Review, City, Chat, Reservation, ReservationStatus, Favorite, News, PostType, Race, Pet, PetAnimalType, PetSize
 from datetime import datetime
 from api.utils import generate_sitemap, APIException
 from flask_cors import CORS
@@ -17,6 +17,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 from sqlalchemy.orm import joinedload
 import base64
+import requests
 
 
 api = Blueprint('api', __name__)
@@ -24,6 +25,67 @@ api = Blueprint('api', __name__)
 # Allow CORS requests to this API
 CORS(api)
 
+
+def normalize_pet_animal_type(raw_value):
+    if not isinstance(raw_value, str):
+        raise ValueError("Animal type must be a string")
+
+    normalized = raw_value.strip().lower()
+    if normalized in ["perro", "dog"]:
+        return PetAnimalType.DOG
+    if normalized in ["gato", "cat"]:
+        return PetAnimalType.CAT
+    if normalized in ["otros", "other"]:
+        return PetAnimalType.OTHER
+
+    raise ValueError("Invalid animal type. Use dog, cat, or other")
+
+
+def normalize_pet_size(raw_value):
+    if not isinstance(raw_value, str):
+        raise ValueError("Size must be a string")
+
+    normalized = raw_value.strip().lower()
+    if normalized in ["pequeño", "pequeno", "small"]:
+        return PetSize.SMALL
+    if normalized in ["mediano", "medium"]:
+        return PetSize.MEDIUM
+    if normalized in ["grande", "large"]:
+        return PetSize.LARGE
+
+    raise ValueError("Invalid size. Use small, medium, or large")
+
+GOOGLE_GEOCODING_API_KEY = os.getenv("GOOGLE_GEOCODING_API_KEY")
+
+def geocode_address(address):
+    if not GOOGLE_GEOCODING_API_KEY:
+        raise ValueError("Google Maps API key is not configured")
+
+    url = "https://maps.googleapis.com/maps/api/geocode/json"
+    params = {
+        "address": address,
+        "key": GOOGLE_GEOCODING_API_KEY,
+    }
+
+    try:
+        response = requests.get(url, params=params, timeout=10)
+        response.raise_for_status()
+        data = response.json()
+    except requests.RequestException as error:
+        raise RuntimeError("Unable to connect to the geocoding service") from error
+    except ValueError as error:
+        raise RuntimeError("Invalid response from the geocoding service") from error
+
+    status = data.get("status")
+    if status == "OK":
+        location = data["results"][0]["geometry"]["location"]
+        return location["lat"], location["lng"]
+
+    if status == "ZERO_RESULTS":
+        raise ValueError("Address could not be geocoded")
+
+    error_message = data.get("error_message") or "Geocoding service returned an error"
+    raise RuntimeError(f"Geocoding failed: {status}. {error_message}")
 
 @api.route('/analyze-pet', methods=['POST'])
 def analyze_pet():
@@ -581,6 +643,22 @@ def delete_review(review_id):
     return jsonify({"msg": "Review eliminada correctamente"}), 200
 
 
+@api.route('/places/<int:place_id>/reviews', methods=['GET'])
+def get_place_reviews(place_id):
+    place = db.session.get(Place, place_id)
+    if place is None:
+        return jsonify(response="Place not found"), 404
+
+    reviews = db.session.execute(
+        select(Review)
+        .join(Reservation, Review.reservation_id == Reservation.id)
+        .where(Reservation.place_id == place_id)
+        .order_by(Review.id.desc())
+    ).scalars().all()
+
+    return jsonify([review.serialize() for review in reviews]), 200
+
+
 @api.route('/cities', methods=['GET'])
 def get_cities():
     cities = db.session.execute(
@@ -651,7 +729,7 @@ def update_city(city_id):
 # USER #
 
 
-@api.route("/login/user", methods=["POST"])
+@api.route("/user/login", methods=["POST"])
 def login_user():
     email = request.json.get("email", None)
     password = request.json.get("password", None)
@@ -822,7 +900,31 @@ def delete_news(news_id):
 
 @api.route('/chat', methods=['GET'])
 def get_chats():
-    chats = db.session.execute(select(Chat)).scalars().all()
+    chats = db.session.execute(select(Chat).order_by(Chat.created_at.desc())).scalars().all()
+    return jsonify([chat.serialize() for chat in chats]), 200
+
+
+@api.route('/chat/user', methods=['GET'])
+@jwt_required()
+def get_user_chats():
+    user_id = get_jwt_identity()
+    chats = db.session.execute(
+        select(Chat)
+        .where(Chat.user_id == int(user_id))
+        .order_by(Chat.created_at.desc())
+    ).scalars().all()
+    return jsonify([chat.serialize() for chat in chats]), 200
+
+
+@api.route('/chat/place', methods=['GET'])
+@jwt_required()
+def get_place_chats():
+    place_id = get_jwt_identity()
+    chats = db.session.execute(
+        select(Chat)
+        .where(Chat.place_id == int(place_id))
+        .order_by(Chat.created_at.desc())
+    ).scalars().all()
     return jsonify([chat.serialize() for chat in chats]), 200
 
 
@@ -835,20 +937,86 @@ def get_chat(chat_id):
 
 
 @api.route('/chat', methods=['POST'])
+@jwt_required(optional=True)
 def create_chat():
     data = request.json
+    if not data:
+        return jsonify({"msg": "Missing body"}), 400
+
+    user_id = data.get("user_id")
+    place_id = data.get("place_id")
+    message = data.get("message")
+    sender = data.get("sender")
+
+    # If identity is available from JWT, we can use it to set the missing ID
+    identity = get_jwt_identity()
+    if identity:
+        if sender == "user" and not user_id:
+            user_id = identity
+        if sender == "place" and not place_id:
+            place_id = identity
+
+    if not all([user_id, place_id, message, sender]):
+        return jsonify({"msg": "Missing required fields: user_id, place_id, message, sender"}), 400
 
     new_chat = Chat(
-        user_id=data.get("user_id"),
-        place_id=data.get("place_id"),
-        message=data.get("message"),
-        sender=data.get("sender")
+        user_id=int(user_id),
+        place_id=int(place_id),
+        message=message,
+        sender=sender
     )
 
     db.session.add(new_chat)
     db.session.commit()
 
+    # Emit socket event for real-time update
+    try:
+        # Get the socketio instance from the current app extensions
+        from flask import current_app
+        sio = current_app.extensions['socketio']
+        serialized_chat = new_chat.serialize()
+        print(f"DEBUG: Data received - User: {user_id}, Place: {place_id}, Sender: {sender}, Identity: {identity}")
+        
+        user_room = f"user_{str(user_id)}"
+        place_room = f"place_{str(place_id)}"
+        
+        print(f"DEBUG: Emitting to rooms: {user_room} and {place_room}")
+        
+        sio.emit('new_message', serialized_chat, room=user_room)
+        sio.emit('new_message', serialized_chat, room=place_room)
+        
+        print(f"DEBUG: Emission to {user_room} and {place_room} finished.")
+    except Exception as e:
+        print(f"Error emitting socket event: {e}")
+
     return jsonify(new_chat.serialize()), 201
+
+@api.route('/chat/read', methods=['PUT'])
+@jwt_required()
+def mark_as_read():
+    identity = get_jwt_identity()
+    data = request.json
+    if not data:
+        return jsonify({"msg": "Missing body"}), 400
+    
+    other_id = data.get("other_id")
+    type = data.get("type") # 'user' or 'place' (who is marking as read)
+    
+    if not other_id or not type:
+        return jsonify({"msg": "Missing other_id or type"}), 400
+    
+    if type == "user":
+        # User is marking messages from Place as read
+        chats = Chat.query.filter_by(user_id=int(identity), place_id=int(other_id), sender="place", is_read=False).all()
+    else:
+        # Place is marking messages from User as read
+        chats = Chat.query.filter_by(place_id=int(identity), user_id=int(other_id), sender="user", is_read=False).all()
+        
+    for chat in chats:
+        chat.is_read = True
+    
+    db.session.commit()
+    return jsonify({"msg": "Messages marked as read", "count": len(chats)}), 200
 
 
 @api.route('/chat/<int:chat_id>', methods=['PUT'])
@@ -951,7 +1119,6 @@ def add_reservation():
     db.session.commit()
 
     return jsonify(new_reservation.serialize()), 201
-
 
 @api.route('/reservations/<int:id>', methods=['PUT'])
 def update_reservation(id):
@@ -1428,8 +1595,8 @@ def get_pets():
 @api.route('/users/pets', methods=['GET'])
 @jwt_required()
 def get_user_pets():
-    email = get_jwt_identity()
-    user = db.session.execute(db.select(User).filter_by(email=email)).scalar_one_or_none()
+    user_id = get_jwt_identity()
+    user = db.session.execute(db.select(User).where(User.id == user_id)).scalar_one_or_none()
     if not user:
         return jsonify({"msg": "User not found"}), 404
         
@@ -1446,8 +1613,8 @@ def get_pet(pet_id):
 @api.route('/pets', methods=['POST'])
 @jwt_required()
 def create_pet():
-    email = get_jwt_identity()
-    user = db.session.execute(db.select(User).filter_by(email=email)).scalar_one_or_none()
+    user_id = get_jwt_identity()
+    user = db.session.execute(db.select(User).where(User.id == user_id)).scalar_one_or_none()
     if not user:
         return jsonify({"msg": "User not found"}), 404
 
@@ -1460,17 +1627,32 @@ def create_pet():
         if field not in body:
             return jsonify({"msg": f"Missing '{field}' in request"}), 400
     
-    animal_type = body['animal_type'].strip().lower()
+    try:
+        animal_type = normalize_pet_animal_type(body['animal_type'])
+        size = normalize_pet_size(body['size'])
+    except ValueError as error:
+        return jsonify({"msg": str(error)}), 400
+
+    other_type = body.get("other_type")
+    if other_type is not None and not isinstance(other_type, str):
+        return jsonify({"msg": "'other_type' must be a string"}), 400
+
+    other_type = other_type.strip() if isinstance(other_type, str) else None
+    other_type = other_type or None
     race_id = None
     
-    if animal_type in ["perro", "gato", "dog", "cat"]:
+    if animal_type in [PetAnimalType.DOG, PetAnimalType.CAT]:
         if "race_id" not in body or not body["race_id"]:
-            return jsonify({"msg": "Missing 'race_id' in request for Dog or Cat"}), 400
+            return jsonify({"msg": "Missing 'race_id' in request for dog or cat"}), 400
         
         race = db.session.execute(db.select(Race).where(Race.id == body['race_id'])).scalars().first()
         if not race:
             return jsonify({"msg": "Race not found"}), 404
         race_id = race.id
+        other_type = None
+    elif animal_type == PetAnimalType.OTHER:
+        if not other_type:
+            return jsonify({"msg": "Missing 'other_type' in request when animal_type is 'other'"}), 400
     elif "race_id" in body and body["race_id"]:
         race = db.session.execute(db.select(Race).where(Race.id == body['race_id'])).scalars().first()
         if race:
@@ -1479,9 +1661,10 @@ def create_pet():
     new_pet = Pet(
         name=body['name'],
         user_id=user.id,
-        animal_type=body['animal_type'],
+        animal_type=animal_type,
+        other_type=other_type,
         race_id=race_id,
-        size=body['size'],
+        size=size,
         url=body.get('url')
     )
     db.session.add(new_pet)
@@ -1495,8 +1678,8 @@ def create_pet():
 @api.route('/pets/<int:pet_id>', methods=['PUT'])
 @jwt_required()
 def update_pet(pet_id):
-    email = get_jwt_identity()
-    user = db.session.execute(db.select(User).filter_by(email=email)).scalar_one_or_none()
+    user_id = get_jwt_identity()
+    user = db.session.execute(db.select(User).where(User.id == user_id)).scalar_one_or_none()
     if not user:
         return jsonify({"msg": "User not found"}), 404
 
@@ -1511,10 +1694,21 @@ def update_pet(pet_id):
     if not body:
         return jsonify({"msg": "Missing JSON in request"}), 400
 
+    next_animal_type = pet.animal_type
+    next_other_type = pet.other_type
+
     if "name" in body:
         pet.name = body["name"]
     if "animal_type" in body:
-        pet.animal_type = body["animal_type"]
+        try:
+            next_animal_type = normalize_pet_animal_type(body["animal_type"])
+        except ValueError as error:
+            return jsonify({"msg": str(error)}), 400
+    if "other_type" in body:
+        if body["other_type"] is not None and not isinstance(body["other_type"], str):
+            return jsonify({"msg": "'other_type' must be a string"}), 400
+        next_other_type = body["other_type"].strip() if isinstance(body["other_type"], str) else None
+        next_other_type = next_other_type or None
     if "race_id" in body:
         if body["race_id"] is None or body["race_id"] == "":
             pet.race_id = None
@@ -1524,9 +1718,23 @@ def update_pet(pet_id):
                 return jsonify({"msg": "Race not found"}), 404
             pet.race_id = race.id
     if "size" in body:
-        pet.size = body["size"]
+        try:
+            pet.size = normalize_pet_size(body["size"])
+        except ValueError as error:
+            return jsonify({"msg": str(error)}), 400
     if "url" in body:
         pet.url = body["url"]
+
+    if next_animal_type in [PetAnimalType.DOG, PetAnimalType.CAT]:
+        if pet.race_id is None:
+            return jsonify({"msg": "A race is required for dog or cat"}), 400
+        pet.animal_type = next_animal_type
+        pet.other_type = None
+    else:
+        if not next_other_type:
+            return jsonify({"msg": "'other_type' is required when animal_type is 'other'"}), 400
+        pet.animal_type = next_animal_type
+        pet.other_type = next_other_type
         
     try:
         db.session.commit()
@@ -1538,8 +1746,8 @@ def update_pet(pet_id):
 @api.route('/pets/<int:pet_id>', methods=['DELETE'])
 @jwt_required()
 def delete_pet(pet_id):
-    email = get_jwt_identity()
-    user = db.session.execute(db.select(User).filter_by(email=email)).scalar_one_or_none()
+    user_id = get_jwt_identity()
+    user = db.session.execute(db.select(User).where(User.id == user_id)).scalar_one_or_none()
     if not user:
         return jsonify({"msg": "User not found"}), 404
 
@@ -1581,6 +1789,7 @@ def update_private_user():
     email = data.get("email")
     name = data.get("name")
     password = data.get("password")
+    address = data.get("address")
 
     if email is not None:
         if not isinstance(email, str):
@@ -1617,6 +1826,27 @@ def update_private_user():
         
         hashed_password = generate_password_hash(password)
         user.password = hashed_password
+
+    if address is not None:
+        if not isinstance(address, str):
+            return jsonify(response="Address must be a string"), 400
+
+        address = address.strip()
+        if len(address) == 0:
+            user.address = None
+            user.latitude = None
+            user.longitude = None
+        else:
+            try:
+                lat, lng = geocode_address(address)
+            except ValueError as error:
+                return jsonify(response=str(error)), 400
+            except RuntimeError as error:
+                return jsonify(response=str(error)), 502
+
+            user.address = address
+            user.latitude = lat
+            user.longitude = lng
     
     db.session.commit()
    
@@ -1634,4 +1864,305 @@ def delete_private_user():
     db.session.commit()
 
     return jsonify(response="User deleted"), 200
+
+@api.route("/users/private/favorites", methods=['DELETE'])
+@jwt_required()
+def delete_private_user_favorite():
+    user_id = get_jwt_identity()
+    user = db.session.execute(select(User).where(User.id == user_id)).scalar_one_or_none()
+    if user is None:
+        return jsonify(response="User not found"), 404
+
+    data = request.get_json(silent=True) or {}
+    place_id = data.get("place_id")
+
+    if place_id is None:
+        return jsonify(response="Place id is required"), 400
+    
+    if not isinstance(place_id, str):
+        return jsonify(response="Place id must be a string"), 400
+    
+    place_id = int(place_id)
+
+    favorite_exists = db.session.execute(select(Favorite).where(Favorite.place_id == place_id, Favorite.user_id == user_id)).scalar_one_or_none()
+    if favorite_exists is None:
+        return jsonify(response="Favorite relation not found"), 404
+    
+    db.session.delete(favorite_exists)
+    db.session.commit()
+    
+    return jsonify(response="Favorite deleted"), 200
+
+@api.route("/users/private/favorites", methods=['POST'])
+@jwt_required()
+def add_private_user_favorite():
+    user_id = get_jwt_identity()
+    user = db.session.execute(select(User).where(User.id == user_id)).scalar_one_or_none()
+    if user is None:
+        return jsonify(response="User not found"), 404
+
+    data = request.get_json(silent=True) or {}
+    place_id = data.get("place_id")
+
+    if place_id is None:
+        return jsonify(response="Place id is required"), 400
+    
+    if not isinstance(place_id, str):
+        return jsonify(response="Place id must be a string"), 400
+    
+    place_id = int(place_id)
+
+    place_exists = db.session.execute(select(Place).where(Place.id == place_id)).scalar_one_or_none()
+    if place_exists is None:
+        return jsonify(response="Place not found"), 404
+
+    favorite_exists = db.session.execute(select(Favorite).where(Favorite.place_id == place_id, Favorite.user_id == user_id)).scalar_one_or_none()
+    if favorite_exists is not None:
+        return jsonify(response="Favorite relation already exists"), 400
+    
+    new_favorite = Favorite(user_id=user_id, place_id=place_id)
+    db.session.add(new_favorite)
+    db.session.commit()
+    
+    return jsonify(user.serialize()), 201
+
+@api.route('/users/private/reservations', methods=['POST'])
+@jwt_required()
+def add_private_user_reservation():
+    user_id = get_jwt_identity()
+    user = db.session.execute(select(User).where(User.id == user_id)).scalar_one_or_none()
+    if user is None:
+        return jsonify(response="User not found"), 404
+
+    data = request.get_json(silent=True) or {}
+    place_id = data.get("place_id")
+    reservation_date_str = data.get("reservation_date")
+    reservation_time_str = data.get("reservation_time")
+    people_count = data.get("people_count")
+    pet_count = data.get("pet_count")
+    zone_preference = data.get("zone_preference")
+    notes = data.get("notes")
+
+    if any([
+        place_id is None,
+        reservation_date_str is None,
+        reservation_time_str is None,
+        people_count is None,
+        pet_count is None
+    ]):
+        return jsonify(response="Missing required fields"), 400
+
+    if not all([
+        isinstance(place_id, str),
+        isinstance(reservation_date_str, str),
+        isinstance(reservation_time_str, str),
+        isinstance(people_count, str),
+        isinstance(pet_count, str)
+    ]):
+        return jsonify(response="Place id, date, time, people count and pet count must be strings"), 400
+
+    place_id = place_id.strip()
+    reservation_date_str = reservation_date_str.strip()
+    reservation_time_str = reservation_time_str.strip()
+    people_count = people_count.strip()
+    pet_count = pet_count.strip()
+
+    if zone_preference is not None:
+        if not isinstance(zone_preference, str):
+            return jsonify(response="Zone preference must be a string"), 400
+        
+        zone_preference = zone_preference.strip() or None
+
+    if notes is not None:
+        if not isinstance(notes, str):
+            return jsonify(response="Notes must be a string"), 400
+        
+        notes = notes.strip() or None
+
+    if any([
+        len(place_id) == 0,
+        len(reservation_date_str) == 0,
+        len(reservation_time_str) == 0,
+        len(people_count) == 0,
+        len(pet_count) == 0
+    ]):
+        return jsonify(response="Required fields cannot be empty"), 400
+
+    try:
+        place_id = int(place_id)
+    except (TypeError, ValueError):
+        return jsonify(response="Place id must be a valid integer"), 400
+
+    place = db.session.get(Place, place_id)
+    if not place:
+        return jsonify(response="Place not found"), 404
+
+    try:
+        people_count = int(people_count)
+        pet_count = int(pet_count)
+    except (TypeError, ValueError):
+        return jsonify(response="People count and pet count must be valid integers"), 400
+
+    try:
+        res_date = datetime.strptime(reservation_date_str, '%Y-%m-%d').date()
+        res_time = datetime.strptime(reservation_time_str[:5], '%H:%M').time()
+    except ValueError:
+        return jsonify(response="Invalid date or time format. Use YYYY-MM-DD and HH:MM"), 400
+
+    new_reservation = Reservation(
+        user_id=user_id,
+        place_id=place_id,
+        reservation_date=res_date,
+        reservation_time=res_time,
+        people_count=people_count,
+        pet_count=pet_count,
+        zone_preference=zone_preference,
+        notes=notes,
+        status=ReservationStatus.PENDING
+    )
+
+    db.session.add(new_reservation)
+    db.session.commit()
+
+    return jsonify(new_reservation.serialize()), 201
+
+
+@api.route('/users/private/reservations', methods=['DELETE'])
+@jwt_required()
+def cancel_private_user_reservation():
+    user_id = get_jwt_identity()
+    user = db.session.execute(select(User).where(User.id == user_id)).scalar_one_or_none()
+    if user is None:
+        return jsonify(response="User not found"), 404
+
+    data = request.get_json(silent=True) or {}
+    reservation_id = data.get("reservation_id")
+
+    if reservation_id is None:
+        return jsonify(response="Reservation id is required"), 400
+
+    if not isinstance(reservation_id, str):
+        return jsonify(response="Reservation id must be a string"), 400
+
+    reservation_id = reservation_id.strip()
+    if len(reservation_id) == 0:
+        return jsonify(response="Reservation id cannot be empty"), 400
+
+    try:
+        reservation_id = int(reservation_id)
+    except (TypeError, ValueError):
+        return jsonify(response="Reservation id must be a valid integer"), 400
+
+    reservation = db.session.execute(
+        select(Reservation).where(
+            Reservation.id == reservation_id,
+            Reservation.user_id == user_id
+        )
+    ).scalar_one_or_none()
+    if reservation is None:
+        return jsonify(response="Reservation not found"), 404
+
+    reservation.status = ReservationStatus.CANCELLED
+    db.session.commit()
+
+    return jsonify(reservation.serialize()), 200
+
+
+@api.route('/users/private/reviews', methods=['GET'])
+@jwt_required()
+def get_private_user_reviews():
+    user_id = get_jwt_identity()
+    user = db.session.execute(select(User).where(User.id == user_id)).scalar_one_or_none()
+    if user is None:
+        return jsonify(response="User not found"), 404
+
+    reviews = db.session.execute(
+        select(Review).where(Review.user_id == user_id).order_by(Review.id.desc())
+    ).scalars().all()
+
+    return jsonify([review.serialize() for review in reviews]), 200
+
+
+@api.route('/users/private/reviews', methods=['POST'])
+@jwt_required()
+def add_private_user_review():
+    user_id = get_jwt_identity()
+    user = db.session.execute(select(User).where(User.id == user_id)).scalar_one_or_none()
+    if user is None:
+        return jsonify(response="User not found"), 404
+
+    data = request.get_json(silent=True) or {}
+    reservation_id = data.get("reservation_id")
+    rating = data.get("rating")
+    title = data.get("title")
+    content = data.get("content")
+
+    if any([reservation_id is None, rating is None, title is None, content is None]):
+        return jsonify(response="Missing required fields"), 400
+
+    if not all([
+        isinstance(reservation_id, str),
+        isinstance(rating, str),
+        isinstance(title, str),
+        isinstance(content, str)
+    ]):
+        return jsonify(response="Reservation id, rating, title and content must be strings"), 400
+
+    reservation_id = reservation_id.strip()
+    rating = rating.strip()
+    title = title.strip()
+    content = content.strip()
+
+    if any([len(reservation_id) == 0, len(rating) == 0, len(title) == 0, len(content) == 0]):
+        return jsonify(response="Required fields cannot be empty"), 400
+
+    try:
+        reservation_id = int(reservation_id)
+    except (TypeError, ValueError):
+        return jsonify(response="Reservation id must be a valid integer"), 400
+
+    try:
+        rating = int(rating)
+    except (TypeError, ValueError):
+        return jsonify(response="Rating must be a valid integer"), 400
+
+    if rating < 1 or rating > 5:
+        return jsonify(response="Rating must be between 1 and 5"), 400
+
+    reservation = db.session.execute(
+        select(Reservation).where(
+            Reservation.id == reservation_id,
+            Reservation.user_id == user_id
+        )
+    ).scalar_one_or_none()
+    if reservation is None:
+        return jsonify(response="Reservation not found"), 404
+
+    if reservation.status != ReservationStatus.CONFIRMED:
+        return jsonify(response="Only confirmed reservations can be reviewed"), 400
+
+    # existing_review = db.session.execute(
+    #     select(Review).where(
+    #         Review.user_id == user_id,
+    #         Review.reservation_id == reservation_id
+    #     )
+    # ).scalar_one_or_none()
+    # if existing_review is not None:
+    #     return jsonify(response="A review for this reservation already exists"), 400
+
+    new_review = Review(
+        user_id=user_id,
+        reservation_id=reservation_id,
+        rating=rating,
+        title=title,
+        content=content,
+        created_at=datetime.now().isoformat(),
+        is_active=True
+    )
+
+    db.session.add(new_review)
+    db.session.commit()
+
+    return jsonify(new_review.serialize()), 201
+
 

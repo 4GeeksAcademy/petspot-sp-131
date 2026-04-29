@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import useGlobalReducer from "../../../hooks/useGlobalReducer";
 import { useNavigate } from "react-router-dom";
+import { getPrivateUser } from "../../../services/userPrivateService";
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
@@ -10,35 +11,26 @@ function UserEditProfile() {
     const [formData, setFormData] = useState({
         name: "",
         email: "",
-        password: ""
+        password: "",
+        address: ""
     });
     const navigate = useNavigate()
+    console.log(formData)
 
     useEffect(() => {
-        async function getPrivateUser() {
+        async function loadPrivateUser() {
             if (store.privateUser?.id) {
                 setFormData((currentData) => ({
                     ...currentData,
-                    name: store.privateUser.name || "",
-                    email: store.privateUser.email || ""
+                    name: store.privateUser.name,
+                    email: store.privateUser.email,
+                    address: store.privateUser.address || ""
                 }));
                 return;
             }
 
             try {
-                const userToken = localStorage.getItem("userToken");
-
-                const response = await fetch(`${backendUrl}/api/users/private`, {
-                    headers: {
-                        Authorization: `Bearer ${userToken}`
-                    }
-                });
-
-                if (!response.ok) {
-                    throw new Error(`Request failed with status ${response.status}`);
-                }
-
-                const responseJSON = await response.json();
+                const responseJSON = await getPrivateUser();
                 dispatch({
                     type: "GET_PRIVATE_USER",
                     payload: responseJSON
@@ -46,14 +38,15 @@ function UserEditProfile() {
                 setFormData((currentData) => ({
                     ...currentData,
                     name: responseJSON.name || "",
-                    email: responseJSON.email || ""
+                    email: responseJSON.email || "",
+                    address: store.privateUser.address || ""
                 }));
             } catch (error) {
                 alert("Unable to load your profile right now. Please try again.");
             }
         }
 
-        getPrivateUser();
+        loadPrivateUser();
     }, [dispatch, store.privateUser]);
 
     function handleChange(event) {
@@ -64,6 +57,14 @@ function UserEditProfile() {
         }));
     }
 
+    function handleRemoveLocation(event) {
+        event.preventDefault()
+        setFormData((currentData) => ({
+            ...currentData,
+            address: ""
+        }))
+    }
+
     function handleSubmit(event) {
         event.preventDefault();
         const userToken = localStorage.getItem("userToken");
@@ -71,6 +72,8 @@ function UserEditProfile() {
         async function updatePrivateUser() {
             try {
                 const trimmedPassword = formData.password.trim();
+                const trimmedAddress = formData.address.toString().trim();
+
                 const body = {
                     name: formData.name.trim(),
                     email: formData.email.trim()
@@ -78,6 +81,12 @@ function UserEditProfile() {
 
                 if (trimmedPassword) {
                     body.password = trimmedPassword;
+                }
+
+                if (trimmedAddress) {
+                    body.address = trimmedAddress
+                } else {
+                    body.address = ""
                 }
 
                 const response = await fetch(`${backendUrl}/api/users/private`, {
@@ -92,7 +101,7 @@ function UserEditProfile() {
                 const responseJSON = await response.json();
 
                 if (!response.ok) {
-                    alert(responseJSON.msg || responseJSON.message || "Unable to update your profile.");
+                    alert(responseJSON.response || "Unable to update your profile.");
                     return;
                 }
 
@@ -107,7 +116,7 @@ function UserEditProfile() {
                 }));
 
                 alert("Profile updated successfully.");
-                navigate('/user/private/profile', {replace: true});
+                navigate('/user/private/profile', { replace: true });
 
             } catch (error) {
                 alert("Unable to update your profile right now. Please try again.");
@@ -168,6 +177,22 @@ function UserEditProfile() {
                             onChange={handleChange}
                             placeholder="Enter a new password"
                         />
+                    </div>
+
+                    <div className="p-3 bg-white d-flex flex-column mb-3">
+                        <div className="mb-3">
+                            <label htmlFor="userEditAddress" className="form-label">Address</label>
+                            <input
+                                id="userEditAddress"
+                                name="address"
+                                type="text"
+                                className="form-control bg-secondary-subtle border-0"
+                                value={formData.address}
+                                onChange={handleChange}
+                                placeholder="Enter address"
+                            />
+                        </div>
+                        <button className="btn btn-sm btn-outline-secondary mt-2" onClick={handleRemoveLocation}>Remove location</button>
                     </div>
 
                     <p className="text-body-secondary small mb-4">* Required fields</p>

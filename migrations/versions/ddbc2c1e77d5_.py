@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 4c3e8b8ef99d
+Revision ID: ddbc2c1e77d5
 Revises: 
-Create Date: 2026-04-25 18:38:23.216886
+Create Date: 2026-04-29 02:56:43.549855
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '4c3e8b8ef99d'
+revision = 'ddbc2c1e77d5'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -30,6 +30,8 @@ def upgrade():
     op.create_table('cities',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('city', sa.String(length=120), nullable=False),
+    sa.Column('latitude', sa.Float(), nullable=True),
+    sa.Column('longitude', sa.Float(), nullable=True),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('city')
     )
@@ -46,6 +48,9 @@ def upgrade():
     sa.Column('email', sa.String(length=120), nullable=False),
     sa.Column('password', sa.String(length=255), nullable=False),
     sa.Column('is_active', sa.Boolean(), nullable=False),
+    sa.Column('latitude', sa.Float(), nullable=True),
+    sa.Column('longitude', sa.Float(), nullable=True),
+    sa.Column('address', sa.String(length=255), nullable=True),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('email')
     )
@@ -63,9 +68,10 @@ def upgrade():
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(length=120), nullable=False),
     sa.Column('user_id', sa.Integer(), nullable=False),
-    sa.Column('animal_type', sa.String(length=120), nullable=False),
+    sa.Column('animal_type', sa.Enum('dog', 'cat', 'other', name='pet_animal_type'), nullable=False),
+    sa.Column('other_type', sa.String(length=120), nullable=True),
     sa.Column('race_id', sa.Integer(), nullable=True),
-    sa.Column('size', sa.String(length=120), nullable=False),
+    sa.Column('size', sa.Enum('small', 'medium', 'large', name='pet_size'), nullable=False),
     sa.Column('url', sa.String(length=500), nullable=True),
     sa.ForeignKeyConstraint(['race_id'], ['races.id'], ),
     sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
@@ -80,6 +86,7 @@ def upgrade():
     sa.Column('establishment_type', sa.Enum('BAR', 'RESTAURANT', 'CAFE', name='establishment_type'), nullable=False),
     sa.Column('pet_rules', sa.Text(), nullable=True),
     sa.Column('city_id', sa.Integer(), nullable=False),
+    sa.Column('image_url', sa.String(length=500), nullable=True),
     sa.ForeignKeyConstraint(['city_id'], ['cities.id'], ),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('email')

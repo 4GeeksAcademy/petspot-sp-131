@@ -1,7 +1,5 @@
 import { Link } from "react-router-dom";
 import UserNewsList from "../../../components/UserPrivate/UserNews/UserNewsList";
-import useGlobalReducer from "../../../hooks/useGlobalReducer";
-import { useEffect } from "react";
 
 function UserNews() {
     return (

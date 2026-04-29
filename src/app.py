@@ -11,10 +11,10 @@ from dotenv import load_dotenv
 from api.routes import api
 from api.admin import setup_admin
 from api.commands import setup_commands
+from flask_socketio import SocketIO
+from api.sockets import setup_sockets
 from flask_jwt_extended import JWTManager
 load_dotenv()
-
-from flask_jwt_extended import JWTManager
 
 # from models import Person
 
@@ -25,9 +25,9 @@ static_file_dir = os.path.join(os.path.dirname(
 app = Flask(__name__)
 app.url_map.strict_slashes = False
 
-app.config["JWT_SECRET_KEY"] = "super-secret"
-
-jwt = JWTManager(app)
+# SocketIO initialization
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
+setup_sockets(socketio)
 
 # database condiguration
 db_url = os.getenv("DATABASE_URL")
@@ -86,4 +86,4 @@ def serve_any_other_file(error):
 # this only runs if `$ python src/main.py` is executed
 if __name__ == '__main__':
     PORT = int(os.environ.get('PORT', 3001))
-    app.run(host='0.0.0.0', port=PORT, debug=True)
+    socketio.run(app, host='0.0.0.0', port=PORT, debug=True)
