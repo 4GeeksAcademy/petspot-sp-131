@@ -80,6 +80,7 @@ def setup_commands(app):
             user.name = "Name_User_" + str(next_index)
             user.latitude = city.latitude
             user.longitude = city.longitude
+            user.address = f"{city.city}, Spain"
             db.session.add(user)
             db.session.commit()
             print("User: ", user.email, " created.")
