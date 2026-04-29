@@ -59,6 +59,7 @@ export const Admin = () => {
             { label: "Cities", icon: "fa-city", color: "bg-secondary", path: "/cities" },
             { label: "Global News", icon: "fa-newspaper", color: "bg-primary", path: "/news" },
             { label: "User Reviews", icon: "fa-star", color: "bg-danger", path: "/reviews" },
+            { label: "Community Chats", icon: "fa-comments", color: "bg-info", path: "/usuario/admin/community" },
           ].map((item, idx) => (
             <div className="col-md-3 col-sm-6" key={idx}>
               <Link to={item.path} className="text-decoration-none">

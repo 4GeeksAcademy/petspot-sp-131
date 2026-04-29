@@ -137,6 +137,7 @@ export const router = createBrowserRouter(
         <Route path="eliminar/:id" element={<AdminDelete />} />
         <Route path="detalle/:id" element={<AdminDetail />} />
         <Route path="pets" element={<AdminPets />} />
+        <Route path="community" element={<Chat />} />
       </Route>
 
       <Route path="places" element={<RequireAdmin><Places /></RequireAdmin>} />
@@ -162,9 +163,6 @@ export const router = createBrowserRouter(
       <Route path="news/delete/:id" element={<RequireAdmin><DeleteNews /></RequireAdmin>} />
       <Route path="news/view/:id" element={<RequireAdmin><NewsDetail /></RequireAdmin>} />
 
-      <Route path="chat" element={<RequireAdmin><Chat /></RequireAdmin>} />
-      <Route path="chat/add" element={<RequireAdmin><AddChat /></RequireAdmin>} />
-      <Route path="chat/edit/:id" element={<RequireAdmin><EditChat /></RequireAdmin>} />
 
       <Route path="reservations" element={<RequireAdmin><Reservations /></RequireAdmin>} />
       <Route path="reservations/form" element={<RequireAdmin><AddReservation /></RequireAdmin>} />

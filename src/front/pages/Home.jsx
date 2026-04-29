@@ -119,9 +119,6 @@ export const Home = () => {
                         <Link to="/news" className="btn btn-light rounded-pill px-4 shadow-sm">
                             <i className="fa-solid fa-newspaper me-2 text-warning"></i>Pet News
                         </Link>
-                        <Link to="/chat" className="btn btn-light rounded-pill px-4 shadow-sm">
-                            <i className="fa-solid fa-comments me-2 text-info"></i>Community
-                        </Link>
                     </div>
                 </div>
             </div>
