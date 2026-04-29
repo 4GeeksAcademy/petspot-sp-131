@@ -87,6 +87,7 @@ import UserPlaceDetailCard from "./components/UserPrivate/UserPlaces/UserPlaceDe
 import UserNewsDetail from "./components/UserPrivate/UserNews/UserNewsDetail.jsx";
 
 import { TellMeMore } from "./pages/TellMeMore";
+import PlaceMatcher from "./pages/PlaceMatcher";
 
 export const router = createBrowserRouter(
   createRoutesFromElements(
@@ -113,6 +114,8 @@ export const router = createBrowserRouter(
           <Route path="news" element={<UserNews />} />
           <Route path="news/:id" element={<UserNewsDetail />} />
           <Route path="places/view/:id" element={<UserPlaceDetailCard />} />
+          <Route path="place-matcher" element={<PlaceMatcher />} />
+          
         </Route>
       </Route>
 
