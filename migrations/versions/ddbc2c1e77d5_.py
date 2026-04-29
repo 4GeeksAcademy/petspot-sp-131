@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 6341dee82d40
+Revision ID: ddbc2c1e77d5
 Revises: 
-Create Date: 2026-04-28 12:15:48.061005
+Create Date: 2026-04-29 02:56:43.549855
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '6341dee82d40'
+revision = 'ddbc2c1e77d5'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -30,6 +30,8 @@ def upgrade():
     op.create_table('cities',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('city', sa.String(length=120), nullable=False),
+    sa.Column('latitude', sa.Float(), nullable=True),
+    sa.Column('longitude', sa.Float(), nullable=True),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('city')
     )
@@ -46,6 +48,9 @@ def upgrade():
     sa.Column('email', sa.String(length=120), nullable=False),
     sa.Column('password', sa.String(length=255), nullable=False),
     sa.Column('is_active', sa.Boolean(), nullable=False),
+    sa.Column('latitude', sa.Float(), nullable=True),
+    sa.Column('longitude', sa.Float(), nullable=True),
+    sa.Column('address', sa.String(length=255), nullable=True),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('email')
     )
@@ -92,8 +97,6 @@ def upgrade():
     sa.Column('place_id', sa.Integer(), nullable=False),
     sa.Column('message', sa.Text(), nullable=False),
     sa.Column('sender', sa.String(length=20), nullable=False),
-    sa.Column('is_read', sa.Boolean(), nullable=True),
-    sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.ForeignKeyConstraint(['place_id'], ['places.id'], ),
     sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
     sa.PrimaryKeyConstraint('id')

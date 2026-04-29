@@ -36,6 +36,7 @@ class User(db.Model):
     is_active: Mapped[bool] = mapped_column(Boolean(), default=True)
     latitude: Mapped[float] = mapped_column(Float, nullable=True)
     longitude: Mapped[float] = mapped_column(Float, nullable=True)
+    address: Mapped[str] = mapped_column(String(255), nullable=True)
 
     reservations: Mapped[list["Reservation"]] = relationship("Reservation", back_populates="user", cascade="all, delete-orphan")
     reviews: Mapped[list["Review"]] = relationship("Review", back_populates="user", cascade="all, delete-orphan")
@@ -59,7 +60,8 @@ class User(db.Model):
             "reviews": [review.serialize() for review in self.reviews],
             "pets": [pet.serialize() for pet in self.pets],
             "latitude": self.latitude,
-            "longitude": self.longitude
+            "longitude": self.longitude,
+            "address": self.address
         }
 
 class Place(db.Model):
