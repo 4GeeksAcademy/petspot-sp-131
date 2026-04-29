@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import useGlobalReducer from "../../../hooks/useGlobalReducer";
 import { getPrivateUser } from "../../../services/userPrivateService";
+import LocationMap from "../../LocationMap";
 
 function UserProfileCard() {
     const { store, dispatch } = useGlobalReducer();
@@ -62,6 +63,11 @@ function UserProfileCard() {
                     <p className="mb-0 mb-3">Longitude: {store.privateUser.longitude}</p>
                 </div>
             }
+            <LocationMap
+                latitude={store.privateUser.latitude}
+                longitude={store.privateUser.longitude}
+                label="User location"
+            />
             <div className="d-grid d-sm-flex gap-2 justify-content-sm-center mt-5">
                 <Link to="/user/private/pets" className="btn btn-outline-primary">Manage pets</Link>
                 <Link to="/user/private/profile/edit" className="btn btn-outline-success">Edit profile</Link>

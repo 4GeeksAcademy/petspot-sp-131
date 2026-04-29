@@ -7,6 +7,7 @@ import {
     handleAddToFavorites,
     handleRemoveFromFavorites
 } from "../../../services/userPrivateService";
+import LocationMap from "../../LocationMap";
 
 function UserPlaceDetailCard() {
 
@@ -92,6 +93,11 @@ function UserPlaceDetailCard() {
                 <div className="mb-3">
                     <span className="fw-bold">Pet rules: </span>{activePlace.pet_rules ? activePlace.pet_rules : "-"}
                 </div>
+                <LocationMap
+                    latitude={activePlace.city.latitude}
+                    longitude={activePlace.city.longitude}
+                    label="Place location"
+                />
                 <div className="d-grid d-sm-flex gap-2 justify-content-sm-center mt-5 mb-3">
                     <Link to={`/user/private/reservations/add/${id}`} className="btn btn-outline-success">Make a reservation</Link>
                     <button
