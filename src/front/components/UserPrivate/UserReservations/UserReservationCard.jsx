@@ -51,9 +51,12 @@ function UserReservationCard({ reservationObj, onCancelReservation }) {
                         {status === "confirmed" && (
                             <Link to={`/user/private/reviews/add/${id}`} className="btn btn-outline-warning">Write a review</Link>
                         )}
-                        <button type="button" className="btn btn-outline-success">
+                        <Link 
+                            to={`/user/private/chats?id=${place_id}&name=${encodeURIComponent(place_name)}`} 
+                            className="btn btn-outline-success"
+                        >
                             Open Chat
-                        </button>
+                        </Link>
                         {status !== "cancelled" && (
                             <button
                                 type="button"
