@@ -43,7 +43,7 @@ function UserProfileCard() {
             <div className="mb-2">
                 <span className="fw-bold">Email: </span>{store.privateUser.email}
             </div>
-            <div className="mb-4">
+            <div className="mb-2">
                 <span className="fw-bold">Pets: </span>{store.privateUser.pets?.length || 0}
                 {store.privateUser.pets?.length > 0 && (
                     <div className="mt-2">
@@ -58,9 +58,7 @@ function UserProfileCard() {
             {(store.privateUser.latitude && store.privateUser.longitude)
                 &&
                 <div className="mb-4">
-                    <p className="fw-bold mb-0">Location</p>
-                    <p className="mb-0">Latitude: {store.privateUser.latitude}</p>
-                    <p className="mb-0 mb-3">Longitude: {store.privateUser.longitude}</p>
+                    <span className="fw-bold">Address: </span>{store.privateUser.address}
                 </div>
             }
             <LocationMap

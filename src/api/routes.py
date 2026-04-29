@@ -17,6 +17,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 from sqlalchemy.orm import joinedload
 import base64
+import requests
 
 
 api = Blueprint('api', __name__)
@@ -54,6 +55,37 @@ def normalize_pet_size(raw_value):
 
     raise ValueError("Invalid size. Use small, medium, or large")
 
+GOOGLE_GEOCODING_API_KEY = os.getenv("GOOGLE_GEOCODING_API_KEY")
+
+def geocode_address(address):
+    if not GOOGLE_GEOCODING_API_KEY:
+        raise ValueError("Google Maps API key is not configured")
+
+    url = "https://maps.googleapis.com/maps/api/geocode/json"
+    params = {
+        "address": address,
+        "key": GOOGLE_GEOCODING_API_KEY,
+    }
+
+    try:
+        response = requests.get(url, params=params, timeout=10)
+        response.raise_for_status()
+        data = response.json()
+    except requests.RequestException as error:
+        raise RuntimeError("Unable to connect to the geocoding service") from error
+    except ValueError as error:
+        raise RuntimeError("Invalid response from the geocoding service") from error
+
+    status = data.get("status")
+    if status == "OK":
+        location = data["results"][0]["geometry"]["location"]
+        return location["lat"], location["lng"]
+
+    if status == "ZERO_RESULTS":
+        raise ValueError("Address could not be geocoded")
+
+    error_message = data.get("error_message") or "Geocoding service returned an error"
+    raise RuntimeError(f"Geocoding failed: {status}. {error_message}")
 
 @api.route('/analyze-pet', methods=['POST'])
 def analyze_pet():
@@ -1757,10 +1789,7 @@ def update_private_user():
     email = data.get("email")
     name = data.get("name")
     password = data.get("password")
-    latitude_provided = "latitude" in data
-    longitude_provided = "longitude" in data
-    latitude = data.get("latitude")
-    longitude = data.get("longitude")
+    address = data.get("address")
 
     if email is not None:
         if not isinstance(email, str):
@@ -1798,31 +1827,26 @@ def update_private_user():
         hashed_password = generate_password_hash(password)
         user.password = hashed_password
 
-    if latitude_provided and longitude_provided:
-        latitude_is_empty = latitude is None or (isinstance(latitude, str) and len(latitude.strip()) == 0)
-        longitude_is_empty = longitude is None or (isinstance(longitude, str) and len(longitude.strip()) == 0)
+    if address is not None:
+        if not isinstance(address, str):
+            return jsonify(response="Address must be a string"), 400
 
-        if latitude_is_empty and longitude_is_empty:
+        address = address.strip()
+        if len(address) == 0:
+            user.address = None
             user.latitude = None
             user.longitude = None
         else:
-            if latitude_is_empty or longitude_is_empty:
-                return jsonify(response="Latitude and longitude must both exist"), 400
-
             try:
-                latitude = float(latitude)
-                longitude = float(longitude)
-            except (TypeError, ValueError):
-                return jsonify(response="Latitude and longitude must be numbers"), 400
-            
-            if not (-90 <= latitude <= 90):
-                return jsonify(response="Invalid latitude"), 400
+                lat, lng = geocode_address(address)
+            except ValueError as error:
+                return jsonify(response=str(error)), 400
+            except RuntimeError as error:
+                return jsonify(response=str(error)), 502
 
-            if not (-180 <= longitude <= 180):
-                return jsonify(response="Invalid longitude"), 400
-            
-            user.latitude = latitude
-            user.longitude = longitude
+            user.address = address
+            user.latitude = lat
+            user.longitude = lng
     
     db.session.commit()
    

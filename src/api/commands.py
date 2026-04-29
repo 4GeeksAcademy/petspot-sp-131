@@ -80,6 +80,7 @@ def setup_commands(app):
             user.name = "Name_User_" + str(next_index)
             user.latitude = city.latitude
             user.longitude = city.longitude
+            user.address = f"{city.city}, Spain"
             db.session.add(user)
             db.session.commit()
             print("User: ", user.email, " created.")
@@ -165,8 +166,8 @@ def setup_commands(app):
 
     @app.cli.command("insert-cities") # name of our command
     def insert_cities():
-        for city, coordinates in cities.items():
-            latitude, longitude = coordinates
+        for city, city_data in cities.items():
+            _, latitude, longitude = city_data
             city_exists = db.session.execute(select(City).where(City.city == city)).scalar_one_or_none()
             if not city_exists:
                 add_city = City(city=city, latitude=latitude, longitude=longitude)
