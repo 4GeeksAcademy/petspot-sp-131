@@ -96,6 +96,12 @@ function UserPlaceDetailCard() {
                 <UserPlaceMap latitude={activePlace.city.latitude} longitude={activePlace.city.longitude} />
                 <div className="d-grid d-sm-flex gap-2 justify-content-sm-center mt-5 mb-3">
                     <Link to={`/user/private/reservations/add/${id}`} className="btn btn-outline-success">Make a reservation</Link>
+                    <Link 
+                        to={`/user/private/chats?id=${id}&name=${encodeURIComponent(activePlace.name)}`} 
+                        className="btn btn-outline-primary"
+                    >
+                        Contact
+                    </Link>
                     <button
                         type="button"
                         className={`btn ${isFavorite ? "btn-warning" : "btn-outline-warning"}`}

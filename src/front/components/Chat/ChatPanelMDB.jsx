@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { io } from "socket.io-client";
+import { useLocation } from "react-router-dom";
 import "../../styles/chatMdb.css";
 
 const ChatPanelMDB = ({ type }) => {
@@ -9,6 +10,12 @@ const ChatPanelMDB = ({ type }) => {
     const [newMessage, setNewMessage] = useState("");
     const [sending, setSending] = useState(false);
     const [unreadCounts, setUnreadCounts] = useState({});
+    const location = useLocation();
+    
+    // Parse URL params for pre-selected chat
+    const queryParams = new URLSearchParams(location.search);
+    const preSelectedId = queryParams.get("id") ? Number(queryParams.get("id")) : null;
+    const preSelectedName = queryParams.get("name") || "Nuevo Chat";
     
     const socketRef = useRef(null);
     const scrollRef = useRef(null);
@@ -167,13 +174,25 @@ const ChatPanelMDB = ({ type }) => {
         });
         
         const list = Object.values(convMap);
+
+        // If we have a pre-selected ID but no messages yet, add a dummy conversation to the list
+        if (preSelectedId && !convMap[preSelectedId]) {
+            list.push({
+                id: preSelectedId,
+                name: preSelectedName,
+                lastMessage: { message: "Escribe el primer mensaje...", created_at: new Date().toISOString() },
+                messages: []
+            });
+        }
+
         if (list.length > 0 && selectedConvId === null) {
-            setSelectedConvId(list[0].id);
-            selectedConvIdRef.current = list[0].id;
-            markAsRead(list[0].id);
+            const initialId = preSelectedId || list[0].id;
+            setSelectedConvId(initialId);
+            selectedConvIdRef.current = initialId;
+            markAsRead(initialId);
         }
         return list;
-    }, [messages, type]);
+    }, [messages, type, preSelectedId, preSelectedName]);
 
     const handleSelectConversation = (id) => {
         setSelectedConvId(id);
