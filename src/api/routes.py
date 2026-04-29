@@ -57,7 +57,7 @@ def normalize_pet_size(raw_value):
 
 GOOGLE_GEOCODING_API_KEY = os.getenv("GOOGLE_GEOCODING_API_KEY")
 
-def geocode_address(address):
+def geocode_address_details(address):
     if not GOOGLE_GEOCODING_API_KEY:
         raise ValueError("Google Maps API key is not configured")
 
@@ -78,14 +78,39 @@ def geocode_address(address):
 
     status = data.get("status")
     if status == "OK":
-        location = data["results"][0]["geometry"]["location"]
-        return location["lat"], location["lng"]
+        result = data["results"][0]
+        location = result["geometry"]["location"]
+        return {
+            "formatted_address": result["formatted_address"],
+            "latitude": location["lat"],
+            "longitude": location["lng"],
+            "address_components": result.get("address_components", [])
+        }
 
     if status == "ZERO_RESULTS":
-        raise ValueError("Address could not be geocoded")
+        raise ValueError("Invalid address")
 
     error_message = data.get("error_message") or "Geocoding service returned an error"
     raise RuntimeError(f"Geocoding failed: {status}. {error_message}")
+
+
+def geocode_address(address):
+    geocoded = geocode_address_details(address)
+    return geocoded["latitude"], geocoded["longitude"]
+
+
+def geocoded_result_matches_city(geocoded_result, city_name):
+    normalized_city = city_name.strip().lower()
+    formatted_address = geocoded_result["formatted_address"].strip().lower()
+    if normalized_city in formatted_address:
+        return True
+
+    for component in geocoded_result.get("address_components", []):
+        component_name = component.get("long_name", "").strip().lower()
+        if component_name == normalized_city:
+            return True
+
+    return False
 
 @api.route('/analyze-pet', methods=['POST'])
 def analyze_pet():
@@ -1351,6 +1376,9 @@ def update_private_place():
         return jsonify(response="Place not found"), 404
         
     data = request.get_json(silent=True) or {}
+    address_provided = "address" in data
+    city_id_provided = "city_id" in data
+    next_city = place.city
     
     if 'name' in data:
         name = str(data['name']).strip()
@@ -1372,13 +1400,53 @@ def update_private_place():
              if len(rules) > 250:
                  return jsonify(response="pet_rules cannot exceed 250 characters"), 400
              place.pet_rules = rules or None
-             
-    if 'city_id' in data:
-        city_id = data['city_id']
-        city = db.session.get(City, city_id)
-        if not city:
+
+    if city_id_provided:
+        city_id = data.get("city_id")
+        try:
+            city_id = int(city_id)
+        except (TypeError, ValueError):
+            return jsonify(response="city_id must be a valid integer"), 400
+
+        next_city = db.session.get(City, city_id)
+        if not next_city:
             return jsonify(response="City not found"), 404
-        place.city_id = city_id
+
+    geocoded_location = None
+
+    if address_provided:
+        address = data.get("address")
+        if not isinstance(address, str):
+            return jsonify(response="Address must be a string"), 400
+
+        address = address.strip()
+        if not address:
+            return jsonify(response="Address or city is required"), 400
+
+        try:
+            geocoded_location = geocode_address_details(address)
+        except ValueError as error:
+            return jsonify(response=str(error)), 400
+        except RuntimeError as error:
+            return jsonify(response=str(error)), 502
+
+        if city_id_provided and not geocoded_result_matches_city(geocoded_location, next_city.city):
+            return jsonify(response="Address does not belong to the selected city"), 400
+    else:
+        if not city_id_provided:
+            return jsonify(response="Address or city is required"), 400
+
+        try:
+            geocoded_location = geocode_address_details(f"{next_city.city}, Spain")
+        except ValueError as error:
+            return jsonify(response=str(error)), 400
+        except RuntimeError as error:
+            return jsonify(response=str(error)), 502
+
+    place.city = next_city
+    place.address = geocoded_location["formatted_address"]
+    place.latitude = geocoded_location["latitude"]
+    place.longitude = geocoded_location["longitude"]
         
     db.session.commit()
     return jsonify(place.serialize()), 200
