@@ -7,8 +7,9 @@ const backendUrl = import.meta.env.VITE_BACKEND_URL;
 function EditPrivatePlace() {
     const { store, dispatch } = useGlobalReducer();
     const navigate = useNavigate();
-    const [addressMessage, setAddressMessage] = useState("");
-    const [addressMessageType, setAddressMessageType] = useState("");
+    const [validationMessage, setValidationMessage] = useState("");
+    const [validationMessageType, setValidationMessageType] = useState("");
+    const [isValidated, setIsValidated] = useState(false);
     const [formData, setFormData] = useState({
         email: "",
         name: "",
@@ -104,8 +105,11 @@ function EditPrivatePlace() {
     function handleChange(event) {
         const { name, value } = event.target;
         if (name === "address" || name === "city_id") {
-            setAddressMessage("");
-            setAddressMessageType("");
+            setValidationMessage("");
+            setValidationMessageType("");
+        }
+        if (name === "address") {
+            setIsValidated(false);
         }
         setFormData((currentData) => ({
             ...currentData,
@@ -118,8 +122,9 @@ function EditPrivatePlace() {
 
         const trimmedAddress = formData.address.trim();
         if (!trimmedAddress) {
-            setAddressMessage("Please enter an address first.");
-            setAddressMessageType("danger");
+            setValidationMessage("Please enter an address first.");
+            setValidationMessageType("danger");
+            setIsValidated(false);
             return;
         }
 
@@ -137,8 +142,9 @@ function EditPrivatePlace() {
 
             if (!response.ok) {
                 const backendMessage = responseJSON.response || responseJSON.message || "Unknown backend error";
-                setAddressMessage(backendMessage === "Invalid address" ? "Invalid address" : backendMessage);
-                setAddressMessageType("danger");
+                setValidationMessage(backendMessage === "Invalid address" ? "Invalid address" : backendMessage);
+                setValidationMessageType("danger");
+                setIsValidated(false);
                 return;
             }
 
@@ -149,22 +155,25 @@ function EditPrivatePlace() {
             }));
 
             if (responseJSON.city_id) {
-                setAddressMessage(`Address validated. City updated to ${responseJSON.detected_city}.`);
-                setAddressMessageType("success");
+                setValidationMessage(`Address validated. City updated to ${responseJSON.detected_city}.`);
+                setValidationMessageType("success");
             } else {
-                setAddressMessage("Address validated, but no matching city was found. Please review the city selection.");
-                setAddressMessageType("warning");
+                setValidationMessage("Address validated, but no matching city was found. Please review the city selection.");
+                setValidationMessageType("warning");
             }
+            setIsValidated(true);
         } catch (error) {
-            setAddressMessage("Unable to validate the address right now. Please try again.");
-            setAddressMessageType("danger");
+            setValidationMessage("Unable to validate the address right now. Please try again.");
+            setValidationMessageType("danger");
+            setIsValidated(false);
         }
     }
 
     function handleRemoveLocation(event) {
         event.preventDefault();
-        setAddressMessage("");
-        setAddressMessageType("");
+        setValidationMessage("");
+        setValidationMessageType("");
+        setIsValidated(false);
         setFormData((currentData) => ({
             ...currentData,
             address: ""
@@ -186,6 +195,12 @@ function EditPrivatePlace() {
 
         if (trimmedPetRules.length > 250) {
             alert("Pet rules cannot exceed 250 characters.");
+            return;
+        }
+
+        if (trimmedAddress && !isValidated) {
+            setValidationMessage("Please validate the address before submitting.");
+            setValidationMessageType("danger");
             return;
         }
 
@@ -365,9 +380,9 @@ function EditPrivatePlace() {
                             placeholder="Enter address"
                         />
                     </div>
-                    {addressMessage ? (
-                        <div className={`alert alert-${addressMessageType} py-2`} role="alert">
-                            {addressMessage}
+                    {validationMessage ? (
+                        <div className={`alert alert-${validationMessageType} py-2`} role="alert">
+                            {validationMessage}
                         </div>
                     ) : null}
                     <div className="d-flex justify-content-center">
