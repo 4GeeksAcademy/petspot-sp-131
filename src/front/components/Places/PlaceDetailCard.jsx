@@ -39,6 +39,12 @@ function PlaceDetailCard() {
                     <span className="fw-bold">City: </span>
                     {activePlace.city.city}
                 </div>
+                <div className="mb-3">
+                    <span className="fw-bold"><i className="fas fa-clock me-1"></i> Hours: </span>
+                    {activePlace.start_time && activePlace.end_time ? 
+                        `${activePlace.start_time.substring(0, 5)} - ${activePlace.end_time.substring(0, 5)}` : 
+                        "Not specified"}
+                </div>
                 <div>
                     <span className="fw-bold">Pet rules: </span>{activePlace.pet_rules ? activePlace.pet_rules : "-"}
                 </div>

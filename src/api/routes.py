@@ -426,6 +426,18 @@ def update_place(place_id):
             return jsonify(response="City not found"), 404
         place.city = city
 
+    if 'start_time' in data:
+        try:
+            place.start_time = datetime.strptime(data['start_time'], "%H:%M").time() if data['start_time'] else None
+        except ValueError:
+            return jsonify(response="Invalid start_time format (HH:MM)"), 400
+
+    if 'end_time' in data:
+        try:
+            place.end_time = datetime.strptime(data['end_time'], "%H:%M").time() if data['end_time'] else None
+        except ValueError:
+            return jsonify(response="Invalid end_time format (HH:MM)"), 400
+
     db.session.commit()
 
     return jsonify(place.serialize()), 200
@@ -1071,6 +1083,11 @@ def add_reservation():
     except ValueError:
         return jsonify(response="Invalid date or time format. Use YYYY-MM-DD and HH:MM"), 400
 
+    # Scheduling Validation (Calendly logic)
+    if place.start_time and place.end_time:
+        if not (place.start_time <= res_time <= place.end_time):
+            return jsonify(response=f"The place is closed at that time. Operating hours: {place.start_time.strftime('%H:%M')} - {place.end_time.strftime('%H:%M')}"), 400
+
     new_reservation = Reservation(
         user_id=user_id,
         place_id=place_id,
@@ -1347,6 +1364,18 @@ def update_private_place():
         if not city:
             return jsonify(response="City not found"), 404
         place.city_id = city_id
+
+    if 'start_time' in data:
+        try:
+            place.start_time = datetime.strptime(data['start_time'], "%H:%M").time() if data['start_time'] else None
+        except ValueError:
+            return jsonify(response="Invalid start_time format"), 400
+
+    if 'end_time' in data:
+        try:
+            place.end_time = datetime.strptime(data['end_time'], "%H:%M").time() if data['end_time'] else None
+        except ValueError:
+            return jsonify(response="Invalid end_time format"), 400
         
     db.session.commit()
     return jsonify(place.serialize()), 200

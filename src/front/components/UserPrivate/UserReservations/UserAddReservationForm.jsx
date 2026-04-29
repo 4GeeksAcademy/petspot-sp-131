@@ -66,6 +66,17 @@ function UserAddReservationForm() {
             return;
         }
 
+        // Frontend validation for scheduling (Calendly logic)
+        if (selectedPlace?.start_time && selectedPlace?.end_time) {
+            const start = selectedPlace.start_time.substring(0, 5);
+            const end = selectedPlace.end_time.substring(0, 5);
+            
+            if (reservationTime < start || reservationTime > end) {
+                alert(`Sorry, this place is only open from ${start} to ${end}. Please choose a different time.`);
+                return;
+            }
+        }
+
         try {
             const userToken = localStorage.getItem("userToken");
             const response = await fetch(`${backendUrl}/api/users/private/reservations`, {
@@ -108,6 +119,14 @@ function UserAddReservationForm() {
             </div>
             <form onSubmit={handleSubmit} className="mx-auto p-5 bg-secondary-subtle border-0 rounded text-start" style={{ maxWidth: 600 }}>
                 <h1 className="text-center mb-4 display-6">New Reservation</h1>
+                
+                {selectedPlace?.start_time && selectedPlace?.end_time && (
+                    <div className="alert alert-info border-0 shadow-sm mb-4 py-2 text-center">
+                        <i className="fas fa-clock me-2"></i>
+                        Operating Hours: <strong>{selectedPlace.start_time.substring(0, 5)} - {selectedPlace.end_time.substring(0, 5)}</strong>
+                    </div>
+                )}
+
                 <div className="mb-3">
                     <label className="form-label">Place</label>
                     <input
@@ -124,6 +143,11 @@ function UserAddReservationForm() {
                 <div className="mb-3">
                     <label htmlFor="reservationTime" className="form-label">Reservation Time *</label>
                     <input onChange={(event) => setReservationTime(event.target.value)} value={reservationTime} type="time" className="form-control" id="reservationTime" required />
+                    {selectedPlace?.start_time && selectedPlace?.end_time && reservationTime && (reservationTime < selectedPlace.start_time.substring(0, 5) || reservationTime > selectedPlace.end_time.substring(0, 5)) && (
+                        <div className="text-danger small mt-1">
+                            The place is closed at this time.
+                        </div>
+                    )}
                 </div>
                 <div className="mb-3">
                     <label htmlFor="peopleCount" className="form-label">People Count *</label>
@@ -143,7 +167,7 @@ function UserAddReservationForm() {
                 </div>
                 <p className="text-body-secondary small mb-4">* Required fields</p>
                 <div className="mt-5">
-                    <button type="submit" className="btn btn-success d-block mx-auto">Submit</button>
+                    <button type="submit" className="btn btn-success d-block mx-auto shadow-sm px-5">Confirm Reservation</button>
                 </div>
             </form>
         </>

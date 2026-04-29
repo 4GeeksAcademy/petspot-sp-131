@@ -13,6 +13,8 @@ function EditPrivatePlace() {
     const [establishmentType, setEstablishmentType] = useState("");
     const [city, setCity] = useState("");
     const [petRules, setPetRules] = useState("");
+    const [startTime, setStartTime] = useState("");
+    const [endTime, setEndTime] = useState("");
 
     const navigate = useNavigate();
 
@@ -23,6 +25,8 @@ function EditPrivatePlace() {
             setEstablishmentType(activePlace.establishment_type);
             setCity(String(activePlace.city.id));
             setPetRules(activePlace.pet_rules || "");
+            setStartTime(activePlace.start_time ? activePlace.start_time.substring(0, 5) : "");
+            setEndTime(activePlace.end_time ? activePlace.end_time.substring(0, 5) : "");
         } else {
             // If we don't have the active place loaded, go back to dashboard
             navigate("/places/private");
@@ -50,7 +54,9 @@ function EditPrivatePlace() {
             name: trimmedPlaceName,
             establishment_type: establishmentType,
             city_id: trimmedCity,
-            pet_rules: trimmedPetRules
+            pet_rules: trimmedPetRules,
+            start_time: startTime || null,
+            end_time: endTime || null
         };
 
         async function updatePrivatePlace() {
@@ -70,6 +76,7 @@ function EditPrivatePlace() {
                     },
                     body: JSON.stringify(body)
                 });
+
                 if (!response.ok) {
                     const errorData = await response.json();
                     const backendMessage = errorData.response || errorData.message || "Unknown backend error";
@@ -77,24 +84,20 @@ function EditPrivatePlace() {
                     return;
                 }
 
-                const updatePlaceResponse = await fetch(`${backendUrl}/api/places/private`, {
+                // Refresh data
+                const refreshResponse = await fetch(`${backendUrl}/api/places/private`, {
                     headers: {
                         Authorization: `Bearer ${tokenPlace}`
                     }
-                })
+                });
 
-                const updatePlaceResponseJSON = await response.json()
-
-                if (!response.ok) {
-                    const backendMessage = updatePlaceResponseJSON.response || updatePlaceResponseJSON.message || "Unknown backend error"
-                    alert(`Error ${response.status}: ${backendMessage}`)
-                    return
+                if (refreshResponse.ok) {
+                    const updatedData = await refreshResponse.json();
+                    dispatch({
+                        type: "GET_PRIVATE_PLACE",
+                        payload: updatedData
+                    });
                 }
-
-                dispatch({
-                    type: "GET_PRIVATE_PLACE",
-                    payload: updatePlaceResponseJSON
-                })
 
                 alert("Profile updated successfully!");
                 navigate("/places/private");
@@ -168,6 +171,31 @@ function EditPrivatePlace() {
                             <option value={cityObj.id} key={`${cityObj.city}-${i}`}>{cityObj.city}</option>
                         ))}
                     </select>
+                </div>
+                <div className="row mb-3">
+                    <div className="col-md-6">
+                        <label htmlFor="startTime" className="form-label">Opening Time</label>
+                        <input
+                            type="time"
+                            className="form-control"
+                            id="startTime"
+                            value={startTime}
+                            onChange={(e) => setStartTime(e.target.value)}
+                        />
+                    </div>
+                    <div className="col-md-6">
+                        <label htmlFor="endTime" className="form-label">Closing Time</label>
+                        <input
+                            type="time"
+                            className="form-control"
+                            id="endTime"
+                            value={endTime}
+                            onChange={(e) => setEndTime(e.target.value)}
+                        />
+                    </div>
+                    <div className="col-12 mt-1">
+                        <small className="text-muted">Set your operating hours so users can book correctly.</small>
+                    </div>
                 </div>
                 <div className="mb-3">
                     <label htmlFor="petRules" className="form-label">Pet rules</label>

@@ -85,6 +85,9 @@ class Place(db.Model):
     chats: Mapped[list["Chat"]] = relationship("Chat", back_populates="place", cascade="all, delete-orphan")
     reservations: Mapped[list["Reservation"]] = relationship("Reservation", back_populates="place", cascade="all, delete-orphan")
 
+    start_time: Mapped["Time"] = mapped_column(Time, nullable=True)
+    end_time: Mapped["Time"] = mapped_column(Time, nullable=True)
+
     def __str__(self):
         return self.name
 
@@ -99,6 +102,8 @@ class Place(db.Model):
             "city": self.city.serialize(),
             "favorited_by_users": [favorite.user_id for favorite in self.favorites],
             "image_url": self.image_url,
+            "start_time": str(self.start_time) if self.start_time else None,
+            "end_time": str(self.end_time) if self.end_time else None,
             "reviews": [review.serialize() for reservation in self.reservations for review in reservation.reviews]
         }
 
