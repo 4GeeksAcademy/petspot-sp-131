@@ -36,6 +36,7 @@ class User(db.Model):
     is_active: Mapped[bool] = mapped_column(Boolean(), default=True)
     latitude: Mapped[float] = mapped_column(Float, nullable=True)
     longitude: Mapped[float] = mapped_column(Float, nullable=True)
+    address: Mapped[str] = mapped_column(String(255), nullable=True)
 
     reservations: Mapped[list["Reservation"]] = relationship("Reservation", back_populates="user", cascade="all, delete-orphan")
     reviews: Mapped[list["Review"]] = relationship("Review", back_populates="user", cascade="all, delete-orphan")
@@ -59,27 +60,26 @@ class User(db.Model):
             "reviews": [review.serialize() for review in self.reviews],
             "pets": [pet.serialize() for pet in self.pets],
             "latitude": self.latitude,
-            "longitude": self.longitude
+            "longitude": self.longitude,
+            "address": self.address
         }
 
 class Place(db.Model):
     __tablename__ = "places"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    email: Mapped[str] = mapped_column(
-        String(120), unique=True, nullable=False)
+    email: Mapped[str] = mapped_column(String(120), unique=True, nullable=False)
     password: Mapped[str] = mapped_column(nullable=False)
-    is_active: Mapped[bool] = mapped_column(
-        Boolean(), nullable=False, default=True)
+    is_active: Mapped[bool] = mapped_column(Boolean(), nullable=False, default=True)
     name: Mapped[str] = mapped_column(String(120), nullable=False)
-    establishment_type: Mapped[EstablishmentType] = mapped_column(
-        SQLEnum(EstablishmentType, name="establishment_type"),
-        nullable=False
-    )
+    establishment_type: Mapped[EstablishmentType] = mapped_column(SQLEnum(EstablishmentType, name="establishment_type"),nullable=False)
     pet_rules: Mapped[str | None] = mapped_column(Text, nullable=True)
-    city_id: Mapped[int] = mapped_column(
-        ForeignKey("cities.id"), nullable=False)
+    city_id: Mapped[int] = mapped_column(ForeignKey("cities.id"), nullable=False)
     image_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    latitude: Mapped[float] = mapped_column(Float, nullable=True)
+    longitude: Mapped[float] = mapped_column(Float, nullable=True)
+    address: Mapped[str] = mapped_column(String(255), nullable=True)
+
     city: Mapped["City"] = relationship("City", back_populates="places")
     favorites: Mapped[list["Favorite"]] = relationship("Favorite", back_populates="place", cascade="all, delete-orphan")
     chats: Mapped[list["Chat"]] = relationship("Chat", back_populates="place", cascade="all, delete-orphan")
@@ -99,6 +99,9 @@ class Place(db.Model):
             "name": self.name,
             "establishment_type": self.establishment_type.value,
             "pet_rules": self.pet_rules,
+            "latitude": self.latitude,
+            "longitude": self.longitude,
+            "address": self.address,
             "city": self.city.serialize(),
             "favorited_by_users": [favorite.user_id for favorite in self.favorites],
             "image_url": self.image_url,
@@ -114,6 +117,7 @@ class City(db.Model):
     city: Mapped[str] = mapped_column(String(120), unique=True, nullable=False)
     latitude: Mapped[float] = mapped_column(Float, nullable=True)
     longitude: Mapped[float] = mapped_column(Float, nullable=True)
+    address: Mapped[str] = mapped_column(String(255), nullable=True)
 
     places: Mapped[list["Place"]] = relationship("Place", back_populates="city", cascade="all, delete-orphan")
 
@@ -125,7 +129,8 @@ class City(db.Model):
             "id": self.id,
             "city": self.city,
             "latitude": self.latitude,
-            "longitude": self.longitude
+            "longitude": self.longitude,
+            "address": self.address
         }
     
 

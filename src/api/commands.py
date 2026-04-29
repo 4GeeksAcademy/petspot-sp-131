@@ -80,6 +80,7 @@ def setup_commands(app):
             user.name = "Name_User_" + str(next_index)
             user.latitude = city.latitude
             user.longitude = city.longitude
+            user.address = f"{city.city}, Spain"
             db.session.add(user)
             db.session.commit()
             print("User: ", user.email, " created.")
@@ -114,12 +115,17 @@ def setup_commands(app):
                 next_index += 1
                 continue
 
+            city = random.choice(existing_cities)
+
             place = Place()
             place.email = email
             place.password = generate_password_hash("123456")
             place.name = "Name_Place_" + str(next_index)
             place.establishment_type = random.choice(list(EstablishmentType))
-            place.city = random.choice(existing_cities)
+            place.city_id = city.id
+            place.address=city.address
+            place.latitude=city.latitude
+            place.longitude=city.longitude
             place.pet_rules = "Pets allowed under supervision"
             place.image_url = place_image_urls[place.establishment_type]
             db.session.add(place)
@@ -165,11 +171,11 @@ def setup_commands(app):
 
     @app.cli.command("insert-cities") # name of our command
     def insert_cities():
-        for city, coordinates in cities.items():
-            latitude, longitude = coordinates
+        for city, city_data in cities.items():
+            address, latitude, longitude = city_data
             city_exists = db.session.execute(select(City).where(City.city == city)).scalar_one_or_none()
             if not city_exists:
-                add_city = City(city=city, latitude=latitude, longitude=longitude)
+                add_city = City(city=city, latitude=latitude, longitude=longitude, address=address)
                 db.session.add(add_city)
                 db.session.commit()
                 print(f"{city} added")
