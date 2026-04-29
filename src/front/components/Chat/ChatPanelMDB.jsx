@@ -130,8 +130,10 @@ const ChatPanelMDB = ({ type }) => {
             const otherId = type === "user" ? msg.place_id : msg.user_id;
             
             setMessages(prev => {
-                if (prev.find(m => m.id === msg.id)) return prev;
-                return [...prev, msg];
+                // If the message already exists (e.g. arrived very fast), don't add it again
+                if (prev.some(m => m.id === msg.id)) return prev;
+                // Add the new message and sort by date to be safe
+                return [...prev, msg].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
             });
 
             // Increment unread count if message is not for the active conversation
@@ -224,8 +226,8 @@ const ChatPanelMDB = ({ type }) => {
             });
             
             if (response.ok) {
-                const sentMsg = await response.json();
-                setMessages(prev => [...prev, sentMsg]);
+                // We don't add it manually here because the SocketIO listener 
+                // will catch the 'new_message' event that the backend emits to our room.
                 setNewMessage("");
             }
         } catch (error) {
