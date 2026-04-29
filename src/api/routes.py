@@ -112,6 +112,15 @@ def geocoded_result_matches_city(geocoded_result, city_name):
 
     return False
 
+
+def find_matching_city_for_geocoded_result(geocoded_result):
+    cities = db.session.execute(select(City)).scalars().all()
+    for city in cities:
+        if geocoded_result_matches_city(geocoded_result, city.city):
+            return city
+
+    return None
+
 @api.route('/analyze-pet', methods=['POST'])
 def analyze_pet():
     if 'image' not in request.files:
@@ -183,6 +192,36 @@ def analyze_pet():
         return jsonify({"msg": "AI response could not be parsed", "raw": raw_text}), 500
     except Exception as e:
         return jsonify({"msg": f"Error analyzing image: {str(e)}"}), 500
+
+
+@api.route('/geocode/place-address', methods=['POST'])
+def geocode_place_address():
+    data = request.get_json(silent=True) or {}
+    address = data.get("address")
+
+    if not isinstance(address, str):
+        return jsonify(response="Address must be a string"), 400
+
+    address = address.strip()
+    if not address:
+        return jsonify(response="Address is required"), 400
+
+    try:
+        geocoded_result = geocode_address_details(address)
+    except ValueError as error:
+        return jsonify(response=str(error)), 400
+    except RuntimeError as error:
+        return jsonify(response=str(error)), 502
+
+    matching_city = find_matching_city_for_geocoded_result(geocoded_result)
+
+    return jsonify({
+        "formatted_address": geocoded_result["formatted_address"],
+        "latitude": geocoded_result["latitude"],
+        "longitude": geocoded_result["longitude"],
+        "detected_city": matching_city.city if matching_city else None,
+        "city_id": matching_city.id if matching_city else None
+    }), 200
 
 
 

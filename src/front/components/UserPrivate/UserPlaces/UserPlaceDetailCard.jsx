@@ -77,25 +77,24 @@ function UserPlaceDetailCard() {
                         style={{ width: "100%", height: "300px", objectFit: "cover" }}
                     />
                 )}
-                <div className="mb-3">
+                <div className="mb-2">
                     <span className="fw-bold">Name: </span>{activePlace.name}
                 </div>
-                <div className="mb-3">
+                <div className="mb-2">
                     <span className="fw-bold">Email: </span>{activePlace.email}
                 </div>
-                <div className="mb-3">
+                <div className="mb-2">
                     <span className="fw-bold">Establishment type: </span>{activePlace.establishment_type}
                 </div>
-                <div className="mb-3">
-                    <span className="fw-bold">City: </span>
-                    {activePlace.city.city}
-                </div>
-                <div className="mb-3">
+                <div className="mb-2">
                     <span className="fw-bold">Pet rules: </span>{activePlace.pet_rules ? activePlace.pet_rules : "-"}
                 </div>
+                <div className="mb-3">
+                    <span className="fw-bold">Address: </span>{activePlace.address}
+                </div>
                 <LocationMap
-                    latitude={activePlace.city.latitude}
-                    longitude={activePlace.city.longitude}
+                    latitude={activePlace.latitude}
+                    longitude={activePlace.longitude}
                     label="Place location"
                 />
                 <div className="d-grid d-sm-flex gap-2 justify-content-sm-center mt-5 mb-3">
