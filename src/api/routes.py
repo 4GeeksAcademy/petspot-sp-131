@@ -121,6 +121,21 @@ def find_matching_city_for_geocoded_result(geocoded_result):
 
     return None
 
+
+def extract_city_name_from_geocoded_result(geocoded_result):
+    preferred_component_types = [
+        "locality",
+        "administrative_area_level_2",
+        "administrative_area_level_1"
+    ]
+
+    for preferred_type in preferred_component_types:
+        for component in geocoded_result.get("address_components", []):
+            if preferred_type in component.get("types", []):
+                return component.get("long_name")
+
+    return None
+
 @api.route('/analyze-pet', methods=['POST'])
 def analyze_pet():
     if 'image' not in request.files:
@@ -221,6 +236,41 @@ def geocode_place_address():
         "longitude": geocoded_result["longitude"],
         "detected_city": matching_city.city if matching_city else None,
         "city_id": matching_city.id if matching_city else None
+    }), 200
+
+
+@api.route('/geocode/city', methods=['POST'])
+def geocode_city():
+    data = request.get_json(silent=True) or {}
+    city = data.get("city")
+
+    if not isinstance(city, str):
+        return jsonify(response="City must be a string"), 400
+
+    city = city.strip()
+    if not city:
+        return jsonify(response="City is required"), 400
+
+    try:
+        geocoded_result = geocode_address_details(city)
+    except ValueError as error:
+        return jsonify(response="Invalid city" if str(error) == "Invalid address" else str(error)), 400
+    except RuntimeError as error:
+        return jsonify(response=str(error)), 502
+
+    normalized_city = extract_city_name_from_geocoded_result(geocoded_result) or city.title()
+
+    city_exists = db.session.execute(
+        select(City).where(City.city == normalized_city)
+    ).scalar_one_or_none()
+    if city_exists:
+        return jsonify(response="City already exists"), 400
+
+    return jsonify({
+        "city": normalized_city,
+        "formatted_address": geocoded_result["formatted_address"],
+        "latitude": geocoded_result["latitude"],
+        "longitude": geocoded_result["longitude"]
     }), 200
 
 
@@ -735,11 +785,36 @@ def get_cities():
 def add_city():
     data = request.get_json(silent=True) or {}
     city = data.get("city")
+    address = data.get("address")
+    latitude = data.get("latitude")
+    longitude = data.get("longitude")
 
     if city is None:
         return jsonify(response="City is required"), 400
 
+    if address is None:
+        return jsonify(response="Address is required"), 400
+
+    if latitude is None or longitude is None:
+        return jsonify(response="Latitude and longitude are required"), 400
+
     city = city.strip().title()
+    if not city:
+        return jsonify(response="City is required"), 400
+
+    if not isinstance(address, str):
+        return jsonify(response="Address must be a string"), 400
+
+    address = address.strip()
+    if not address:
+        return jsonify(response="Address is required"), 400
+
+    try:
+        latitude = float(latitude)
+        longitude = float(longitude)
+    except (TypeError, ValueError):
+        return jsonify(response="Latitude and longitude must be valid numbers"), 400
+
     city_exists = db.session.execute(
         select(City).where(City.city == city)
     ).scalar_one_or_none()
@@ -747,7 +822,7 @@ def add_city():
         return jsonify(response="City already exists"), 400
 
     try:
-        add_city = City(city=city)
+        add_city = City(city=city, address=address, latitude=latitude, longitude=longitude)
         db.session.add(add_city)
         db.session.commit()
     except IntegrityError:
