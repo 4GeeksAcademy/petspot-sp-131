@@ -20,6 +20,8 @@ function EditPrivatePlace() {
         start_time: "",
         end_time: ""
     });
+    const [suggestions, setSuggestions] = useState([])
+    const [addressSearchTerm, setAddressSearchTerm] = useState("");
 
     useEffect(() => {
         async function loadPrivatePlace() {
@@ -108,6 +110,28 @@ function EditPrivatePlace() {
         }
     }, [dispatch, store.cities.length]);
 
+    useEffect(() => {
+        if (addressSearchTerm.length < 3) {
+            setSuggestions([])
+            return;
+        }
+
+        async function loadSuggestions() {
+            try {
+                const response = await fetch(`${backendUrl}/api/autocomplete/address?input=${addressSearchTerm}`)
+                if (!response.ok) {
+                    throw new Error(`Suggestions request failed with status ${response.status}`);
+                }
+                const responseJSON = await response.json()
+                setSuggestions(responseJSON)
+
+            } catch (error) {
+                console.error("Unable to load suggestions")
+            }
+        }
+        loadSuggestions()
+    }, [addressSearchTerm])
+
     function handleChange(event) {
         const { name, value } = event.target;
         if (name === "address" || name === "city_id") {
@@ -121,6 +145,19 @@ function EditPrivatePlace() {
             ...currentData,
             [name]: value
         }));
+
+        if (event.target.name === "address") {
+            setAddressSearchTerm(value);
+        }
+    }
+
+    function handleSuggestionClick(suggestion) {
+        setFormData((currentData) => ({
+            ...currentData,
+            address: suggestion.description
+        }));
+        setAddressSearchTerm("")
+        setSuggestions([])
     }
 
     async function handleValidateAddress(event) {
@@ -240,7 +277,7 @@ function EditPrivatePlace() {
                     },
                     body: JSON.stringify(body)
                 });
-                
+
                 const responseJSON = await response.json();
 
                 if (!response.ok) {
@@ -405,25 +442,48 @@ function EditPrivatePlace() {
                     </div>
                 </div>
 
-                <div className="p-3 bg-white d-flex flex-column mb-3">
-                    <div className="mb-3">
-                        <label htmlFor="placeEditAddress" className="form-label">Address</label>
+                <div className="mb-3 position-relative">
+                    <label htmlFor="placeEditAddress" className="form-label">Address *</label>
+                    <div className="input-group">
                         <input
                             id="placeEditAddress"
                             name="address"
                             type="text"
-                            className="form-control bg-secondary-subtle border-0"
+                            className="form-control"
                             value={formData.address}
                             onChange={handleChange}
                             placeholder="Enter address"
+                            autoComplete="off"
+                            onBlur={() => {
+                                setTimeout(() => {
+                                    setSuggestions([]);
+                                }, 150);
+                            }}
                         />
+                        <button
+                            type="button"
+                            className="btn btn-sm btn-secondary"
+                            onClick={handleRemoveLocation}
+                        >
+                            Remove location
+                        </button>
                     </div>
-                    {validationMessage ? (
-                        <div className={`alert alert-${validationMessageType} py-2`} role="alert">
-                            {validationMessage}
-                        </div>
-                    ) : null}
-                    <div className="d-flex justify-content-center">
+                </div>
+                {suggestions.length > 0 && (
+                    <>
+                        <ul className="list-group list-group-item-action bg-white w-100 position-absolute">
+                            {suggestions.map((suggestion) => {
+                                return <li key={suggestion.place_id} className="list-group-item list-group-item-action border-0 py-0 ps-1" style={{ cursor: "pointer" }} onClick={() => handleSuggestionClick(suggestion)}>{suggestion.description}</li>
+                            })}
+                        </ul>
+                    </>
+                )}
+                {validationMessage ? (
+                    <div className={`alert alert-${validationMessageType} py-2`} role="alert">
+                        {validationMessage}
+                    </div>
+                ) : null}
+                <div className="d-flex justify-content-center">
 
                     <button
                         type="button"
@@ -432,15 +492,8 @@ function EditPrivatePlace() {
                     >
                         Validate address
                     </button>
-                    <button
-                        type="button"
-                        className="btn btn-sm btn-outline-secondary mt-2"
-                        onClick={handleRemoveLocation}
-                    >
-                        Remove location
-                    </button>
-                    </div>
                 </div>
+
                 <div className="mb-3">
                     <label htmlFor="petRules" className="form-label">Pet rules</label>
                     <textarea
