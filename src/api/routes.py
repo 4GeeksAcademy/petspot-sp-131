@@ -55,16 +55,16 @@ def normalize_pet_size(raw_value):
 
     raise ValueError("Invalid size. Use small, medium, or large")
 
-GOOGLE_GEOCODING_API_KEY = os.getenv("GOOGLE_GEOCODING_API_KEY")
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
 def geocode_address_details(address):
-    if not GOOGLE_GEOCODING_API_KEY:
+    if not GOOGLE_API_KEY:
         raise ValueError("Google Maps API key is not configured")
 
     url = "https://maps.googleapis.com/maps/api/geocode/json"
     params = {
         "address": address,
-        "key": GOOGLE_GEOCODING_API_KEY,
+        "key": GOOGLE_API_KEY,
     }
 
     try:
@@ -273,7 +273,35 @@ def geocode_city():
         "longitude": geocoded_result["longitude"]
     }), 200
 
+@api.route('/autocomplete/address', methods=['GET'])
+def autocomplete_address():
+    data = request.get_json(silent=True) or {}
+    user_input = data.get("input")
+    if not user_input:
+        return jsonify(response="Input is required"), 400
 
+    if not GOOGLE_API_KEY:
+        raise ValueError("Google Maps API key is not configured")
+
+    url = "https://maps.googleapis.com/maps/api/place/autocomplete/json"
+    params = {
+        "input": user_input,
+        "key": GOOGLE_API_KEY,
+        "types": "address"
+    }
+    
+    response = requests.get(url, params=params)
+    response_dict = response.json()
+    predictions = response_dict.get("predictions", [])
+    results = [
+        {
+            "description": p["description"],
+            "place_id": p["place_id"]
+        }
+        for p in predictions
+    ]
+    
+    return jsonify(results), 200
 
 
 @api.route('/admin/login', methods=['POST'])

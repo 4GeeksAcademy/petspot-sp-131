@@ -179,7 +179,7 @@ function UserEditProfile() {
                         />
                     </div>
 
-                    <div className="p-3 bg-white d-flex flex-column mb-3">
+                    <div className="p-3 bg-white d-flex flex-column mb-3 border rounded">
                         <div className="mb-3">
                             <label htmlFor="userEditAddress" className="form-label">Address</label>
                             <input
@@ -192,7 +192,7 @@ function UserEditProfile() {
                                 placeholder="Enter address"
                             />
                         </div>
-                        <button className="btn btn-sm btn-outline-secondary mt-2" onClick={handleRemoveLocation}>Remove location</button>
+                        <button className="btn btn-sm btn-outline-danger mt-2 shadow-0" onClick={handleRemoveLocation}>Remove location</button>
                     </div>
 
                     <p className="text-body-secondary small mb-4">* Required fields</p>
