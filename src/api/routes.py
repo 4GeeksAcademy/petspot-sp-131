@@ -78,14 +78,23 @@ def geocode_address_details(address):
 
     status = data.get("status")
     if status == "OK":
-        result = data["results"][0]
-        location = result["geometry"]["location"]
-        return {
-            "formatted_address": result["formatted_address"],
-            "latitude": location["lat"],
-            "longitude": location["lng"],
-            "address_components": result.get("address_components", [])
-        }
+        found_non_spain_result = False
+        for result in data["results"]:
+            address_components = result["address_components"]
+            for element in address_components:
+                if 'Spain' in element["long_name"]:
+                    location = result["geometry"]["location"]
+                    return {
+                        "formatted_address": result["formatted_address"],
+                        "latitude": location["lat"],
+                        "longitude": location["lng"],
+                        "address_components": result.get("address_components", [])
+                    }
+
+            found_non_spain_result = True
+
+        if found_non_spain_result:
+            raise ValueError("Please enter an address in Spain.")
 
     if status == "ZERO_RESULTS":
         raise ValueError("Invalid address")
@@ -209,27 +218,31 @@ def analyze_pet():
         return jsonify({"msg": f"Error analyzing image: {str(e)}"}), 500
 
 def add_city_to_db(geocoded_result):
-    address_components = geocoded_result["address_components"]
-    for element in address_components:
-        if 'locality' in element["types"]:
-            city = element['long_name'] or element['short_name']
-            try:
-                geocoded_city = geocode_address_details(city)
-            except ValueError as error:
-                return jsonify(response="Invalid city" if str(error) == "Invalid address" else str(error)), 400
-            except RuntimeError as error:
-                return jsonify(response=str(error)), 502
-            
-            address = geocoded_city['formatted_address']
-            latitude = geocoded_city["latitude"]
-            longitude = geocoded_city["longitude"]
+    city = extract_city_name_from_geocoded_result(geocoded_result)
+    if not city:
+        return jsonify(response="Unable to detect a city from the provided address"), 400
 
-            add_city = City(city=city, address=address, latitude=latitude, longitude=longitude)
-            db.session.add(add_city)
-            db.session.commit()
-            return True
-        
-    return None
+    existing_city = db.session.execute(
+        select(City).where(City.city == city)
+    ).scalar_one_or_none()
+    if existing_city:
+        return True
+
+    try:
+        geocoded_city = geocode_address_details(f"{city}, Spain")
+    except ValueError as error:
+        return jsonify(response="Invalid city" if str(error) == "Invalid address" else str(error)), 400
+    except RuntimeError as error:
+        return jsonify(response=str(error)), 502
+
+    address = geocoded_city['formatted_address']
+    latitude = geocoded_city["latitude"]
+    longitude = geocoded_city["longitude"]
+
+    add_city = City(city=city, address=address, latitude=latitude, longitude=longitude)
+    db.session.add(add_city)
+    db.session.commit()
+    return True
 
 
 @api.route('/geocode/place-address', methods=['POST'])
@@ -264,7 +277,8 @@ def geocode_place_address():
                 "detected_city": matching_city.city if matching_city else None,
                 "city_id": matching_city.id if matching_city else None
             }), 200
-        return jsonify(response="Unable to validate address. Add city to db to validate."), 400
+
+        return city_to_add_to_db
 
     return jsonify({
         "formatted_address": geocoded_result["formatted_address"],
