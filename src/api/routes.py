@@ -208,6 +208,29 @@ def analyze_pet():
     except Exception as e:
         return jsonify({"msg": f"Error analyzing image: {str(e)}"}), 500
 
+def add_city_to_db(geocoded_result):
+    address_components = geocoded_result["address_components"]
+    for element in address_components:
+        if 'locality' in element["types"]:
+            city = element['long_name'] or element['short_name']
+            try:
+                geocoded_city = geocode_address_details(city)
+            except ValueError as error:
+                return jsonify(response="Invalid city" if str(error) == "Invalid address" else str(error)), 400
+            except RuntimeError as error:
+                return jsonify(response=str(error)), 502
+            
+            address = geocoded_city['formatted_address']
+            latitude = geocoded_city["latitude"]
+            longitude = geocoded_city["longitude"]
+
+            add_city = City(city=city, address=address, latitude=latitude, longitude=longitude)
+            db.session.add(add_city)
+            db.session.commit()
+            return True
+        
+    return None
+
 
 @api.route('/geocode/place-address', methods=['POST'])
 def geocode_place_address():
@@ -229,6 +252,19 @@ def geocode_place_address():
         return jsonify(response=str(error)), 502
 
     matching_city = find_matching_city_for_geocoded_result(geocoded_result)
+
+    if not matching_city:
+        city_to_add_to_db = add_city_to_db(geocoded_result)
+        if city_to_add_to_db is True:
+            matching_city = find_matching_city_for_geocoded_result(geocoded_result)
+            return jsonify({
+                "formatted_address": geocoded_result["formatted_address"],
+                "latitude": geocoded_result["latitude"],
+                "longitude": geocoded_result["longitude"],
+                "detected_city": matching_city.city if matching_city else None,
+                "city_id": matching_city.id if matching_city else None
+            }), 200
+        return jsonify(response="Unable to validate address. Add city to db to validate."), 400
 
     return jsonify({
         "formatted_address": geocoded_result["formatted_address"],
