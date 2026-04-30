@@ -275,8 +275,7 @@ def geocode_city():
 
 @api.route('/autocomplete/address', methods=['GET'])
 def autocomplete_address():
-    data = request.get_json(silent=True) or {}
-    user_input = data.get("input")
+    user_input = request.args.get("input")
     if not user_input:
         return jsonify(response="Input is required"), 400
 
