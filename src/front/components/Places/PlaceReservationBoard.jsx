@@ -315,8 +315,9 @@ function PlaceReservationBoard({ placeId }) {
   return (
     <div className="board-wrapper min-vh-100 p-3 p-md-5" style={{ background: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)" }}>
       <div className="container-fluid">
-        <div className="row g-4">
-          {/* Waitlist Column */}
+        <DndContext sensors={sensors} onDragEnd={handleDragEnd} collisionDetection={closestCenter}>
+          <div className="row g-4">
+            {/* Waitlist Column */}
           <div className="col-lg-3">
             <div className="card border-0 shadow-lg h-100" style={{ borderRadius: "24px", background: "rgba(255,255,255,0.7)", backdropFilter: "blur(20px)" }}>
               <div className="card-header bg-transparent border-0 pt-4 px-4">
@@ -334,17 +335,15 @@ function PlaceReservationBoard({ placeId }) {
                 <p className="small text-muted mb-0">Drag to a table to seat</p>
               </div>
               <div className="card-body p-3 d-flex flex-column gap-3 overflow-auto" style={{ maxHeight: "70vh" }}>
-                <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-                    {reservations.filter(r => !r.table_id && r.status !== 'cancelled').map(res => (
-                        <DraggableReservation key={res.id} reservation={res} onUpdateStatus={handleUpdateStatus} />
-                    ))}
-                    {reservations.filter(r => !r.table_id && r.status !== 'cancelled').length === 0 && (
-                        <div className="text-center py-5 opacity-50">
-                            <i className="fas fa-calendar-day fa-3x mb-3"></i>
-                            <p className="small">No reservations for this day</p>
-                        </div>
-                    )}
-                </DndContext>
+                  {reservations.filter(r => !r.table_id && r.status !== 'cancelled').map(res => (
+                      <DraggableReservation key={res.id} reservation={res} onUpdateStatus={handleUpdateStatus} />
+                  ))}
+                  {reservations.filter(r => !r.table_id && r.status !== 'cancelled').length === 0 && (
+                      <div className="text-center py-5 opacity-50">
+                          <i className="fas fa-calendar-day fa-3x mb-3"></i>
+                          <p className="small">No reservations for this day</p>
+                      </div>
+                  )}
               </div>
             </div>
           </div>
@@ -363,37 +362,36 @@ function PlaceReservationBoard({ placeId }) {
                 backgroundImage: "radial-gradient(#d1d1d1 1px, transparent 1px)", 
                 backgroundSize: "30px 30px" 
               }}>
-                <DndContext sensors={sensors} onDragEnd={handleDragEnd} collisionDetection={closestCenter}>
-                    {tables.map(table => (
-                        <TableFurniture 
-                            key={table.id} 
-                            table={table} 
-                            reservations={reservations.filter(r => r.table_id === table.id && r.status !== 'cancelled')}
-                            onDelete={handleDeleteTable}
-                            onEdit={(t) => { setEditingTable(t); }}
-                            onMove={async (id, data) => {
-                                const tokenPlace = localStorage.getItem("token_place");
-                                await fetch(`${backendUrl}/api/tables/${id}`, {
-                                    method: "PUT",
-                                    headers: { 
-                                        "Content-Type": "application/json",
-                                        "Authorization": `Bearer ${tokenPlace}`
-                                    },
-                                    body: JSON.stringify(data)
-                                });
-                                fetchData();
-                            }}
-                        >
-                            {reservations.filter(r => r.table_id === table.id && r.status !== 'cancelled').map(res => (
-                                <DraggableReservation key={res.id} reservation={res} onUpdateStatus={handleUpdateStatus} />
-                            ))}
-                        </TableFurniture>
-                    ))}
-                </DndContext>
+                  {tables.map(table => (
+                      <TableFurniture 
+                          key={table.id} 
+                          table={table} 
+                          reservations={reservations.filter(r => r.table_id === table.id && r.status !== 'cancelled')}
+                          onDelete={handleDeleteTable}
+                          onEdit={(t) => { setEditingTable(t); }}
+                          onMove={async (id, data) => {
+                              const tokenPlace = localStorage.getItem("token_place");
+                              await fetch(`${backendUrl}/api/tables/${id}`, {
+                                  method: "PUT",
+                                  headers: { 
+                                      "Content-Type": "application/json",
+                                      "Authorization": `Bearer ${tokenPlace}`
+                                  },
+                                  body: JSON.stringify(data)
+                              });
+                              fetchData();
+                          }}
+                      >
+                          {reservations.filter(r => r.table_id === table.id && r.status !== 'cancelled').map(res => (
+                              <DraggableReservation key={res.id} reservation={res} onUpdateStatus={handleUpdateStatus} />
+                          ))}
+                      </TableFurniture>
+                  ))}
               </div>
             </div>
           </div>
         </div>
+        </DndContext>
       </div>
 
       {/* Add/Edit Table Modal */}
