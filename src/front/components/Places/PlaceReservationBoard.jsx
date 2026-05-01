@@ -36,6 +36,23 @@ function TableFurniture({ table, reservations, onDelete, onEdit, onMove, childre
 
   const shapeStyle = table.shape === "round" ? { borderRadius: "50%" } : { borderRadius: "16px" };
 
+  const hasReservations = reservations.length > 0;
+  const isOccupiedManual = table.is_occupied;
+
+  let bgColor = "rgba(25, 135, 84, 0.95)"; // Green (Available)
+  let borderColor = "rgba(25, 135, 84, 0.2)";
+  let glowColor = "rgba(25, 135, 84, 0.3)";
+
+  if (isOccupiedManual) {
+    bgColor = "rgba(220, 53, 69, 0.95)"; // Red (Occupied Manual)
+    borderColor = "rgba(220, 53, 69, 0.5)";
+    glowColor = "rgba(220, 53, 69, 0.4)";
+  } else if (hasReservations) {
+    bgColor = "rgba(13, 110, 253, 0.95)"; // Blue (Has Reservation)
+    borderColor = "rgba(13, 110, 253, 0.5)";
+    glowColor = "rgba(13, 110, 253, 0.4)";
+  }
+
   return (
     <div 
       ref={setDragRef} 
@@ -51,15 +68,17 @@ function TableFurniture({ table, reservations, onDelete, onEdit, onMove, childre
           width: "100%",
           height: "100%",
           ...shapeStyle,
-          background: isOver ? "rgba(13, 110, 253, 0.2)" : "rgba(255, 255, 255, 0.95)",
+          background: isOver ? "rgba(255, 255, 255, 0.3)" : bgColor,
           backdropFilter: "blur(10px)",
-          border: isOver ? "2px dashed #0d6efd" : "2px solid rgba(0,0,0,0.05)",
-          cursor: "grab"
+          border: isOver ? "2px dashed white" : `2px solid ${borderColor}`,
+          boxShadow: `0 0 20px ${glowColor}`,
+          cursor: "grab",
+          color: "white"
         }}
       >
         {/* Table Label */}
         <div className="text-center px-2">
-            <div className="fw-bold small mb-1 text-primary text-truncate" style={{maxWidth: "100px"}}>{table.name}</div>
+            <div className="fw-bold small mb-1 text-truncate" style={{maxWidth: "100px"}}>{table.name}</div>
             <div className="d-flex gap-1 justify-content-center align-items-center opacity-75">
                 <span className="small" style={{fontSize: "0.65rem"}}><i className="fas fa-users me-1"></i>{table.capacity_people}</span>
                 <span className="small" style={{fontSize: "0.65rem"}}><i className="fas fa-paw me-1"></i>{table.capacity_pets}</span>
@@ -75,10 +94,13 @@ function TableFurniture({ table, reservations, onDelete, onEdit, onMove, childre
 
         {/* Action Buttons (Menu) */}
         <div className="table-actions position-absolute top-0 end-0 m-1 d-flex flex-column gap-1 opacity-0 transition-all">
-            <button className="btn btn-xs btn-primary rounded-circle p-1" onClick={(e) => { e.stopPropagation(); onEdit(table); }} title="Edit">
+            <button className="btn btn-xs btn-light rounded-circle p-1" onClick={(e) => { e.stopPropagation(); onEdit(table); }} title="Edit">
                 <i className="fas fa-pencil-alt" style={{fontSize: "0.6rem"}}></i>
             </button>
-            <button className="btn btn-xs btn-danger rounded-circle p-1" onClick={(e) => { e.stopPropagation(); onDelete(table.id); }} title="Delete">
+            <button className={`btn btn-xs ${table.is_occupied ? 'btn-warning' : 'btn-danger'} rounded-circle p-1`} onClick={(e) => { e.stopPropagation(); onMove(table.id, { is_occupied: !table.is_occupied }); }} title={table.is_occupied ? "Mark as Available" : "Mark as Occupied"}>
+                <i className={`fas ${table.is_occupied ? 'fa-door-open' : 'fa-user-slash'}`} style={{fontSize: "0.6rem"}}></i>
+            </button>
+            <button className="btn btn-xs btn-dark rounded-circle p-1" onClick={(e) => { e.stopPropagation(); onDelete(table.id); }} title="Delete">
                 <i className="fas fa-times" style={{fontSize: "0.6rem"}}></i>
             </button>
         </div>
@@ -313,7 +335,19 @@ function PlaceReservationBoard({ placeId }) {
                             table={table} 
                             reservations={reservations.filter(r => r.table_id === table.id)}
                             onDelete={handleDeleteTable}
-                            onEdit={(t) => { setEditingTable(t); /* Trigger modal manually or use state */ }}
+                            onEdit={(t) => { setEditingTable(t); }}
+                            onMove={async (id, data) => {
+                                const placeToken = localStorage.getItem("placeToken");
+                                await fetch(`${backendUrl}/api/tables/${id}`, {
+                                    method: "PUT",
+                                    headers: { 
+                                        "Content-Type": "application/json",
+                                        "Authorization": `Bearer ${placeToken}`
+                                    },
+                                    body: JSON.stringify(data)
+                                });
+                                fetchData();
+                            }}
                         >
                             {reservations.filter(r => r.table_id === table.id).map(res => (
                                 <DraggableReservation key={res.id} reservation={res} onUpdateStatus={handleUpdateStatus} />

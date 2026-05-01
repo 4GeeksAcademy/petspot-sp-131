@@ -145,8 +145,12 @@ class Table(db.Model):
     pos_x: Mapped[int] = mapped_column(nullable=True, default=0)
     pos_y: Mapped[int] = mapped_column(nullable=True, default=0)
     shape: Mapped[str] = mapped_column(String(20), nullable=True, default="square")
+    is_occupied: Mapped[bool] = mapped_column(nullable=True, default=False)
 
     place: Mapped["Place"] = relationship("Place", back_populates="tables")
+
+    def __repr__(self):
+        return f'<Table {self.name}>'
 
     def serialize(self):
         return {
@@ -157,7 +161,8 @@ class Table(db.Model):
             "capacity_pets": self.capacity_pets,
             "pos_x": self.pos_x,
             "pos_y": self.pos_y,
-            "shape": self.shape
+            "shape": self.shape,
+            "is_occupied": self.is_occupied if self.is_occupied is not None else False
         }
 
 class City(db.Model):

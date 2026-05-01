@@ -2435,6 +2435,7 @@ def add_place_table(place_id):
     pos_y = data.get('pos_y', 0)
 
     shape = data.get('shape', 'square')
+    is_occupied = data.get('is_occupied', False)
 
     if not name:
         return jsonify({"msg": "Name is required"}), 400
@@ -2465,6 +2466,7 @@ def update_table(table_id):
     if 'pos_x' in data: table.pos_x = int(data['pos_x'])
     if 'pos_y' in data: table.pos_y = int(data['pos_y'])
     if 'shape' in data: table.shape = data['shape']
+    if 'is_occupied' in data: table.is_occupied = bool(data['is_occupied'])
 
     db.session.commit()
     return jsonify(table.serialize()), 200
