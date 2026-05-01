@@ -258,16 +258,21 @@ function PlaceReservationBoard({ placeId }) {
       const reservationId = active.data.current.reservation.id;
       const tableId = over.data.current.table.id;
       const tokenPlace = localStorage.getItem("token_place");
-      const res = await fetch(`${backendUrl}/api/reservations/${reservationId}/seat`, {
-        method: "PUT",
-        headers: { 
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${tokenPlace}`
-        },
-        body: JSON.stringify({ table_id: tableId, status: 'confirmed' })
-      });
-      if (!res.ok) {
-          alert(`Drop failed: ${await res.text()}`);
+      try {
+          const res = await fetch(`${backendUrl}/api/reservations/${reservationId}/seat`, {
+            method: "PUT",
+            headers: { 
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${tokenPlace}`
+            },
+            body: JSON.stringify({ table_id: tableId, status: 'confirmed' })
+          });
+          if (!res.ok) {
+              alert(`Drop failed: ${await res.text()}`);
+          }
+      } catch (err) {
+          console.error("Fetch failed:", err);
+          alert("Network error: Could not reach the server to seat reservation.");
       }
       fetchData();
     }
