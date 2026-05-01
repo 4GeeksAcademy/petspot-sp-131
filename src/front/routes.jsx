@@ -90,7 +90,7 @@ import UserEditPet from "./pages/UserPrivate/UserPets/UserEditPet.jsx";
 import UserDeletePet from "./pages/UserPrivate/UserPets/UserDeletePet.jsx";
 
 import { TellMeMore } from "./pages/TellMeMore";
-import PlaceMatcher from "./pages/PlaceMatcher";
+import PlaceMatcher from "./pages/UserPrivate/PlaceMatcher";
 
 export const router = createBrowserRouter(
   createRoutesFromElements(
@@ -99,10 +99,10 @@ export const router = createBrowserRouter(
       <Route path="tell-me-more" element={<TellMeMore />} />
       <Route path="demo" element={<Demo />} />
       <Route path="single/:theId" element={<Single />} />
-      
+
       <Route path="signup/user" element={<SignupUser />} />
       <Route path="user/login" element={<UserLogin />} />
-      <Route element={<RequireUserAuth/>}>
+      <Route element={<RequireUserAuth />}>
         <Route path="user/private" element={<UserLayout />}>
           <Route index element={<UserDashboard />} />
           <Route path="chats" element={<UserChats />} />
@@ -122,7 +122,7 @@ export const router = createBrowserRouter(
           <Route path="news/:id" element={<UserNewsDetail />} />
           <Route path="places/view/:id" element={<UserPlaceDetailCard />} />
           <Route path="place-matcher" element={<PlaceMatcher />} />
-          
+
         </Route>
       </Route>
 
