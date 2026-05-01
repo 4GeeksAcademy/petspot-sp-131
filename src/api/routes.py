@@ -1704,6 +1704,13 @@ def update_private_place():
         place.address = geocoded_location["formatted_address"]
         place.latitude = geocoded_location["latitude"]
         place.longitude = geocoded_location["longitude"]
+        
+        if 'latitude' in data:
+            place.latitude = data["latitude"]
+        
+        if 'longitude' in data:
+            place.longitude = data["longitude"]
+
     elif city_id_provided:
         place.city = next_city
         
@@ -2117,6 +2124,8 @@ def update_private_user():
     name = data.get("name")
     password = data.get("password")
     address = data.get("address")
+    latitude_pin = data.get("latitude")
+    longitude_pin = data.get("longitude")
 
     if email is not None:
         if not isinstance(email, str):
@@ -2170,11 +2179,17 @@ def update_private_user():
                 return jsonify(response=str(error)), 400
             except RuntimeError as error:
                 return jsonify(response=str(error)), 502
-
+        
             user.address = address
             user.latitude = lat
             user.longitude = lng
     
+        if latitude_pin is not None:
+            user.latitude = latitude_pin
+
+        if longitude_pin is not None:
+            user.longitude = longitude_pin
+            
     db.session.commit()
    
     return jsonify(user.serialize()), 200
