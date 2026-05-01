@@ -144,7 +144,7 @@ class Table(db.Model):
     capacity_pets: Mapped[int] = mapped_column(nullable=False)
     pos_x: Mapped[int] = mapped_column(nullable=True, default=0)
     pos_y: Mapped[int] = mapped_column(nullable=True, default=0)
-    shape: Mapped[str] = mapped_column(String(20), nullable=False, default="square")
+    shape: Mapped[str] = mapped_column(String(20), nullable=True, default="square")
 
     place: Mapped["Place"] = relationship("Place", back_populates="tables")
 
