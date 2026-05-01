@@ -84,6 +84,8 @@ class Place(db.Model):
     favorites: Mapped[list["Favorite"]] = relationship("Favorite", back_populates="place", cascade="all, delete-orphan")
     chats: Mapped[list["Chat"]] = relationship("Chat", back_populates="place", cascade="all, delete-orphan")
     reservations: Mapped[list["Reservation"]] = relationship("Reservation", back_populates="place", cascade="all, delete-orphan")
+    tables: Mapped[list["Table"]] = relationship("Table", back_populates="place", cascade="all, delete-orphan")
+    schedules: Mapped[list["PlaceSchedule"]] = relationship("PlaceSchedule", back_populates="place", cascade="all, delete-orphan")
 
     start_time: Mapped["Time"] = mapped_column(Time, nullable=True)
     end_time: Mapped["Time"] = mapped_column(Time, nullable=True)
@@ -108,6 +110,52 @@ class Place(db.Model):
             "start_time": str(self.start_time) if self.start_time else None,
             "end_time": str(self.end_time) if self.end_time else None,
             "reviews": [review.serialize() for reservation in self.reservations for review in reservation.reviews]
+        }
+
+class PlaceSchedule(db.Model):
+    __tablename__ = "place_schedules"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    place_id: Mapped[int] = mapped_column(ForeignKey("places.id"), nullable=False)
+    day_of_week: Mapped[int] = mapped_column(nullable=False) # 0=Monday, 6=Sunday
+    start_time: Mapped["Time"] = mapped_column(Time, nullable=True)
+    end_time: Mapped["Time"] = mapped_column(Time, nullable=True)
+    is_closed: Mapped[bool] = mapped_column(Boolean(), default=False)
+
+    place: Mapped["Place"] = relationship("Place", back_populates="schedules")
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "place_id": self.place_id,
+            "day_of_week": self.day_of_week,
+            "start_time": str(self.start_time) if self.start_time else None,
+            "end_time": str(self.end_time) if self.end_time else None,
+            "is_closed": self.is_closed
+        }
+
+class Table(db.Model):
+    __tablename__ = "tables"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    place_id: Mapped[int] = mapped_column(ForeignKey("places.id"), nullable=False)
+    name: Mapped[str] = mapped_column(String(50), nullable=False)
+    capacity_people: Mapped[int] = mapped_column(nullable=False)
+    capacity_pets: Mapped[int] = mapped_column(nullable=False)
+    pos_x: Mapped[int] = mapped_column(nullable=True, default=0)
+    pos_y: Mapped[int] = mapped_column(nullable=True, default=0)
+
+    place: Mapped["Place"] = relationship("Place", back_populates="tables")
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "place_id": self.place_id,
+            "name": self.name,
+            "capacity_people": self.capacity_people,
+            "capacity_pets": self.capacity_pets,
+            "pos_x": self.pos_x,
+            "pos_y": self.pos_y
         }
 
 class City(db.Model):
@@ -204,7 +252,8 @@ class Reservation(db.Model):
     reservation_date: Mapped["Date"] = mapped_column(Date, nullable=False)
     reservation_time: Mapped["Time"] = mapped_column(Time, nullable=False)
     people_count: Mapped[int] = mapped_column(nullable=False)
-    pet_count: Mapped[int] = mapped_column(nullable=False)
+    pet_id: Mapped[int | None] = mapped_column(ForeignKey("pets.id"), nullable=True)
+    table_id: Mapped[int | None] = mapped_column(ForeignKey("tables.id"), nullable=True)
     zone_preference: Mapped[str] = mapped_column(String(100), nullable=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     status: Mapped[ReservationStatus] = mapped_column(
@@ -215,6 +264,8 @@ class Reservation(db.Model):
 
     user: Mapped["User"] = relationship("User", back_populates="reservations")
     place: Mapped["Place"] = relationship("Place", back_populates="reservations")
+    pet: Mapped["Pet"] = relationship("Pet", foreign_keys=[pet_id])
+    table: Mapped["Table"] = relationship("Table", foreign_keys=[table_id])
     reviews: Mapped[list["Review"]] = relationship("Review", back_populates="reservation", cascade="all, delete-orphan")
 
     def serialize(self):
@@ -227,7 +278,10 @@ class Reservation(db.Model):
             "reservation_date": str(self.reservation_date),
             "reservation_time": str(self.reservation_time),
             "people_count": self.people_count,
-            "pet_count": self.pet_count,
+            "pet_id": self.pet_id,
+            "pet_name": self.pet.name if self.pet else None,
+            "table_id": self.table_id,
+            "table_name": self.table.name if self.table else None,
             "zone_preference": self.zone_preference,
             "notes": self.notes,
             "status": self.status.value

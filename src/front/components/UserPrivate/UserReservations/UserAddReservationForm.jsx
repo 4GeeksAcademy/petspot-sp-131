@@ -13,9 +13,10 @@ function UserAddReservationForm() {
     const [reservationDate, setReservationDate] = useState("");
     const [reservationTime, setReservationTime] = useState("");
     const [peopleCount, setPeopleCount] = useState("");
-    const [petCount, setPetCount] = useState("");
+    const [petId, setPetId] = useState("");
     const [zonePreference, setZonePreference] = useState("");
     const [notes, setNotes] = useState("");
+    const [availableSlots, setAvailableSlots] = useState([]);
 
     useEffect(() => {
         async function loadPlaces() {
@@ -55,44 +56,62 @@ function UserAddReservationForm() {
         }
     }
 
+    useEffect(() => {
+        if (!store.privateUser) {
+            loadPrivateUser();
+        }
+    }, [store.privateUser]);
+
+    useEffect(() => {
+        async function loadSlots() {
+            if (!reservationDate || !id) return;
+            try {
+                const response = await fetch(`${backendUrl}/api/places/${id}/availability?date=${reservationDate}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    setAvailableSlots(data.slots || []);
+                } else {
+                    setAvailableSlots([]);
+                }
+            } catch (error) {
+                console.error("Error loading slots:", error);
+                setAvailableSlots([]);
+            }
+        }
+        loadSlots();
+        // Reset time when date changes
+        setReservationTime("");
+    }, [reservationDate, id]);
+
     async function handleSubmit(event) {
         event.preventDefault();
 
         const trimmedZonePreference = zonePreference.trim();
         const trimmedNotes = notes.trim();
 
-        if (!id || !reservationDate || !reservationTime || !peopleCount || petCount === "") {
+        if (!id || !reservationDate || !reservationTime || !peopleCount) {
             alert("Please complete all required fields before submitting the form.");
             return;
         }
 
-        // Frontend validation for scheduling (Calendly logic)
-        if (selectedPlace?.start_time && selectedPlace?.end_time) {
-            const start = selectedPlace.start_time.substring(0, 5);
-            const end = selectedPlace.end_time.substring(0, 5);
-            
-            if (reservationTime < start || reservationTime > end) {
-                alert(`Sorry, this place is only open from ${start} to ${end}. Please choose a different time.`);
-                return;
-            }
-        }
-
         try {
             const userToken = localStorage.getItem("userToken");
-            const response = await fetch(`${backendUrl}/api/users/private/reservations`, {
+            const response = await fetch(`${backendUrl}/api/reservations`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                     Authorization: `Bearer ${userToken}`
                 },
                 body: JSON.stringify({
+                    user_id: store.privateUser?.id,
                     place_id: id.toString(),
                     reservation_date: reservationDate,
                     reservation_time: reservationTime,
                     people_count: peopleCount,
-                    pet_count: petCount,
+                    pet_id: petId || null,
                     zone_preference: trimmedZonePreference || null,
-                    notes: trimmedNotes || null
+                    notes: trimmedNotes || null,
+                    amount: 0 // Optional: sending 0 makes it confirmed by default per backend logic
                 })
             });
 
@@ -138,15 +157,37 @@ function UserAddReservationForm() {
                 </div>
                 <div className="mb-3">
                     <label htmlFor="reservationDate" className="form-label">Reservation Date *</label>
-                    <input onChange={(event) => setReservationDate(event.target.value)} value={reservationDate} type="date" className="form-control" id="reservationDate" required />
+                    <input 
+                        onChange={(event) => setReservationDate(event.target.value)} 
+                        value={reservationDate} 
+                        type="date" 
+                        className="form-control" 
+                        id="reservationDate" 
+                        min={new Date().toISOString().split('T')[0]}
+                        required 
+                    />
                 </div>
                 <div className="mb-3">
                     <label htmlFor="reservationTime" className="form-label">Reservation Time *</label>
-                    <input onChange={(event) => setReservationTime(event.target.value)} value={reservationTime} type="time" className="form-control" id="reservationTime" required />
-                    {selectedPlace?.start_time && selectedPlace?.end_time && reservationTime && (reservationTime < selectedPlace.start_time.substring(0, 5) || reservationTime > selectedPlace.end_time.substring(0, 5)) && (
-                        <div className="text-danger small mt-1">
-                            The place is closed at this time.
-                        </div>
+                    {availableSlots.length > 0 ? (
+                        <select
+                            className="form-select"
+                            id="reservationTime"
+                            value={reservationTime}
+                            onChange={(e) => setReservationTime(e.target.value)}
+                            required
+                        >
+                            <option value="">Select an available time slot</option>
+                            {availableSlots.map(slot => (
+                                <option key={slot} value={slot}>{slot}</option>
+                            ))}
+                        </select>
+                    ) : (
+                        reservationDate ? (
+                            <div className="alert alert-warning p-2 mb-0">No available slots for this date.</div>
+                        ) : (
+                            <div className="alert alert-secondary p-2 mb-0">Please select a date first.</div>
+                        )
                     )}
                 </div>
                 <div className="mb-3">
@@ -154,8 +195,18 @@ function UserAddReservationForm() {
                     <input onChange={(event) => setPeopleCount(event.target.value)} value={peopleCount} type="number" min="1" className="form-control" id="peopleCount" required />
                 </div>
                 <div className="mb-3">
-                    <label htmlFor="petCount" className="form-label">Pet Count *</label>
-                    <input onChange={(event) => setPetCount(event.target.value)} value={petCount} type="number" min="0" className="form-control" id="petCount" required />
+                    <label htmlFor="petSelection" className="form-label">Which pet are you bringing?</label>
+                    <select 
+                        className="form-select" 
+                        id="petSelection" 
+                        value={petId}
+                        onChange={(e) => setPetId(e.target.value)}
+                    >
+                        <option value="">None (0 pets)</option>
+                        {store.privateUser?.pets?.map(pet => (
+                            <option key={pet.id} value={pet.id}>{pet.name} ({pet.animal_type})</option>
+                        ))}
+                    </select>
                 </div>
                 <div className="mb-3">
                     <label htmlFor="zonePreference" className="form-label">Zone Preference</label>
@@ -167,7 +218,9 @@ function UserAddReservationForm() {
                 </div>
                 <p className="text-body-secondary small mb-4">* Required fields</p>
                 <div className="mt-5">
-                    <button type="submit" className="btn btn-success d-block mx-auto shadow-sm px-5">Confirm Reservation</button>
+                    <button type="submit" className="btn btn-success d-block mx-auto shadow-sm px-5" disabled={!reservationTime}>
+                        Confirm Reservation
+                    </button>
                 </div>
             </form>
         </>
