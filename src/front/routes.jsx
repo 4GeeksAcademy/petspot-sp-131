@@ -7,8 +7,6 @@ import {
 
 import { Layout } from "./pages/Layout";
 import { Home } from "./pages/Home";
-import { Demo } from "./pages/Demo";
-import { Single } from "./pages/Single";
 import { User } from "./pages/User";
 import { UserCreate } from "./pages/UserCreate";
 import { UserEdit } from "./pages/UserEdit";
@@ -97,8 +95,7 @@ export const router = createBrowserRouter(
     <Route path="/" element={<Layout />} errorElement={<h1>Not found!</h1>}>
       <Route index element={<Home />} />
       <Route path="tell-me-more" element={<TellMeMore />} />
-      <Route path="demo" element={<Demo />} />
-      <Route path="single/:theId" element={<Single />} />
+
       
       <Route path="signup/user" element={<SignupUser />} />
       <Route path="user/login" element={<UserLogin />} />
