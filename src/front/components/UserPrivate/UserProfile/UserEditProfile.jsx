@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import useGlobalReducer from "../../../hooks/useGlobalReducer";
 import { useNavigate } from "react-router-dom";
 import { getPrivateUser } from "../../../services/userPrivateService";
+import LocationMap from "../../LocationMap";
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
@@ -143,6 +144,8 @@ function UserEditProfile() {
 
                 if (trimmedAddress) {
                     body.address = trimmedAddress
+                    body.latitude = mapPosition.lat
+                    body.longitude = mapPosition.lng
                 } else {
                     body.address = ""
                 }
@@ -274,13 +277,11 @@ function UserEditProfile() {
                     <p className="text-body-secondary small mb-4">* Required fields</p>
 
                     {mapPosition && (
-                        <iframe
-                            title="map preview"
-                            width="100%"
-                            height="250"
-                            style={{ border: 0 }}
-                            loading="lazy"
-                            src={`https://www.google.com/maps?q=${mapPosition.lat},${mapPosition.lng}&z=16&output=embed`}
+                        <LocationMap
+                            latitude={mapPosition.lat}
+                            longitude={mapPosition.lng}
+                            draggable
+                            onPositionChange={setMapPosition}
                         />
                     )}
 

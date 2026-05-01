@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import useGlobalReducer from "../../hooks/useGlobalReducer";
+import LocationMap from "../../components/LocationMap";
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
@@ -166,7 +167,7 @@ function EditPrivatePlace() {
         setAddressSearchTerm("")
         setSuggestions([])
 
-         try {
+        try {
             const response = await fetch(`${backendUrl}/api/places/details?place_id=${suggestion.place_id}`);
             if (!response.ok) {
                 throw new Error(`Suggestions request failed with status ${response.status}`);
@@ -276,7 +277,9 @@ function EditPrivatePlace() {
         };
 
         if (validatedAddress) {
-            body.address = validatedAddress;
+            body.address = validatedAddress
+            body.latitude = mapPosition.lat
+            body.longitude = mapPosition.lng
         } else {
             body.city_id = validatedCityId;
         }
@@ -522,14 +525,12 @@ function EditPrivatePlace() {
                 </div>
 
                 {mapPosition && (
-                        <iframe
-                            title="map preview"
-                            width="100%"
-                            height="250"
-                            style={{ border: 0 }}
-                            loading="lazy"
-                            src={`https://www.google.com/maps?q=${mapPosition.lat},${mapPosition.lng}&z=16&output=embed`}
-                        />
+                    <LocationMap
+                        latitude={mapPosition.lat}
+                        longitude={mapPosition.lng}
+                        draggable
+                        onPositionChange={setMapPosition}
+                    />
                 )}
 
                 <p className="text-body-secondary small mb-4">* Required fields</p>
