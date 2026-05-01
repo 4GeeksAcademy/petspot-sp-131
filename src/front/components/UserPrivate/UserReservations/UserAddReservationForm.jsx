@@ -13,9 +13,10 @@ function UserAddReservationForm() {
     const [reservationDate, setReservationDate] = useState("");
     const [reservationTime, setReservationTime] = useState("");
     const [peopleCount, setPeopleCount] = useState("");
-    const [petCount, setPetCount] = useState("");
+    const [petId, setPetId] = useState("");
     const [zonePreference, setZonePreference] = useState("");
     const [notes, setNotes] = useState("");
+    const [availableSlots, setAvailableSlots] = useState([]);
 
     useEffect(() => {
         async function loadPlaces() {
@@ -55,33 +56,62 @@ function UserAddReservationForm() {
         }
     }
 
+    useEffect(() => {
+        if (!store.privateUser) {
+            loadPrivateUser();
+        }
+    }, [store.privateUser]);
+
+    useEffect(() => {
+        async function loadSlots() {
+            if (!reservationDate || !id) return;
+            try {
+                const response = await fetch(`${backendUrl}/api/places/${id}/availability?date=${reservationDate}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    setAvailableSlots(data.slots || []);
+                } else {
+                    setAvailableSlots([]);
+                }
+            } catch (error) {
+                console.error("Error loading slots:", error);
+                setAvailableSlots([]);
+            }
+        }
+        loadSlots();
+        // Reset time when date changes
+        setReservationTime("");
+    }, [reservationDate, id]);
+
     async function handleSubmit(event) {
         event.preventDefault();
 
         const trimmedZonePreference = zonePreference.trim();
         const trimmedNotes = notes.trim();
 
-        if (!id || !reservationDate || !reservationTime || !peopleCount || petCount === "") {
+        if (!id || !reservationDate || !reservationTime || !peopleCount) {
             alert("Please complete all required fields before submitting the form.");
             return;
         }
 
         try {
             const userToken = localStorage.getItem("userToken");
-            const response = await fetch(`${backendUrl}/api/users/private/reservations`, {
+            const response = await fetch(`${backendUrl}/api/reservations`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                     Authorization: `Bearer ${userToken}`
                 },
                 body: JSON.stringify({
+                    user_id: store.privateUser?.id,
                     place_id: id.toString(),
                     reservation_date: reservationDate,
                     reservation_time: reservationTime,
                     people_count: peopleCount,
-                    pet_count: petCount,
+                    pet_id: petId || null,
                     zone_preference: trimmedZonePreference || null,
-                    notes: trimmedNotes || null
+                    notes: trimmedNotes || null,
+                    amount: 0 // Optional: sending 0 makes it confirmed by default per backend logic
                 })
             });
 
@@ -100,53 +130,162 @@ function UserAddReservationForm() {
     }
 
     return (
-        <>
-            <div className="text-center my-5">
-                <Link to={`/user/private/places/view/${id}`} className="btn btn-secondary">
-                    Go Back to Place
+        <div className="container py-5">
+            <div className="text-center mb-5">
+                <Link to={`/user/private/places/view/${id}`} className="btn btn-outline-primary rounded-pill px-4">
+                    <i className="fas fa-arrow-left me-2"></i> Back to Establishment
                 </Link>
             </div>
-            <form onSubmit={handleSubmit} className="mx-auto p-5 bg-secondary-subtle border-0 rounded text-start" style={{ maxWidth: 600 }}>
-                <h1 className="text-center mb-4 display-6">New Reservation</h1>
-                <div className="mb-3">
-                    <label className="form-label">Place</label>
-                    <input
-                        type="text"
-                        className="form-control"
-                        value={selectedPlace ? selectedPlace.name : `Place #${id}`}
-                        disabled
-                    />
+            
+            <div className="card shadow-lg border-0 mx-auto" style={{ 
+                maxWidth: "700px", 
+                background: "linear-gradient(145deg, rgba(255,255,255,0.9), rgba(240,245,255,0.9))", 
+                backdropFilter: "blur(15px)", 
+                borderRadius: "24px",
+                overflow: "hidden"
+            }}>
+                <div className="card-header border-0 pt-5 pb-2 text-center bg-transparent">
+                    <h1 className="fw-bold mb-0" style={{ color: "#1a237e", letterSpacing: "-1px" }}>Book Your Visit</h1>
+                    <p className="text-muted">Secure your spot at {selectedPlace ? selectedPlace.name : "this establishment"}</p>
                 </div>
-                <div className="mb-3">
-                    <label htmlFor="reservationDate" className="form-label">Reservation Date *</label>
-                    <input onChange={(event) => setReservationDate(event.target.value)} value={reservationDate} type="date" className="form-control" id="reservationDate" required />
+
+                <div className="card-body p-4 p-md-5">
+                    <form onSubmit={handleSubmit}>
+                        <div className="row g-4">
+                            <div className="col-md-12">
+                                <label className="form-label fw-bold text-secondary small text-uppercase">Establishment</label>
+                                <div className="p-3 rounded-4 bg-white border border-light shadow-sm d-flex align-items-center">
+                                    <i className="fas fa-store text-primary me-3 fs-4"></i>
+                                    <span className="fw-bold fs-5">{selectedPlace ? selectedPlace.name : `Place #${id}`}</span>
+                                </div>
+                            </div>
+
+                            <div className="col-md-6">
+                                <label htmlFor="reservationDate" className="form-label fw-bold text-secondary small text-uppercase">Pick a Date *</label>
+                                <div className="input-group input-group-lg">
+                                    <span className="input-group-text bg-white border-end-0 rounded-start-4"><i className="far fa-calendar-alt text-primary"></i></span>
+                                    <input 
+                                        onChange={(event) => setReservationDate(event.target.value)} 
+                                        value={reservationDate} 
+                                        type="date" 
+                                        className="form-control border-start-0 rounded-end-4 bg-white" 
+                                        id="reservationDate" 
+                                        min={new Date().toISOString().split('T')[0]}
+                                        required 
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="col-md-6">
+                                <label htmlFor="peopleCount" className="form-label fw-bold text-secondary small text-uppercase">Guests *</label>
+                                <div className="input-group input-group-lg">
+                                    <span className="input-group-text bg-white border-end-0 rounded-start-4"><i className="fas fa-users text-primary"></i></span>
+                                    <input 
+                                        onChange={(event) => setPeopleCount(event.target.value)} 
+                                        value={peopleCount} 
+                                        type="number" 
+                                        min="1" 
+                                        className="form-control border-start-0 rounded-end-4 bg-white" 
+                                        id="peopleCount" 
+                                        placeholder="Number of people"
+                                        required 
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="col-12">
+                                <label className="form-label fw-bold text-secondary small text-uppercase mb-3">Available Time Slots *</label>
+                                {availableSlots.length > 0 ? (
+                                    <div className="d-flex flex-wrap gap-2 justify-content-center p-3 rounded-4 bg-white border border-light shadow-sm">
+                                        {availableSlots.map(slot => (
+                                            <button
+                                                key={slot}
+                                                type="button"
+                                                className={`btn rounded-pill px-3 py-2 fw-bold transition-all ${reservationTime === slot ? 'btn-primary shadow' : 'btn-outline-primary'}`}
+                                                onClick={() => setReservationTime(slot)}
+                                                style={{ minWidth: "90px" }}
+                                            >
+                                                {slot}
+                                            </button>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="text-center p-4 rounded-4 bg-light border border-dashed text-muted">
+                                        {reservationDate ? (
+                                            <>
+                                                <i className="fas fa-calendar-times mb-2 fs-3"></i>
+                                                <p className="mb-0">No availability found for this date.</p>
+                                                <small>The establishment might be closed or fully booked.</small>
+                                            </>
+                                        ) : (
+                                            <p className="mb-0 italic text-secondary">Select a date to view available times</p>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="col-md-12">
+                                <label htmlFor="petSelection" className="form-label fw-bold text-secondary small text-uppercase">Bringing a Pet?</label>
+                                <div className="input-group input-group-lg">
+                                    <span className="input-group-text bg-white border-end-0 rounded-start-4"><i className="fas fa-paw text-primary"></i></span>
+                                    <select 
+                                        className="form-select border-start-0 rounded-end-4 bg-white" 
+                                        id="petSelection" 
+                                        value={petId}
+                                        onChange={(e) => setPetId(e.target.value)}
+                                    >
+                                        <option value="">No pet this time</option>
+                                        {store.privateUser?.pets?.map(pet => (
+                                            <option key={pet.id} value={pet.id}>{pet.name} ({pet.animal_type})</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div className="col-md-12">
+                                <label htmlFor="zonePreference" className="form-label fw-bold text-secondary small text-uppercase">Zone Preference</label>
+                                <input 
+                                    onChange={(event) => setZonePreference(event.target.value)} 
+                                    value={zonePreference} 
+                                    type="text" 
+                                    className="form-control form-control-lg rounded-4" 
+                                    id="zonePreference" 
+                                    placeholder="e.g. Terrace, Window, Indoor..."
+                                />
+                            </div>
+
+                            <div className="col-md-12">
+                                <label htmlFor="notes" className="form-label fw-bold text-secondary small text-uppercase">Special Requests</label>
+                                <textarea 
+                                    onChange={(event) => setNotes(event.target.value)} 
+                                    value={notes} 
+                                    className="form-control rounded-4" 
+                                    id="notes" 
+                                    rows="3"
+                                    placeholder="Any allergies or special needs?"
+                                ></textarea>
+                            </div>
+                        </div>
+
+                        <div className="mt-5 text-center">
+                            <button 
+                                type="submit" 
+                                className="btn btn-primary btn-lg rounded-pill px-5 py-3 shadow-lg fw-bold w-100" 
+                                disabled={!reservationTime}
+                                style={{ 
+                                    background: "linear-gradient(45deg, #1a237e, #0d47a1)", 
+                                    border: "none",
+                                    fontSize: "1.1rem"
+                                }}
+                            >
+                                <i className="fas fa-check-circle me-2"></i> Confirm Reservation
+                            </button>
+                            <p className="mt-3 text-muted small"><i className="fas fa-info-circle me-1"></i> Instant confirmation. No payment required today.</p>
+                        </div>
+                    </form>
                 </div>
-                <div className="mb-3">
-                    <label htmlFor="reservationTime" className="form-label">Reservation Time *</label>
-                    <input onChange={(event) => setReservationTime(event.target.value)} value={reservationTime} type="time" className="form-control" id="reservationTime" required />
-                </div>
-                <div className="mb-3">
-                    <label htmlFor="peopleCount" className="form-label">People Count *</label>
-                    <input onChange={(event) => setPeopleCount(event.target.value)} value={peopleCount} type="number" min="1" className="form-control" id="peopleCount" required />
-                </div>
-                <div className="mb-3">
-                    <label htmlFor="petCount" className="form-label">Pet Count *</label>
-                    <input onChange={(event) => setPetCount(event.target.value)} value={petCount} type="number" min="0" className="form-control" id="petCount" required />
-                </div>
-                <div className="mb-3">
-                    <label htmlFor="zonePreference" className="form-label">Zone Preference</label>
-                    <input onChange={(event) => setZonePreference(event.target.value)} value={zonePreference} type="text" className="form-control" id="zonePreference" />
-                </div>
-                <div className="mb-3">
-                    <label htmlFor="notes" className="form-label">Notes</label>
-                    <textarea onChange={(event) => setNotes(event.target.value)} value={notes} className="form-control" id="notes"></textarea>
-                </div>
-                <p className="text-body-secondary small mb-4">* Required fields</p>
-                <div className="mt-5">
-                    <button type="submit" className="btn btn-success d-block mx-auto">Submit</button>
-                </div>
-            </form>
-        </>
+            </div>
+        </div>
     );
 }
 

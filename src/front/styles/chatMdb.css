@@ -1,12 +1,12 @@
-.gradient-custom-chat {
+.gradient-custom {
     /* fallback for old browsers */
-    background: #39FF14;
+    background: #fccb90;
     
     /* Chrome 10-25, Safari 5.1-6 */
-    background: -webkit-linear-gradient(to bottom right, rgba(57, 255, 20, 0.8), rgba(92, 64, 51, 0.9));
+    background: -webkit-linear-gradient(to bottom right, rgba(252, 203, 144, 1), rgba(213, 126, 235, 1));
     
     /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
-    background: linear-gradient(to bottom right, rgba(57, 255, 20, 0.8), rgba(92, 64, 51, 0.9));
+    background: linear-gradient(to bottom right, rgba(252, 203, 144, 1), rgba(213, 126, 235, 1));
     
     min-height: 100vh;
 }
@@ -18,10 +18,6 @@
     border: 2px solid rgba(255, 255, 255, 0.05);
     background-clip: padding-box;
     box-shadow: 10px 10px 10px rgba(46, 54, 68, 0.03);
-}
-
-.link-light:hover {
-    color: #39FF14 !important;
 }
 
 .chat-scroll {
@@ -37,6 +33,21 @@
     background: rgba(255, 255, 255, 0.1);
 }
 .chat-scroll::-webkit-scrollbar-thumb {
-    background: rgba(57, 255, 20, 0.5);
+    background: rgba(255, 255, 255, 0.3);
     border-radius: 10px;
+}
+
+.conversation-active {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 1em;
+}
+
+.link-light {
+    text-decoration: none;
+    color: #fff;
+}
+
+.link-light:hover {
+    color: #fff;
+    opacity: 0.8;
 }

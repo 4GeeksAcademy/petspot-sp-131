@@ -114,15 +114,18 @@ function UserAddReviewForm() {
                     />
                 </div>
                 <div className="mb-3">
-                    <label htmlFor="rating" className="form-label">Rating *</label>
-                    <select id="rating" className="form-select" value={rating} onChange={(event) => setRating(event.target.value)} required>
-                        <option value="">Select a rating</option>
-                        <option value="1">1</option>
-                        <option value="2">2</option>
-                        <option value="3">3</option>
-                        <option value="4">4</option>
-                        <option value="5">5</option>
-                    </select>
+                    <label className="form-label d-block">Rating *</label>
+                    <div className="d-flex gap-2 h3">
+                        {[1, 2, 3, 4, 5].map((num) => (
+                            <i
+                                key={num}
+                                className={`fa-star cursor-pointer ${num <= rating ? "fa-solid text-warning" : "fa-regular text-secondary"}`}
+                                style={{ cursor: "pointer" }}
+                                onClick={() => setRating(num)}
+                            ></i>
+                        ))}
+                    </div>
+                    <input type="hidden" value={rating} required />
                 </div>
                 <div className="mb-3">
                     <label htmlFor="title" className="form-label">Title *</label>

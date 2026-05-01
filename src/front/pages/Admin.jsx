@@ -30,22 +30,53 @@ export const Admin = () => {
 
   return (
     <div className="container py-4">
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h1>Admins</h1>
+      <div className="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+        <div>
+          <h1 className="display-5 fw-bold text-primary mb-0">Admin Panel</h1>
+          <p className="text-muted">Manage the entire PetSpot ecosystem from here.</p>
+        </div>
 
         {!isLogged ? (
-          <Link to="/usuario/admin/login" className="btn btn-success">
-            Login
+          <Link to="/usuario/admin/login" className="btn btn-success px-4 rounded-pill">
+            <i className="fa-solid fa-right-to-bracket me-2"></i>Login
           </Link>
         ) : (
-          <button className="btn btn-danger" onClick={handleLogout}>
-            Logout
+          <button className="btn btn-outline-danger px-4 rounded-pill" onClick={handleLogout}>
+            <i className="fa-solid fa-power-off me-2"></i>Logout
           </button>
         )}
       </div>
 
+      {isLogged && location.pathname === "/usuario/admin" && (
+        <div className="row g-4 mb-5">
+          {/* Quick Access Cards */}
+          {[
+            { label: "Administrators", icon: "fa-user-shield", color: "bg-dark", path: "/usuario/admin" },
+            { label: "Users", icon: "fa-users", color: "bg-primary", path: "/user" },
+            { label: "Establishments", icon: "fa-store", color: "bg-success", path: "/places" },
+            { label: "Pets Registry", icon: "fa-paw", color: "bg-info", path: "/usuario/admin/pets" },
+            { label: "Reservations", icon: "fa-calendar-check", color: "bg-warning", path: "/reservations" },
+            { label: "Cities", icon: "fa-city", color: "bg-secondary", path: "/cities" },
+            { label: "Global News", icon: "fa-newspaper", color: "bg-primary", path: "/news" },
+            { label: "User Reviews", icon: "fa-star", color: "bg-danger", path: "/reviews" },
+            { label: "Community Chats", icon: "fa-comments", color: "bg-info", path: "/usuario/admin/community" },
+          ].map((item, idx) => (
+            <div className="col-md-3 col-sm-6" key={idx}>
+              <Link to={item.path} className="text-decoration-none">
+                <div className="card h-100 border-0 shadow-sm hover-shadow transition-all text-center p-3">
+                  <div className={`${item.color} text-white rounded-circle mx-auto d-flex align-items-center justify-content-center mb-3`} style={{ width: "60px", height: "60px" }}>
+                    <i className={`fa-solid ${item.icon} fs-4`}></i>
+                  </div>
+                  <h6 className="fw-bold text-dark mb-0">{item.label}</h6>
+                </div>
+              </Link>
+            </div>
+          ))}
+        </div>
+      )}
+
       {successMessage && (
-        <div className="alert alert-success">{successMessage}</div>
+        <div className="alert alert-success shadow-sm border-0">{successMessage}</div>
       )}
 
       <Outlet />

@@ -85,6 +85,32 @@ function UserNavbar() {
                     </NavLink>
                 </li>
                 <li className="nav-item">
+                    <NavLink
+                        className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
+                        to="/tell-me-more"
+                        style={{
+                            background: "linear-gradient(135deg, #7c3aed, #a855f7)",
+                            color: "white",
+                            fontWeight: 600,
+                            border: "none",
+                            borderRadius: "0.5rem",
+                            boxShadow: "0 4px 15px rgba(124, 58, 237, 0.35)",
+                            transition: "all 0.2s",
+                            marginLeft: "10px"
+                        }}
+                        onMouseEnter={e => {
+                            e.currentTarget.style.transform = "translateY(-2px)";
+                            e.currentTarget.style.boxShadow = "0 8px 25px rgba(124, 58, 237, 0.5)";
+                        }}
+                        onMouseLeave={e => {
+                            e.currentTarget.style.transform = "translateY(0)";
+                            e.currentTarget.style.boxShadow = "0 4px 15px rgba(124, 58, 237, 0.35)";
+                        }}
+                    >
+                        ✨ Tell me more
+                    </NavLink>
+                </li>
+                <li className="nav-item">
                     <button className="btn btn-danger ms-2" onClick={handleLogout}>Log Out</button>
                 </li>
             </ul>

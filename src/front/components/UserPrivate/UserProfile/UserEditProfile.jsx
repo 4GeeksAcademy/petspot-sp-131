@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import useGlobalReducer from "../../../hooks/useGlobalReducer";
 import { useNavigate } from "react-router-dom";
 import { getPrivateUser } from "../../../services/userPrivateService";
+import LocationMap from "../../LocationMap";
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
@@ -14,8 +15,13 @@ function UserEditProfile() {
         password: "",
         address: ""
     });
+    const [suggestions, setSuggestions] = useState([])
+    const [addressSearchTerm, setAddressSearchTerm] = useState("");
+    const [mapPosition, setMapPosition] = useState({
+        lat: store.privateUser?.latitude || null,
+        lng: store.privateUser?.longitude || null
+    })
     const navigate = useNavigate()
-    console.log(formData)
 
     useEffect(() => {
         async function loadPrivateUser() {
@@ -39,7 +45,7 @@ function UserEditProfile() {
                     ...currentData,
                     name: responseJSON.name || "",
                     email: responseJSON.email || "",
-                    address: store.privateUser.address || ""
+                    address: responseJSON.address || ""
                 }));
             } catch (error) {
                 alert("Unable to load your profile right now. Please try again.");
@@ -55,6 +61,57 @@ function UserEditProfile() {
             ...currentData,
             [name]: value
         }));
+
+        if (event.target.name === "address") {
+            setAddressSearchTerm(value);
+        }
+    }
+
+    useEffect(() => {
+        if (addressSearchTerm.length < 3) {
+            setSuggestions([])
+            return;
+        }
+
+        async function loadSuggestions() {
+            try {
+                const response = await fetch(`${backendUrl}/api/autocomplete/address?input=${addressSearchTerm}`)
+                if (!response.ok) {
+                    throw new Error(`Suggestions request failed with status ${response.status}`);
+                }
+                const responseJSON = await response.json()
+                setSuggestions(responseJSON)
+
+            } catch (error) {
+                console.error("Unable to load suggestions")
+            }
+        }
+        loadSuggestions()
+    }, [addressSearchTerm])
+
+    async function handleSuggestionClick(suggestion) {
+        setFormData((currentData) => ({
+            ...currentData,
+            address: suggestion.description
+        }));
+        setAddressSearchTerm("")
+        setSuggestions([])
+
+        try {
+            const response = await fetch(`${backendUrl}/api/places/details?place_id=${suggestion.place_id}`);
+            if (!response.ok) {
+                throw new Error(`Suggestions request failed with status ${response.status}`);
+            }
+            const data = await response.json();
+
+            setMapPosition({
+                lat: data.lat,
+                lng: data.lng,
+            });
+
+        } catch (error) {
+            console.error("Unable to load lat/lng")
+        }
     }
 
     function handleRemoveLocation(event) {
@@ -63,6 +120,8 @@ function UserEditProfile() {
             ...currentData,
             address: ""
         }))
+        setAddressSearchTerm("")
+        setMapPosition(null)
     }
 
     function handleSubmit(event) {
@@ -85,6 +144,8 @@ function UserEditProfile() {
 
                 if (trimmedAddress) {
                     body.address = trimmedAddress
+                    body.latitude = mapPosition.lat
+                    body.longitude = mapPosition.lng
                 } else {
                     body.address = ""
                 }
@@ -150,6 +211,7 @@ function UserEditProfile() {
                             value={formData.name}
                             onChange={handleChange}
                             required
+                            autoComplete="off"
                         />
                     </div>
 
@@ -163,6 +225,7 @@ function UserEditProfile() {
                             value={formData.email}
                             onChange={handleChange}
                             required
+                            autoComplete="off"
                         />
                     </div>
 
@@ -179,23 +242,48 @@ function UserEditProfile() {
                         />
                     </div>
 
-                    <div className="p-3 bg-white d-flex flex-column mb-3">
-                        <div className="mb-3">
-                            <label htmlFor="userEditAddress" className="form-label">Address</label>
+                    <div className="mb-3 position-relative">
+                        <label htmlFor="userEditAddress" className="form-label">Address</label>
+                        <div className="input-group">
                             <input
                                 id="userEditAddress"
                                 name="address"
                                 type="text"
-                                className="form-control bg-secondary-subtle border-0"
+                                className="form-control "
                                 value={formData.address}
                                 onChange={handleChange}
                                 placeholder="Enter address"
+                                autoComplete="off"
+                                onBlur={() => {
+                                    setTimeout(() => {
+                                        setSuggestions([]);
+                                    }, 150);
+                                }}
                             />
+                            <button className="btn btn-sm btn-secondary border border-subtle" onClick={handleRemoveLocation}>Remove location</button>
                         </div>
-                        <button className="btn btn-sm btn-outline-secondary mt-2" onClick={handleRemoveLocation}>Remove location</button>
                     </div>
 
+                    {suggestions.length > 0 && (
+                        <>
+                            <ul className="list-group list-group-item-action position-absolute bg-white w-100">
+                                {suggestions.map((suggestion) => {
+                                    return <li key={suggestion.place_id} className="list-group-item list-group-item-action border-0 py-0 ps-1" style={{ cursor: "pointer" }} onClick={() => handleSuggestionClick(suggestion)}>{suggestion.description}</li>
+                                })}
+                            </ul>
+                        </>
+                    )}
+
                     <p className="text-body-secondary small mb-4">* Required fields</p>
+
+                    {mapPosition && (
+                        <LocationMap
+                            latitude={mapPosition.lat}
+                            longitude={mapPosition.lng}
+                            draggable
+                            onPositionChange={setMapPosition}
+                        />
+                    )}
 
                     <div className="d-grid d-sm-flex gap-2 justify-content-sm-center mt-5">
                         <button type="submit" className="btn btn-success">Save Changes</button>

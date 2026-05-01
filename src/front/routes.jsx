@@ -21,6 +21,7 @@ import DeletePlace from "./pages/Places/DeletePlace";
 import PlaceDetail from "./pages/Places/PlaceDetail";
 import LoginPlace from "./pages/Places/LoginPlace";
 import PrivatePlace from "./pages/Places/PrivatePlace";
+import PlaceDashboard from "./pages/Places/PlaceDashboard";
 import SignupPlace from "./pages/Places/SignupPlace";
 import EditPrivatePlace from "./pages/Places/EditPrivatePlace";
 import PlaceChats from "./pages/Places/PlaceChats";
@@ -140,6 +141,7 @@ export const router = createBrowserRouter(
         <Route path="eliminar/:id" element={<AdminDelete />} />
         <Route path="detalle/:id" element={<AdminDetail />} />
         <Route path="pets" element={<AdminPets />} />
+        <Route path="community" element={<Chat />} />
       </Route>
 
       <Route path="places" element={<RequireAdmin><Places /></RequireAdmin>} />
@@ -150,6 +152,7 @@ export const router = createBrowserRouter(
       <Route path="places/login" element={<LoginPlace />} />
       <Route path="places/signup" element={<SignupPlace />} />
       <Route path="places/private" element={<RequirePlace><PrivatePlace /></RequirePlace>} />
+      <Route path="places/private/dashboard" element={<RequirePlace><PlaceDashboard /></RequirePlace>} />
       <Route path="places/private/edit" element={<RequirePlace><EditPrivatePlace /></RequirePlace>} />
       <Route path="places/private/chats" element={<RequirePlace><PlaceChats /></RequirePlace>} />
 
@@ -165,9 +168,6 @@ export const router = createBrowserRouter(
       <Route path="news/delete/:id" element={<RequireAdmin><DeleteNews /></RequireAdmin>} />
       <Route path="news/view/:id" element={<RequireAdmin><NewsDetail /></RequireAdmin>} />
 
-      <Route path="chat" element={<RequireAdmin><Chat /></RequireAdmin>} />
-      <Route path="chat/add" element={<RequireAdmin><AddChat /></RequireAdmin>} />
-      <Route path="chat/edit/:id" element={<RequireAdmin><EditChat /></RequireAdmin>} />
 
       <Route path="reservations" element={<RequireAdmin><Reservations /></RequireAdmin>} />
       <Route path="reservations/form" element={<RequireAdmin><AddReservation /></RequireAdmin>} />

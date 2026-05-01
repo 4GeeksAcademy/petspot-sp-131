@@ -111,7 +111,7 @@ export const AdminLogin = () => {
                 <span>Login</span>
               )}
             </button>
-3          </form>
+          </form>
         </div>
         
         <div className="card-footer text-center py-3 bg-white border-0">

@@ -14,7 +14,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import joinedload
 from sqlalchemy.exc import IntegrityError
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
+from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity, get_jwt
 from sqlalchemy.orm import joinedload
 import base64
 import requests
@@ -55,16 +55,16 @@ def normalize_pet_size(raw_value):
 
     raise ValueError("Invalid size. Use small, medium, or large")
 
-GOOGLE_GEOCODING_API_KEY = os.getenv("GOOGLE_GEOCODING_API_KEY")
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
-def geocode_address(address):
-    if not GOOGLE_GEOCODING_API_KEY:
+def geocode_address_details(address):
+    if not GOOGLE_API_KEY:
         raise ValueError("Google Maps API key is not configured")
 
     url = "https://maps.googleapis.com/maps/api/geocode/json"
     params = {
         "address": address,
-        "key": GOOGLE_GEOCODING_API_KEY,
+        "key": GOOGLE_API_KEY,
     }
 
     try:
@@ -78,14 +78,72 @@ def geocode_address(address):
 
     status = data.get("status")
     if status == "OK":
-        location = data["results"][0]["geometry"]["location"]
-        return location["lat"], location["lng"]
+        found_non_spain_result = False
+        for result in data["results"]:
+            address_components = result["address_components"]
+            for element in address_components:
+                if 'Spain' in element["long_name"]:
+                    location = result["geometry"]["location"]
+                    return {
+                        "formatted_address": result["formatted_address"],
+                        "latitude": location["lat"],
+                        "longitude": location["lng"],
+                        "address_components": result.get("address_components", [])
+                    }
+
+            found_non_spain_result = True
+
+        if found_non_spain_result:
+            raise ValueError("Please enter an address in Spain.")
 
     if status == "ZERO_RESULTS":
-        raise ValueError("Address could not be geocoded")
+        raise ValueError("Invalid address")
 
     error_message = data.get("error_message") or "Geocoding service returned an error"
     raise RuntimeError(f"Geocoding failed: {status}. {error_message}")
+
+
+def geocode_address(address):
+    geocoded = geocode_address_details(address)
+    return geocoded["latitude"], geocoded["longitude"]
+
+
+def geocoded_result_matches_city(geocoded_result, city_name):
+    normalized_city = city_name.strip().lower()
+    formatted_address = geocoded_result["formatted_address"].strip().lower()
+    if normalized_city in formatted_address:
+        return True
+
+    for component in geocoded_result.get("address_components", []):
+        component_name = component.get("long_name", "").strip().lower()
+        if component_name == normalized_city:
+            return True
+
+    return False
+
+
+def find_matching_city_for_geocoded_result(geocoded_result):
+    cities = db.session.execute(select(City)).scalars().all()
+    for city in cities:
+        if geocoded_result_matches_city(geocoded_result, city.city):
+            return city
+
+    return None
+
+
+def extract_city_name_from_geocoded_result(geocoded_result):
+    preferred_component_types = [
+        "locality",
+        "administrative_area_level_2",
+        "administrative_area_level_1"
+    ]
+
+    for preferred_type in preferred_component_types:
+        for component in geocoded_result.get("address_components", []):
+            if preferred_type in component.get("types", []):
+                return component.get("long_name")
+
+    return None
 
 @api.route('/analyze-pet', methods=['POST'])
 def analyze_pet():
@@ -159,7 +217,177 @@ def analyze_pet():
     except Exception as e:
         return jsonify({"msg": f"Error analyzing image: {str(e)}"}), 500
 
+def add_city_to_db(geocoded_result):
+    city = extract_city_name_from_geocoded_result(geocoded_result)
+    if not city:
+        return jsonify(response="Unable to detect a city from the provided address"), 400
 
+    existing_city = db.session.execute(
+        select(City).where(City.city == city)
+    ).scalar_one_or_none()
+    if existing_city:
+        return True
+
+    try:
+        geocoded_city = geocode_address_details(f"{city}, Spain")
+    except ValueError as error:
+        return jsonify(response="Invalid city" if str(error) == "Invalid address" else str(error)), 400
+    except RuntimeError as error:
+        return jsonify(response=str(error)), 502
+
+    address = geocoded_city['formatted_address']
+    latitude = geocoded_city["latitude"]
+    longitude = geocoded_city["longitude"]
+
+    add_city = City(city=city, address=address, latitude=latitude, longitude=longitude)
+    db.session.add(add_city)
+    db.session.commit()
+    return True
+
+
+@api.route('/geocode/place-address', methods=['POST'])
+def geocode_place_address():
+    data = request.get_json(silent=True) or {}
+    address = data.get("address")
+
+    if not isinstance(address, str):
+        return jsonify(response="Address must be a string"), 400
+
+    address = address.strip()
+    if not address:
+        return jsonify(response="Address is required"), 400
+
+    try:
+        geocoded_result = geocode_address_details(address)
+    except ValueError as error:
+        return jsonify(response=str(error)), 400
+    except RuntimeError as error:
+        return jsonify(response=str(error)), 502
+
+    matching_city = find_matching_city_for_geocoded_result(geocoded_result)
+
+    if not matching_city:
+        city_to_add_to_db = add_city_to_db(geocoded_result)
+        if city_to_add_to_db is True:
+            matching_city = find_matching_city_for_geocoded_result(geocoded_result)
+            return jsonify({
+                "formatted_address": geocoded_result["formatted_address"],
+                "latitude": geocoded_result["latitude"],
+                "longitude": geocoded_result["longitude"],
+                "detected_city": matching_city.city if matching_city else None,
+                "city_id": matching_city.id if matching_city else None
+            }), 200
+
+        return city_to_add_to_db
+
+    return jsonify({
+        "formatted_address": geocoded_result["formatted_address"],
+        "latitude": geocoded_result["latitude"],
+        "longitude": geocoded_result["longitude"],
+        "detected_city": matching_city.city if matching_city else None,
+        "city_id": matching_city.id if matching_city else None
+    }), 200
+
+
+@api.route('/geocode/city', methods=['POST'])
+def geocode_city():
+    data = request.get_json(silent=True) or {}
+    city = data.get("city")
+
+    if not isinstance(city, str):
+        return jsonify(response="City must be a string"), 400
+
+    city = city.strip()
+    if not city:
+        return jsonify(response="City is required"), 400
+
+    try:
+        geocoded_result = geocode_address_details(city)
+    except ValueError as error:
+        return jsonify(response="Invalid city" if str(error) == "Invalid address" else str(error)), 400
+    except RuntimeError as error:
+        return jsonify(response=str(error)), 502
+
+    normalized_city = extract_city_name_from_geocoded_result(geocoded_result) or city.title()
+
+    city_exists = db.session.execute(
+        select(City).where(City.city == normalized_city)
+    ).scalar_one_or_none()
+    if city_exists:
+        return jsonify(response="City already exists"), 400
+
+    return jsonify({
+        "city": normalized_city,
+        "formatted_address": geocoded_result["formatted_address"],
+        "latitude": geocoded_result["latitude"],
+        "longitude": geocoded_result["longitude"]
+    }), 200
+
+@api.route('/autocomplete/address', methods=['GET'])
+def autocomplete_address():
+    user_input = request.args.get("input")
+    if not user_input:
+        return jsonify(response="Input is required"), 400
+
+    if not GOOGLE_API_KEY:
+        raise ValueError("Google Maps API key is not configured")
+
+    url = "https://maps.googleapis.com/maps/api/place/autocomplete/json"
+    params = {
+        "input": user_input,
+        "key": GOOGLE_API_KEY,
+        "types": "address",
+        "components": "country:es"
+    }
+    
+    response = requests.get(url, params=params)
+    response_dict = response.json()
+
+    if response_dict.get("status") != "OK":
+        return jsonify(response="Failed to fetch predictions"), 400
+
+    predictions = response_dict.get("predictions", [])
+    results = [
+        {
+            "description": p["description"],
+            "place_id": p["place_id"]
+        }
+        for p in predictions
+    ]
+    
+    return jsonify(results), 200
+
+@api.route('/places/details', methods=['GET'])
+def get_place_details():
+    place_id = request.args.get("place_id")
+    if not place_id:
+        return jsonify(response="palce_id is required"), 400
+    
+    if not GOOGLE_API_KEY:
+        raise ValueError("Google Maps API key is not configured")
+    
+    response = requests.get(
+        "https://maps.googleapis.com/maps/api/place/details/json",
+        params={
+            "place_id": place_id,
+            "fields": "geometry,formatted_address,address_components",
+            "key": os.getenv("GOOGLE_API_KEY"),
+        },
+    )
+
+    data = response.json()
+
+    if data.get("status") != "OK":
+        return jsonify(response="Failed to fetch place details"), 400
+    
+    result = data.get("result", {})
+    
+    return jsonify({
+        "lat": result.get("geometry", {}).get("location", {}).get("lat"),
+        "lng": result.get("geometry", {}).get("location", {}).get("lng"),
+        "formatted_address": result.get("formatted_address"),
+        "address_components": result.get("address_components"),
+    }), 200
 
 
 @api.route('/admin/login', methods=['POST'])
@@ -458,6 +686,18 @@ def update_place(place_id):
             return jsonify(response="City not found"), 404
         place.city = city
 
+    if 'start_time' in data:
+        try:
+            place.start_time = datetime.strptime(data['start_time'], "%H:%M").time() if data['start_time'] else None
+        except ValueError:
+            return jsonify(response="Invalid start_time format (HH:MM)"), 400
+
+    if 'end_time' in data:
+        try:
+            place.end_time = datetime.strptime(data['end_time'], "%H:%M").time() if data['end_time'] else None
+        except ValueError:
+            return jsonify(response="Invalid end_time format (HH:MM)"), 400
+
     db.session.commit()
 
     return jsonify(place.serialize()), 200
@@ -671,11 +911,36 @@ def get_cities():
 def add_city():
     data = request.get_json(silent=True) or {}
     city = data.get("city")
+    address = data.get("address")
+    latitude = data.get("latitude")
+    longitude = data.get("longitude")
 
     if city is None:
         return jsonify(response="City is required"), 400
 
+    if address is None:
+        return jsonify(response="Address is required"), 400
+
+    if latitude is None or longitude is None:
+        return jsonify(response="Latitude and longitude are required"), 400
+
     city = city.strip().title()
+    if not city:
+        return jsonify(response="City is required"), 400
+
+    if not isinstance(address, str):
+        return jsonify(response="Address must be a string"), 400
+
+    address = address.strip()
+    if not address:
+        return jsonify(response="Address is required"), 400
+
+    try:
+        latitude = float(latitude)
+        longitude = float(longitude)
+    except (TypeError, ValueError):
+        return jsonify(response="Latitude and longitude must be valid numbers"), 400
+
     city_exists = db.session.execute(
         select(City).where(City.city == city)
     ).scalar_one_or_none()
@@ -683,7 +948,7 @@ def add_city():
         return jsonify(response="City already exists"), 400
 
     try:
-        add_city = City(city=city)
+        add_city = City(city=city, address=address, latitude=latitude, longitude=longitude)
         db.session.add(add_city)
         db.session.commit()
     except IntegrityError:
@@ -747,7 +1012,7 @@ def login_user():
     if not check_password_hash(user.password, password):
         return jsonify({"msg": "Bad email or password"}), 401
 
-    access_token = create_access_token(identity=str(user.id))
+    access_token = create_access_token(identity=str(user.id), additional_claims={"role": "user"})
     return jsonify(access_token=access_token), 200
 
 
@@ -1075,7 +1340,8 @@ def add_reservation():
     reservation_date_str = data.get("reservation_date")
     reservation_time_str = data.get("reservation_time")
     people_count = data.get("people_count")
-    pet_count = data.get("pet_count")
+    pet_id = data.get("pet_id")
+    amount = float(data.get("amount", 0))
     zone_preference = data.get("zone_preference")
     notes = data.get("notes")
 
@@ -1084,8 +1350,7 @@ def add_reservation():
         place_id,
         reservation_date_str,
         reservation_time_str,
-        people_count is not None,
-        pet_count is not None
+        people_count is not None
     ]):
         return jsonify(response="Missing required fields"), 400
 
@@ -1103,22 +1368,32 @@ def add_reservation():
     except ValueError:
         return jsonify(response="Invalid date or time format. Use YYYY-MM-DD and HH:MM"), 400
 
+    # Scheduling Validation (Calendly logic)
+    if place.start_time and place.end_time:
+        if not (place.start_time <= res_time <= place.end_time):
+            return jsonify(response=f"The place is closed at that time. Operating hours: {place.start_time.strftime('%H:%M')} - {place.end_time.strftime('%H:%M')}"), 400
+
+    status = ReservationStatus.CONFIRMED if amount == 0 else ReservationStatus.PENDING
+
     new_reservation = Reservation(
         user_id=user_id,
         place_id=place_id,
         reservation_date=res_date,
         reservation_time=res_time,
         people_count=int(people_count),
-        pet_count=int(pet_count),
+        pet_id=int(pet_id) if pet_id else None,
         zone_preference=zone_preference,
         notes=notes,
-        status=ReservationStatus.PENDING
+        status=status
     )
 
     db.session.add(new_reservation)
     db.session.commit()
 
-    return jsonify(new_reservation.serialize()), 201
+    response_data = new_reservation.serialize()
+    response_data["reservation_id"] = new_reservation.id
+
+    return jsonify(response_data), 201
 
 @api.route('/reservations/<int:id>', methods=['PUT'])
 def update_reservation(id):
@@ -1151,8 +1426,10 @@ def update_reservation(id):
         reservation.place_id = int(data['place_id'])
     if 'people_count' in data:
         reservation.people_count = int(data['people_count'])
-    if 'pet_count' in data:
-        reservation.pet_count = int(data['pet_count'])
+    if 'pet_id' in data:
+        reservation.pet_id = int(data['pet_id']) if data['pet_id'] else None
+    if 'table_id' in data:
+        reservation.table_id = int(data['table_id']) if data['table_id'] else None
     if 'zone_preference' in data:
         reservation.zone_preference = data['zone_preference']
     if 'notes' in data:
@@ -1197,11 +1474,17 @@ def get_place_reservations(place_id):
     place = db.session.get(Place, place_id)
     if not place:
         return jsonify(response="Place not found"), 404
-    reservations = db.session.execute(
-        select(Reservation).where(Reservation.place_id == place_id)
-    ).scalars().all()
-    if not reservations:
-        return jsonify(response="No reservations found for this place"), 404
+    date_str = request.args.get('date')
+    query = select(Reservation).where(Reservation.place_id == place_id)
+    
+    if date_str:
+        try:
+            target_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+            query = query.where(Reservation.reservation_date == target_date)
+        except ValueError:
+            return jsonify({"msg": "Invalid date format, use YYYY-MM-DD"}), 400
+
+    reservations = db.session.execute(query).scalars().all()
     return jsonify([res.serialize() for res in reservations]), 200
 
 
@@ -1325,7 +1608,7 @@ def login_place():
     if not check_password_hash(place_password, password):
         return jsonify(response="Incorrect email or password"), 400
 
-    access_token = create_access_token(identity=str(place_exists.id))
+    access_token = create_access_token(identity=str(place_exists.id), additional_claims={"role": "place"})
 
     return jsonify(access_token_place=access_token), 200
 
@@ -1351,6 +1634,9 @@ def update_private_place():
         return jsonify(response="Place not found"), 404
         
     data = request.get_json(silent=True) or {}
+    address_provided = "address" in data
+    city_id_provided = "city_id" in data
+    next_city = place.city
     
     if 'name' in data:
         name = str(data['name']).strip()
@@ -1372,13 +1658,74 @@ def update_private_place():
              if len(rules) > 250:
                  return jsonify(response="pet_rules cannot exceed 250 characters"), 400
              place.pet_rules = rules or None
-             
-    if 'city_id' in data:
-        city_id = data['city_id']
-        city = db.session.get(City, city_id)
-        if not city:
+
+    if city_id_provided:
+        city_id = data.get("city_id")
+        try:
+            city_id = int(city_id)
+        except (TypeError, ValueError):
+            return jsonify(response="city_id must be a valid integer"), 400
+
+        next_city = db.session.get(City, city_id)
+        if not next_city:
             return jsonify(response="City not found"), 404
-        place.city_id = city_id
+    if 'start_time' in data:
+        try:
+            place.start_time = datetime.strptime(data['start_time'], "%H:%M").time() if data['start_time'] else None
+        except ValueError:
+            return jsonify(response="Invalid start_time format"), 400
+
+    if 'end_time' in data:
+        try:
+            place.end_time = datetime.strptime(data['end_time'], "%H:%M").time() if data['end_time'] else None
+        except ValueError:
+            return jsonify(response="Invalid end_time format"), 400
+
+    geocoded_location = None
+
+    if address_provided:
+        address = data.get("address")
+        if not isinstance(address, str):
+            return jsonify(response="Address must be a string"), 400
+
+        address = address.strip()
+        if not address:
+            return jsonify(response="Address or city is required"), 400
+
+        try:
+            geocoded_location = geocode_address_details(address)
+        except ValueError as error:
+            return jsonify(response=str(error)), 400
+        except RuntimeError as error:
+            return jsonify(response=str(error)), 502
+
+        if city_id_provided and not geocoded_result_matches_city(geocoded_location, next_city.city):
+            return jsonify(response="Address does not belong to the selected city"), 400
+    else:
+        if not city_id_provided:
+            return jsonify(response="Address or city is required"), 400
+
+        try:
+            geocoded_location = geocode_address_details(f"{next_city.city}, Spain")
+        except ValueError as error:
+            return jsonify(response=str(error)), 400
+        except RuntimeError as error:
+            return jsonify(response=str(error)), 502
+
+    if geocoded_location:
+        place.city = next_city
+        place.address = geocoded_location["formatted_address"]
+        place.latitude = geocoded_location["latitude"]
+        place.longitude = geocoded_location["longitude"]
+        
+        if 'latitude' in data:
+            place.latitude = data["latitude"]
+        
+        if 'longitude' in data:
+            place.longitude = data["longitude"]
+
+    elif city_id_provided:
+        place.city = next_city
         
     db.session.commit()
     return jsonify(place.serialize()), 200
@@ -1790,6 +2137,8 @@ def update_private_user():
     name = data.get("name")
     password = data.get("password")
     address = data.get("address")
+    latitude_pin = data.get("latitude")
+    longitude_pin = data.get("longitude")
 
     if email is not None:
         if not isinstance(email, str):
@@ -1843,11 +2192,17 @@ def update_private_user():
                 return jsonify(response=str(error)), 400
             except RuntimeError as error:
                 return jsonify(response=str(error)), 502
-
+        
             user.address = address
             user.latitude = lat
             user.longitude = lng
     
+        if latitude_pin is not None:
+            user.latitude = latitude_pin
+
+        if longitude_pin is not None:
+            user.longitude = longitude_pin
+            
     db.session.commit()
    
     return jsonify(user.serialize()), 200
@@ -1939,7 +2294,7 @@ def add_private_user_reservation():
     reservation_date_str = data.get("reservation_date")
     reservation_time_str = data.get("reservation_time")
     people_count = data.get("people_count")
-    pet_count = data.get("pet_count")
+    pet_id = data.get("pet_id")
     zone_preference = data.get("zone_preference")
     notes = data.get("notes")
 
@@ -1947,8 +2302,7 @@ def add_private_user_reservation():
         place_id is None,
         reservation_date_str is None,
         reservation_time_str is None,
-        people_count is None,
-        pet_count is None
+        people_count is None
     ]):
         return jsonify(response="Missing required fields"), 400
 
@@ -1956,16 +2310,14 @@ def add_private_user_reservation():
         isinstance(place_id, str),
         isinstance(reservation_date_str, str),
         isinstance(reservation_time_str, str),
-        isinstance(people_count, str),
-        isinstance(pet_count, str)
+        isinstance(people_count, str)
     ]):
-        return jsonify(response="Place id, date, time, people count and pet count must be strings"), 400
+        return jsonify(response="Place id, date, time and people count must be strings"), 400
 
     place_id = place_id.strip()
     reservation_date_str = reservation_date_str.strip()
     reservation_time_str = reservation_time_str.strip()
     people_count = people_count.strip()
-    pet_count = pet_count.strip()
 
     if zone_preference is not None:
         if not isinstance(zone_preference, str):
@@ -1983,8 +2335,7 @@ def add_private_user_reservation():
         len(place_id) == 0,
         len(reservation_date_str) == 0,
         len(reservation_time_str) == 0,
-        len(people_count) == 0,
-        len(pet_count) == 0
+        len(people_count) == 0
     ]):
         return jsonify(response="Required fields cannot be empty"), 400
 
@@ -1999,9 +2350,16 @@ def add_private_user_reservation():
 
     try:
         people_count = int(people_count)
-        pet_count = int(pet_count)
     except (TypeError, ValueError):
-        return jsonify(response="People count and pet count must be valid integers"), 400
+        return jsonify(response="People count must be a valid integer"), 400
+
+    if pet_id:
+        try:
+            pet_id = int(pet_id)
+        except (TypeError, ValueError):
+            return jsonify(response="Pet id must be a valid integer"), 400
+    else:
+        pet_id = None
 
     try:
         res_date = datetime.strptime(reservation_date_str, '%Y-%m-%d').date()
@@ -2015,7 +2373,7 @@ def add_private_user_reservation():
         reservation_date=res_date,
         reservation_time=res_time,
         people_count=people_count,
-        pet_count=pet_count,
+        pet_id=pet_id,
         zone_preference=zone_preference,
         notes=notes,
         status=ReservationStatus.PENDING
@@ -2166,3 +2524,189 @@ def add_private_user_review():
     return jsonify(new_review.serialize()), 201
 
 
+
+
+from api.models import Table, PlaceSchedule
+
+@api.route('/places/<int:place_id>/tables', methods=['GET'])
+def get_place_tables(place_id):
+    tables = db.session.execute(select(Table).where(Table.place_id == place_id)).scalars().all()
+    return jsonify([t.serialize() for t in tables]), 200
+
+@api.route('/places/<int:place_id>/tables', methods=['POST'])
+def add_place_table(place_id):
+    data = request.get_json(silent=True) or {}
+    name = data.get('name')
+    
+    def safe_int(val, default=0):
+        try:
+            return int(val) if val not in [None, ""] else default
+        except (ValueError, TypeError):
+            return default
+            
+    capacity_people = safe_int(data.get('capacity_people'), 0)
+    capacity_pets = safe_int(data.get('capacity_pets'), 0)
+    pos_x = safe_int(data.get('pos_x'), 0)
+    pos_y = safe_int(data.get('pos_y'), 0)
+
+    shape = data.get('shape', 'square')
+    is_occupied = data.get('is_occupied', False)
+
+    if not name:
+        return jsonify({"msg": "Name is required"}), 400
+
+    new_table = Table(
+        place_id=place_id,
+        name=name,
+        capacity_people=int(capacity_people),
+        capacity_pets=int(capacity_pets),
+        pos_x=int(pos_x),
+        pos_y=int(pos_y),
+        shape=shape
+    )
+    db.session.add(new_table)
+    db.session.commit()
+    return jsonify(new_table.serialize()), 201
+
+@api.route('/tables/<int:table_id>', methods=['PUT'])
+def update_table(table_id):
+    table = db.session.get(Table, table_id)
+    if not table:
+        return jsonify({"msg": "Table not found"}), 404
+
+    data = request.get_json(silent=True) or {}
+    
+    def safe_int(val, default):
+        try:
+            return int(val) if val not in [None, ""] else default
+        except (ValueError, TypeError):
+            return default
+
+    if 'name' in data: table.name = data['name']
+    if 'capacity_people' in data: table.capacity_people = safe_int(data['capacity_people'], table.capacity_people)
+    if 'capacity_pets' in data: table.capacity_pets = safe_int(data['capacity_pets'], table.capacity_pets)
+    if 'pos_x' in data: table.pos_x = safe_int(data['pos_x'], table.pos_x)
+    if 'pos_y' in data: table.pos_y = safe_int(data['pos_y'], table.pos_y)
+    if 'shape' in data: table.shape = data['shape']
+    if 'is_occupied' in data: table.is_occupied = bool(data['is_occupied'])
+
+    db.session.commit()
+    return jsonify(table.serialize()), 200
+
+@api.route('/tables/<int:table_id>', methods=['DELETE'])
+def delete_table(table_id):
+    table = db.session.get(Table, table_id)
+    if not table:
+        return jsonify({"msg": "Table not found"}), 404
+    db.session.delete(table)
+    db.session.commit()
+    return jsonify({"msg": "Table deleted"}), 200
+
+@api.route('/places/<int:place_id>/schedule', methods=['GET'])
+def get_place_schedule(place_id):
+    schedules = db.session.execute(select(PlaceSchedule).where(PlaceSchedule.place_id == place_id)).scalars().all()
+    return jsonify([s.serialize() for s in schedules]), 200
+
+@api.route('/places/<int:place_id>/schedule', methods=['PUT'])
+def update_place_schedule(place_id):
+    data = request.get_json(silent=True) or []
+    db.session.execute(db.delete(PlaceSchedule).where(PlaceSchedule.place_id == place_id))
+    
+    for item in data:
+        try:
+            start_t = datetime.strptime(item['start_time'][:5], '%H:%M').time() if item.get('start_time') else None
+            end_t = datetime.strptime(item['end_time'][:5], '%H:%M').time() if item.get('end_time') else None
+        except ValueError:
+            start_t, end_t = None, None
+
+        s = PlaceSchedule(
+            place_id=place_id,
+            day_of_week=int(item['day_of_week']),
+            start_time=start_t,
+            end_time=end_t,
+            is_closed=bool(item.get('is_closed', False))
+        )
+        db.session.add(s)
+
+    db.session.commit()
+    schedules = db.session.execute(select(PlaceSchedule).where(PlaceSchedule.place_id == place_id)).scalars().all()
+    return jsonify([s.serialize() for s in schedules]), 200
+
+@api.route('/places/<int:place_id>/availability', methods=['GET'])
+def get_place_availability(place_id):
+    date_str = request.args.get('date')
+    if not date_str:
+        return jsonify({"msg": "date parameter is required"}), 400
+        
+    try:
+        req_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+    except ValueError:
+        return jsonify({"msg": "Invalid date format. Use YYYY-MM-DD"}), 400
+
+    day_of_week = req_date.weekday() # 0 = Monday
+    schedule = db.session.execute(select(PlaceSchedule).where(PlaceSchedule.place_id == place_id, PlaceSchedule.day_of_week == day_of_week)).scalar_one_or_none()
+    
+    if not schedule or schedule.is_closed or not schedule.start_time or not schedule.end_time:
+        return jsonify({"slots": []}), 200
+
+    slots = []
+    from datetime import timedelta
+    current_dt = datetime.combine(req_date, schedule.start_time)
+    end_dt = datetime.combine(req_date, schedule.end_time)
+    
+    while current_dt + timedelta(minutes=30) <= end_dt:
+        slots.append(current_dt.time().strftime("%H:%M"))
+        current_dt += timedelta(minutes=30)
+
+    return jsonify({"slots": slots}), 200
+
+@api.route('/reservations/<int:id>/seat', methods=['PUT'])
+@jwt_required()
+def seat_reservation(id):
+    reservation = db.session.get(Reservation, id)
+    if not reservation:
+        return jsonify({"msg": "Reservation not found"}), 404
+        
+    data = request.get_json(silent=True) or {}
+    table_id = data.get("table_id")
+    
+    if table_id:
+        table = db.session.get(Table, int(table_id))
+        if not table or table.place_id != reservation.place_id:
+            return jsonify({"msg": "Invalid table"}), 400
+        reservation.table_id = int(table_id)
+        
+    if 'status' in data:
+        new_status = data['status']
+        claims = get_jwt()
+        role = claims.get("role")
+        
+        # Security Rules:
+        # 1. Only 'place' can set to CONFIRMED
+        if new_status == 'confirmed' and role != 'place':
+            return jsonify({"msg": "Only establishments can confirm reservations"}), 403
+            
+        # 2. Both can CANCEL (but let's check ownership if needed)
+        # For now, if role is present, allow cancellation
+        if new_status in ['confirmed', 'pending', 'cancelled']:
+            reservation.status = ReservationStatus(new_status)
+
+    db.session.commit()
+    return jsonify(reservation.serialize()), 200
+
+@api.route('/places/<int:place_id>/statistics', methods=['GET'])
+def get_place_statistics(place_id):
+    from sqlalchemy import func
+    from datetime import timedelta
+    thirty_days_ago = datetime.now().date() - timedelta(days=30)
+    
+    stats = db.session.execute(
+        select(Reservation.reservation_date, func.count(Reservation.id))
+        .where(Reservation.place_id == place_id)
+        .where(Reservation.reservation_date >= thirty_days_ago)
+        .group_by(Reservation.reservation_date)
+        .order_by(Reservation.reservation_date)
+    ).all()
+    
+    result = [{"date": str(row[0]), "count": row[1]} for row in stats]
+    return jsonify(result), 200

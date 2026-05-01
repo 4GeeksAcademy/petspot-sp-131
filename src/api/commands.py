@@ -2,7 +2,7 @@
 import click, random, requests
 from api.cities import cities
 from datetime import datetime
-from api.models import db, User, Place, EstablishmentType, City, Favorite, AdminUser, Review, Reservation, ReservationStatus, Chat, News, PostType, Race, Pet, PetAnimalType, PetSize
+from api.models import db, User, Place, EstablishmentType, City, Favorite, AdminUser, Review, Reservation, ReservationStatus, Chat, News, PostType, Race, Pet, PetAnimalType, PetSize, PlaceSchedule, Table
 from werkzeug.security import generate_password_hash
 from sqlalchemy import select
 
@@ -115,17 +115,46 @@ def setup_commands(app):
                 next_index += 1
                 continue
 
+            city = random.choice(existing_cities)
+
             place = Place()
             place.email = email
             place.password = generate_password_hash("123456")
             place.name = "Name_Place_" + str(next_index)
             place.establishment_type = random.choice(list(EstablishmentType))
-            place.city = random.choice(existing_cities)
+            place.city_id = city.id
+            place.address=city.address
+            place.latitude=city.latitude
+            place.longitude=city.longitude
             place.pet_rules = "Pets allowed under supervision"
             place.image_url = place_image_urls[place.establishment_type]
             db.session.add(place)
             db.session.commit()
-            print("Place: ", place.email, " created.")
+            
+            # Generate PlaceSchedules
+            for day in range(7):
+                schedule = PlaceSchedule(
+                    place_id=place.id,
+                    day_of_week=day,
+                    start_time=datetime.strptime('09:00', '%H:%M').time(),
+                    end_time=datetime.strptime('21:00', '%H:%M').time(),
+                    is_closed=False
+                )
+                db.session.add(schedule)
+
+            # Generate Tables
+            for t_idx in range(1, 4):
+                new_table = Table(
+                    place_id=place.id,
+                    name=f"Table {t_idx}",
+                    capacity_people=random.choice([2, 4, 6]),
+                    capacity_pets=random.choice([1, 2, 3])
+                )
+                db.session.add(new_table)
+
+            db.session.commit()
+            
+            print("Place: ", place.email, " created with schedules and tables.")
             added_count += 1
             next_index += 1
 
@@ -167,10 +196,10 @@ def setup_commands(app):
     @app.cli.command("insert-cities") # name of our command
     def insert_cities():
         for city, city_data in cities.items():
-            _, latitude, longitude = city_data
+            address, latitude, longitude = city_data
             city_exists = db.session.execute(select(City).where(City.city == city)).scalar_one_or_none()
             if not city_exists:
-                add_city = City(city=city, latitude=latitude, longitude=longitude)
+                add_city = City(city=city, latitude=latitude, longitude=longitude, address=address)
                 db.session.add(add_city)
                 db.session.commit()
                 print(f"{city} added")
@@ -238,6 +267,8 @@ def setup_commands(app):
         for x in range(1, int(count) + 1):
             user = random.choice(users)
             place = random.choice(places)
+            user_pets = db.session.execute(select(Pet).where(Pet.user_id == user.id)).scalars().all()
+            chosen_pet_id = random.choice(user_pets).id if user_pets and random.random() > 0.3 else None
 
             new_reservation = Reservation(
                 user_id=user.id,
@@ -245,7 +276,7 @@ def setup_commands(app):
                 reservation_date=datetime.now().date(),
                 reservation_time=datetime.now().time().replace(second=0, microsecond=0),
                 people_count=random.randint(1, 6),
-                pet_count=random.randint(0, 3),
+                pet_id=chosen_pet_id,
                 zone_preference=random.choice(zone_preferences),
                 notes="Test reservation created from CLI command",
                 status=ReservationStatus.CONFIRMED

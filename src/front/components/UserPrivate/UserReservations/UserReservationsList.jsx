@@ -8,51 +8,49 @@ const backendUrl = import.meta.env.VITE_BACKEND_URL;
 function UserReservationsList() {
     const { store, dispatch } = useGlobalReducer()
 
-    useEffect(() => {
-        if (store.privateUser?.id) {
-            return;
-        }
-
-        async function loadPrivateUser() {
-            try {
-                const privateUser = await getPrivateUser();
-                if (!privateUser) {
-                    return;
-                }
-    
+    const loadPrivateUser = async () => {
+        try {
+            const privateUser = await getPrivateUser();
+            if (privateUser) {
                 dispatch({
                     type: "GET_PRIVATE_USER",
                     payload: privateUser
                 });
-            } catch (error) {
-                console.error("Unable to load private user:", error);
             }
+        } catch (error) {
+            console.error("Unable to load private user:", error);
         }
+    };
 
-        loadPrivateUser();
+    useEffect(() => {
+        if (!store.privateUser?.id) {
+            loadPrivateUser();
+        }
     }, [dispatch, store.privateUser?.id]);
 
     async function handleCancelReservation(reservationId) {
+        if (!confirm("Are you sure you want to cancel this reservation?")) return;
         try {
             const userToken = localStorage.getItem("userToken");
-            const response = await fetch(`${backendUrl}/api/users/private/reservations`, {
-                method: "DELETE",
+            const response = await fetch(`${backendUrl}/api/reservations/${reservationId}`, {
+                method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
                     Authorization: `Bearer ${userToken}`
                 },
                 body: JSON.stringify({
-                    reservation_id: reservationId.toString()
+                    status: "cancelled"
                 })
             });
 
             if (!response.ok) {
-                throw new Error(`Request failed with status ${response.status}`);
+                const errorData = await response.json();
+                throw new Error(errorData.msg || `Request failed with status ${response.status}`);
             }
 
             await loadPrivateUser();
         } catch (error) {
-            alert("Unable to cancel reservation right now. Please try again.");
+            alert(error.message || "Unable to cancel reservation right now. Please try again.");
         }
     }
 
