@@ -38,16 +38,16 @@ function TableFurniture({ table, reservations, onDelete, onEdit, onMove, childre
   const hasReservations = reservations.length > 0;
   const isOccupiedManual = table.is_occupied;
 
-  let bgColor = "rgba(25, 135, 84, 0.95)"; // Verde (Libre)
+  let bgColor = "rgba(25, 135, 84, 0.95)"; 
   let borderColor = "rgba(25, 135, 84, 0.2)";
   let glowColor = "rgba(25, 135, 84, 0.3)";
 
   if (isOccupiedManual) {
-    bgColor = "rgba(220, 53, 69, 0.95)"; // Rojo (Ocupado Manual)
+    bgColor = "rgba(220, 53, 69, 0.95)"; 
     borderColor = "rgba(220, 53, 69, 0.5)";
     glowColor = "rgba(220, 53, 69, 0.4)";
   } else if (hasReservations) {
-    bgColor = "rgba(13, 110, 253, 0.95)"; // Azul (Con Reserva)
+    bgColor = "rgba(13, 110, 253, 0.95)"; 
     borderColor = "rgba(13, 110, 253, 0.5)";
     glowColor = "rgba(13, 110, 253, 0.4)";
   }
@@ -152,13 +152,30 @@ function PlaceReservationBoard({ placeId }) {
   const fetchData = async () => {
     try {
         setLoading(true);
+        const token = localStorage.getItem("token_place");
+        if (!token) return;
+
+        // Usamos rutas privadas para asegurar que los datos pertenecen al local logueado
         const [resT, resR] = await Promise.all([
-            fetch(`${backendUrl}/api/places/${placeId}/tables`),
-            fetch(`${backendUrl}/api/places/${placeId}/reservations?date=${selectedDate}`)
+            fetch(`${backendUrl}/api/places/${placeId}/tables`, {
+                headers: { "Authorization": `Bearer ${token}` }
+            }),
+            fetch(`${backendUrl}/api/places/${placeId}/reservations?date=${selectedDate}`, {
+                headers: { "Authorization": `Bearer ${token}` }
+            })
         ]);
+        
         if (resT.ok) setTables(await resT.json());
-        if (resR.ok) setReservations(await resR.json());
-    } catch (error) { console.error(error); } finally { setLoading(false); }
+        if (resR.ok) {
+            const data = await resR.json();
+            // Si la ruta devolvió un objeto con msg en lugar de lista, manejamos el error
+            setReservations(Array.isArray(data) ? data : []);
+        }
+    } catch (error) { 
+        console.error("Error loading board data:", error); 
+    } finally { 
+        setLoading(false); 
+    }
   };
 
   useEffect(() => { if (placeId) fetchData(); }, [placeId, selectedDate]);
@@ -198,26 +215,29 @@ function PlaceReservationBoard({ placeId }) {
   const handleSaveTable = async (e) => {
     e.preventDefault();
     const token = localStorage.getItem("token_place");
-    const payload = editingTable || newTable;
+    const payload = editingTable || { ...newTable, place_id: placeId };
     const url = editingTable ? `${backendUrl}/api/tables/${editingTable.id}` : `${backendUrl}/api/places/${placeId}/tables`;
     
-    const res = await fetch(url, {
-      method: editingTable ? "PUT" : "POST",
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-      body: JSON.stringify(payload)
-    });
-    
-    if (res.ok) {
-        setEditingTable(null);
-        setNewTable({ name: "", capacity_people: 2, capacity_pets: 1, shape: "square" });
-        fetchData();
-        // Cerrar modal de Bootstrap manualmente si es necesario
-        const modal = document.getElementById('tableModal');
-        const modalInstance = window.bootstrap?.Modal.getInstance(modal);
-        modalInstance?.hide();
-    } else {
-        const error = await res.json();
-        alert(error.msg || "Error saving table");
+    try {
+        const res = await fetch(url, {
+          method: editingTable ? "PUT" : "POST",
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+          body: JSON.stringify(payload)
+        });
+        
+        if (res.ok) {
+            setEditingTable(null);
+            setNewTable({ name: "", capacity_people: 2, capacity_pets: 1, shape: "square" });
+            fetchData();
+            // Intentar cerrar el modal
+            const closeBtn = document.querySelector('#tableModal .btn-close');
+            if (closeBtn) closeBtn.click();
+        } else {
+            const error = await res.json();
+            alert(error.msg || "Error saving table");
+        }
+    } catch (err) {
+        alert("Server error while saving table");
     }
   };
 
@@ -262,7 +282,7 @@ function PlaceReservationBoard({ placeId }) {
             <div className="card border-0 shadow-lg position-relative" style={{ borderRadius: "24px", height: "85vh", background: "rgba(255,255,255,0.6)" }}>
               <div className="card-header bg-white border-0 py-3 px-4 d-flex justify-content-between align-items-center" style={{borderRadius: "24px 24px 0 0"}}>
                 <h5 className="fw-bold mb-0">Room Layout</h5>
-                <button className="btn btn-primary rounded-pill px-4" onClick={() => { setEditingTable(null); setNewTable({ name: "", capacity_people: 2, capacity_pets: 1, shape: "square" }); }} data-bs-toggle="modal" data-bs-target="#tableModal">
+                <button className="btn btn-primary rounded-pill px-4" onClick={() => { setEditingTable(null); }} data-bs-toggle="modal" data-bs-target="#tableModal">
                     <i className="fas fa-plus me-2"></i>New Table
                 </button>
               </div>
@@ -325,7 +345,7 @@ function PlaceReservationBoard({ placeId }) {
                 </div>
               </div>
               <div className="modal-footer border-0 p-4 pt-0">
-                <button type="submit" className="btn btn-primary w-100 py-3 rounded-3 fw-bold" data-bs-dismiss="modal">SAVE TABLE</button>
+                <button type="submit" className="btn btn-primary w-100 py-3 rounded-3 fw-bold">SAVE TABLE</button>
               </div>
             </form>
           </div>
