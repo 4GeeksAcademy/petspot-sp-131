@@ -8,7 +8,8 @@ import {
 } from "@dnd-kit/core";
 import { useDroppable, useDraggable } from "@dnd-kit/core";
 
-const backendUrl = import.meta.env.VITE_BACKEND_URL;
+const rawBackendUrl = import.meta.env.VITE_BACKEND_URL;
+const backendUrl = rawBackendUrl ? (rawBackendUrl.endsWith('/') ? rawBackendUrl.slice(0, -1) : rawBackendUrl) : '';
 
 // Table Component (Both Droppable for Reservations and Draggable for Position)
 function TableFurniture({ table, reservations, onDelete, onEdit, onMove, children }) {
