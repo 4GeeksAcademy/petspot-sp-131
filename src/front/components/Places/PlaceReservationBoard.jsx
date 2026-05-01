@@ -69,7 +69,7 @@ function TableFurniture({ table, reservations, onDelete, onEdit, onMove, childre
           width: "100%",
           height: "100%",
           ...shapeStyle,
-          background: isOver ? "rgba(255, 255, 255, 0.3)" : bgColor,
+          background: isOver ? "rgba(13, 110, 253, 0.8)" : bgColor,
           backdropFilter: "blur(10px)",
           border: isOver ? "2px dashed white" : `2px solid ${borderColor}`,
           boxShadow: `0 0 20px ${glowColor}`,
@@ -95,7 +95,7 @@ function TableFurniture({ table, reservations, onDelete, onEdit, onMove, childre
 
         {/* Action Buttons (Menu) */}
         <div className="table-actions position-absolute top-0 end-0 m-1 d-flex flex-column gap-1 opacity-0 transition-all">
-            <button className="btn btn-xs btn-light rounded-circle p-1" onClick={(e) => { e.stopPropagation(); onEdit(table); }} title="Edit">
+            <button className="btn btn-xs btn-light rounded-circle p-1" onClick={(e) => { e.stopPropagation(); onEdit(table); }} title="Edit" data-bs-toggle="modal" data-bs-target="#addTableModal">
                 <i className="fas fa-pencil-alt" style={{fontSize: "0.6rem"}}></i>
             </button>
             <button className={`btn btn-xs ${table.is_occupied ? 'btn-warning' : 'btn-danger'} rounded-circle p-1`} onClick={(e) => { e.stopPropagation(); onMove(table.id, { is_occupied: !table.is_occupied }); }} title={table.is_occupied ? "Mark as Available" : "Mark as Occupied"}>
@@ -368,7 +368,7 @@ function PlaceReservationBoard({ placeId }) {
                         <TableFurniture 
                             key={table.id} 
                             table={table} 
-                            reservations={reservations.filter(r => r.table_id === table.id)}
+                            reservations={reservations.filter(r => r.table_id === table.id && r.status !== 'cancelled')}
                             onDelete={handleDeleteTable}
                             onEdit={(t) => { setEditingTable(t); }}
                             onMove={async (id, data) => {
@@ -384,7 +384,7 @@ function PlaceReservationBoard({ placeId }) {
                                 fetchData();
                             }}
                         >
-                            {reservations.filter(r => r.table_id === table.id).map(res => (
+                            {reservations.filter(r => r.table_id === table.id && r.status !== 'cancelled').map(res => (
                                 <DraggableReservation key={res.id} reservation={res} onUpdateStatus={handleUpdateStatus} />
                             ))}
                         </TableFurniture>
