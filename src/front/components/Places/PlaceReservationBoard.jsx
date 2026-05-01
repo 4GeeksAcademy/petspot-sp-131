@@ -155,12 +155,12 @@ function PlaceReservationBoard({ placeId }) {
         const token = localStorage.getItem("token_place");
         if (!token) return;
 
-        // Usamos rutas privadas para asegurar que los datos pertenecen al local logueado
+        // Usamos la ruta privada que ya sabemos que funciona en tu perfil
         const [resT, resR] = await Promise.all([
             fetch(`${backendUrl}/api/places/${placeId}/tables`, {
                 headers: { "Authorization": `Bearer ${token}` }
             }),
-            fetch(`${backendUrl}/api/places/${placeId}/reservations?date=${selectedDate}`, {
+            fetch(`${backendUrl}/api/places/private/reservations?date=${selectedDate}`, {
                 headers: { "Authorization": `Bearer ${token}` }
             })
         ]);

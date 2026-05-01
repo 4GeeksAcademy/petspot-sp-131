@@ -1653,11 +1653,20 @@ def delete_private_place():
 @jwt_required()
 def get_private_place_reservations():
     place_id = int(get_jwt_identity())
-    reservations = db.session.execute(
-        db.select(Reservation).where(Reservation.place_id == place_id)
-    ).scalars().all()
-    if not reservations:
-        return jsonify(response="No reservations found for this place"), 404
+    date_str = request.args.get('date')
+    
+    query = db.select(Reservation).where(Reservation.place_id == place_id)
+    
+    if date_str:
+        try:
+            from datetime import datetime
+            target_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+            query = query.where(Reservation.reservation_date == target_date)
+        except ValueError:
+            return jsonify(msg="Invalid date format"), 400
+
+    reservations = db.session.execute(query).scalars().all()
+    # No devolvemos 404 si está vacío, devolvemos lista vacía
     return jsonify([res.serialize() for res in reservations]), 200
 
 
