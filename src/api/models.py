@@ -144,6 +144,7 @@ class Table(db.Model):
     capacity_pets: Mapped[int] = mapped_column(nullable=False)
     pos_x: Mapped[int] = mapped_column(nullable=True, default=0)
     pos_y: Mapped[int] = mapped_column(nullable=True, default=0)
+    shape: Mapped[str] = mapped_column(String(20), nullable=False, default="square")
 
     place: Mapped["Place"] = relationship("Place", back_populates="tables")
 
@@ -155,7 +156,8 @@ class Table(db.Model):
             "capacity_people": self.capacity_people,
             "capacity_pets": self.capacity_pets,
             "pos_x": self.pos_x,
-            "pos_y": self.pos_y
+            "pos_y": self.pos_y,
+            "shape": self.shape
         }
 
 class City(db.Model):
@@ -425,11 +427,11 @@ class Pet(db.Model):
             "id": self.id,
             "name": self.name,
             "user_id": self.user_id,
-            "animal_type": self.animal_type.value,
+            "animal_type": self.animal_type.value if self.animal_type else "other",
             "other_type": self.other_type,
             "race_id": self.race_id,
             "race_name": self.race.name if self.race else None,
             "race_url": self.race.url if self.race else None,
-            "size": self.size.value,
+            "size": self.size.value if self.size else "medium",
             "url": self.url
         }

@@ -2186,7 +2186,7 @@ def add_private_user_reservation():
     reservation_date_str = data.get("reservation_date")
     reservation_time_str = data.get("reservation_time")
     people_count = data.get("people_count")
-    pet_count = data.get("pet_count")
+    pet_id = data.get("pet_id")
     zone_preference = data.get("zone_preference")
     notes = data.get("notes")
 
@@ -2194,8 +2194,7 @@ def add_private_user_reservation():
         place_id is None,
         reservation_date_str is None,
         reservation_time_str is None,
-        people_count is None,
-        pet_count is None
+        people_count is None
     ]):
         return jsonify(response="Missing required fields"), 400
 
@@ -2203,16 +2202,14 @@ def add_private_user_reservation():
         isinstance(place_id, str),
         isinstance(reservation_date_str, str),
         isinstance(reservation_time_str, str),
-        isinstance(people_count, str),
-        isinstance(pet_count, str)
+        isinstance(people_count, str)
     ]):
-        return jsonify(response="Place id, date, time, people count and pet count must be strings"), 400
+        return jsonify(response="Place id, date, time and people count must be strings"), 400
 
     place_id = place_id.strip()
     reservation_date_str = reservation_date_str.strip()
     reservation_time_str = reservation_time_str.strip()
     people_count = people_count.strip()
-    pet_count = pet_count.strip()
 
     if zone_preference is not None:
         if not isinstance(zone_preference, str):
@@ -2230,8 +2227,7 @@ def add_private_user_reservation():
         len(place_id) == 0,
         len(reservation_date_str) == 0,
         len(reservation_time_str) == 0,
-        len(people_count) == 0,
-        len(pet_count) == 0
+        len(people_count) == 0
     ]):
         return jsonify(response="Required fields cannot be empty"), 400
 
@@ -2246,9 +2242,16 @@ def add_private_user_reservation():
 
     try:
         people_count = int(people_count)
-        pet_count = int(pet_count)
     except (TypeError, ValueError):
-        return jsonify(response="People count and pet count must be valid integers"), 400
+        return jsonify(response="People count must be a valid integer"), 400
+
+    if pet_id:
+        try:
+            pet_id = int(pet_id)
+        except (TypeError, ValueError):
+            return jsonify(response="Pet id must be a valid integer"), 400
+    else:
+        pet_id = None
 
     try:
         res_date = datetime.strptime(reservation_date_str, '%Y-%m-%d').date()
@@ -2262,7 +2265,7 @@ def add_private_user_reservation():
         reservation_date=res_date,
         reservation_time=res_time,
         people_count=people_count,
-        pet_count=pet_count,
+        pet_id=pet_id,
         zone_preference=zone_preference,
         notes=notes,
         status=ReservationStatus.PENDING
@@ -2431,6 +2434,8 @@ def add_place_table(place_id):
     pos_x = data.get('pos_x', 0)
     pos_y = data.get('pos_y', 0)
 
+    shape = data.get('shape', 'square')
+
     if not name:
         return jsonify({"msg": "Name is required"}), 400
 
@@ -2440,7 +2445,8 @@ def add_place_table(place_id):
         capacity_people=int(capacity_people),
         capacity_pets=int(capacity_pets),
         pos_x=int(pos_x),
-        pos_y=int(pos_y)
+        pos_y=int(pos_y),
+        shape=shape
     )
     db.session.add(new_table)
     db.session.commit()
@@ -2458,6 +2464,7 @@ def update_table(table_id):
     if 'capacity_pets' in data: table.capacity_pets = int(data['capacity_pets'])
     if 'pos_x' in data: table.pos_x = int(data['pos_x'])
     if 'pos_y' in data: table.pos_y = int(data['pos_y'])
+    if 'shape' in data: table.shape = data['shape']
 
     db.session.commit()
     return jsonify(table.serialize()), 200
