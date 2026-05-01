@@ -213,12 +213,12 @@ function PlaceReservationBoard({ placeId }) {
 
   const handleUpdateStatus = async (reservationId, status) => {
     try {
-        const placeToken = localStorage.getItem("placeToken");
+        const tokenPlace = localStorage.getItem("token_place");
         const res = await fetch(`${backendUrl}/api/reservations/${reservationId}`, {
             method: "PUT",
             headers: { 
                 "Content-Type": "application/json",
-                "Authorization": `Bearer ${placeToken}`
+                "Authorization": `Bearer ${tokenPlace}`
             },
             body: JSON.stringify({ status })
         });
@@ -238,12 +238,12 @@ function PlaceReservationBoard({ placeId }) {
     if (active.data.current.type === "reservation" && over.data.current?.type === "table") {
       const reservationId = active.data.current.reservation.id;
       const tableId = over.data.current.table.id;
-      const placeToken = localStorage.getItem("placeToken");
+      const tokenPlace = localStorage.getItem("token_place");
       await fetch(`${backendUrl}/api/reservations/${reservationId}/seat`, {
         method: "PUT",
         headers: { 
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${placeToken}`
+            "Authorization": `Bearer ${tokenPlace}`
         },
         body: JSON.stringify({ table_id: tableId, status: 'confirmed' })
       });
@@ -354,12 +354,12 @@ function PlaceReservationBoard({ placeId }) {
                             onDelete={handleDeleteTable}
                             onEdit={(t) => { setEditingTable(t); }}
                             onMove={async (id, data) => {
-                                const placeToken = localStorage.getItem("placeToken");
+                                const tokenPlace = localStorage.getItem("token_place");
                                 await fetch(`${backendUrl}/api/tables/${id}`, {
                                     method: "PUT",
                                     headers: { 
                                         "Content-Type": "application/json",
-                                        "Authorization": `Bearer ${placeToken}`
+                                        "Authorization": `Bearer ${tokenPlace}`
                                     },
                                     body: JSON.stringify(data)
                                 });
