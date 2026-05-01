@@ -189,6 +189,7 @@ function PlaceReservationBoard({ placeId }) {
   const [reservations, setReservations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingTable, setEditingTable] = useState(null);
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
 
   const [newTable, setNewTable] = useState({ name: "", capacity_people: 2, capacity_pets: 1, shape: "square" });
 
@@ -196,14 +197,14 @@ function PlaceReservationBoard({ placeId }) {
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
   );
 
-  useEffect(() => { if (placeId) fetchData(); }, [placeId]);
+  useEffect(() => { if (placeId) fetchData(); }, [placeId, selectedDate]);
 
   const fetchData = async () => {
     try {
         setLoading(true);
         const [resT, resR] = await Promise.all([
             fetch(`${backendUrl}/api/places/${placeId}/tables`),
-            fetch(`${backendUrl}/api/places/${placeId}/reservations`)
+            fetch(`${backendUrl}/api/places/${placeId}/reservations?date=${selectedDate}`)
         ]);
         if (resT.ok) setTables(await resT.json());
         if (resR.ok) setReservations(await resR.json());
@@ -301,14 +302,30 @@ function PlaceReservationBoard({ placeId }) {
           <div className="col-lg-3">
             <div className="card border-0 shadow-lg h-100" style={{ borderRadius: "24px", background: "rgba(255,255,255,0.7)", backdropFilter: "blur(20px)" }}>
               <div className="card-header bg-transparent border-0 pt-4 px-4">
+                <div className="mb-3">
+                    <label className="small fw-bold text-muted text-uppercase d-block mb-2">Planning for:</label>
+                    <input 
+                        type="date" 
+                        className="form-control border-0 shadow-sm rounded-pill px-3" 
+                        value={selectedDate} 
+                        onChange={(e) => setSelectedDate(e.target.value)} 
+                        style={{background: "white"}}
+                    />
+                </div>
                 <h5 className="fw-bold mb-0">Waitlist</h5>
                 <p className="small text-muted mb-0">Drag to a table to seat</p>
               </div>
-              <div className="card-body p-3 d-flex flex-column gap-3 overflow-auto" style={{ maxHeight: "80vh" }}>
+              <div className="card-body p-3 d-flex flex-column gap-3 overflow-auto" style={{ maxHeight: "70vh" }}>
                 <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-                    {reservations.filter(r => !r.table_id).map(res => (
+                    {reservations.filter(r => !r.table_id && r.status !== 'cancelled').map(res => (
                         <DraggableReservation key={res.id} reservation={res} onUpdateStatus={handleUpdateStatus} />
                     ))}
+                    {reservations.filter(r => !r.table_id && r.status !== 'cancelled').length === 0 && (
+                        <div className="text-center py-5 opacity-50">
+                            <i className="fas fa-calendar-day fa-3x mb-3"></i>
+                            <p className="small">No reservations for this day</p>
+                        </div>
+                    )}
                 </DndContext>
               </div>
             </div>

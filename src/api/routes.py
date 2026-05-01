@@ -1387,11 +1387,17 @@ def get_place_reservations(place_id):
     place = db.session.get(Place, place_id)
     if not place:
         return jsonify(response="Place not found"), 404
-    reservations = db.session.execute(
-        select(Reservation).where(Reservation.place_id == place_id)
-    ).scalars().all()
-    if not reservations:
-        return jsonify(response="No reservations found for this place"), 404
+    date_str = request.args.get('date')
+    query = select(Reservation).where(Reservation.place_id == place_id)
+    
+    if date_str:
+        try:
+            target_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+            query = query.where(Reservation.reservation_date == target_date)
+        except ValueError:
+            return jsonify({"msg": "Invalid date format, use YYYY-MM-DD"}), 400
+
+    reservations = db.session.execute(query).scalars().all()
     return jsonify([res.serialize() for res in reservations]), 200
 
 
