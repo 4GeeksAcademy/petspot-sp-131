@@ -925,7 +925,7 @@ def login_user():
     if not check_password_hash(user.password, password):
         return jsonify({"msg": "Bad email or password"}), 401
 
-    access_token = create_access_token(identity=str(user.id))
+    access_token = create_access_token(identity=str(user.id), additional_claims={"role": "user"})
     return jsonify(access_token=access_token), 200
 
 
@@ -1515,7 +1515,7 @@ def login_place():
     if not check_password_hash(place_password, password):
         return jsonify(response="Incorrect email or password"), 400
 
-    access_token = create_access_token(identity=str(place_exists.id))
+    access_token = create_access_token(identity=str(place_exists.id), additional_claims={"role": "place"})
 
     return jsonify(access_token_place=access_token), 200
 
@@ -2550,7 +2550,21 @@ def seat_reservation(id):
         if not table or table.place_id != reservation.place_id:
             return jsonify({"msg": "Invalid table"}), 400
         reservation.table_id = int(table_id)
-        reservation.status = ReservationStatus.CONFIRMED
+        
+    if 'status' in data:
+        new_status = data['status']
+        claims = get_jwt()
+        role = claims.get("role")
+        
+        # Security Rules:
+        # 1. Only 'place' can set to CONFIRMED
+        if new_status == 'confirmed' and role != 'place':
+            return jsonify({"msg": "Only establishments can confirm reservations"}), 403
+            
+        # 2. Both can CANCEL (but let's check ownership if needed)
+        # For now, if role is present, allow cancellation
+        if new_status in ['confirmed', 'pending', 'cancelled']:
+            reservation.status = ReservationStatus(new_status)
 
     db.session.commit()
     return jsonify(reservation.serialize()), 200

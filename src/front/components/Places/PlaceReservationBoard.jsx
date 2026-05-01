@@ -11,7 +11,7 @@ import { useDroppable, useDraggable } from "@dnd-kit/core";
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 // Table Component (Both Droppable for Reservations and Draggable for Position)
-function TableFurniture({ table, reservations, onDelete, onEdit, onMove }) {
+function TableFurniture({ table, reservations, onDelete, onEdit, onMove, children }) {
   const { isOver, setNodeRef: setDropRef } = useDroppable({
     id: `table-drop-${table.id}`,
     data: { type: "table", table }
@@ -84,7 +84,11 @@ function TableFurniture({ table, reservations, onDelete, onEdit, onMove }) {
         </div>
       </div>
       
-      {/* Reservations seated in this table (visual stack if needed, but here we just show dots for simplicity in the furniture) */}
+      {/* Seated Reservations Cards */}
+      <div className="seated-reservations mt-2" style={{pointerEvents: "auto"}}>
+        {children}
+      </div>
+      
       <style>{`
         .furniture-container:hover .table-actions { opacity: 1 !important; }
         .btn-xs { width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; }
@@ -94,7 +98,7 @@ function TableFurniture({ table, reservations, onDelete, onEdit, onMove }) {
 }
 
 // Draggable Reservation Component (Waitlist)
-function DraggableReservation({ reservation }) {
+function DraggableReservation({ reservation, onUpdateStatus }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `res-${reservation.id}`,
     data: { type: "reservation", reservation }
@@ -105,30 +109,53 @@ function DraggableReservation({ reservation }) {
     zIndex: 9999,
   } : undefined;
 
+  const getStatusBadge = () => {
+    switch(reservation.status) {
+        case 'confirmed': return <span className="badge bg-success-subtle text-success rounded-pill" style={{fontSize: "0.6rem"}}>Confirmed</span>;
+        case 'cancelled': return <span className="badge bg-danger-subtle text-danger rounded-pill" style={{fontSize: "0.6rem"}}>Cancelled</span>;
+        default: return <span className="badge bg-warning-subtle text-warning rounded-pill" style={{fontSize: "0.6rem"}}>Pending</span>;
+    }
+  };
+
   return (
     <div
       ref={setNodeRef}
-      {...listeners}
-      {...attributes}
-      className={`card border-0 shadow-sm transition-all ${isDragging ? 'shadow-lg scale-105' : ''}`}
+      className={`card border-0 shadow-sm mb-2 transition-all ${isDragging ? 'shadow-lg scale-105' : ''}`}
       style={{ 
         ...style, 
-        cursor: "grab",
         borderRadius: "15px",
         background: "white",
-        borderLeft: "5px solid #0d6efd",
+        borderLeft: reservation.status === 'confirmed' ? "5px solid #198754" : (reservation.status === 'cancelled' ? "5px solid #dc3545" : "5px solid #0d6efd"),
         width: "100%",
         touchAction: "none"
       }}
     >
-      <div className="card-body p-3">
-        <div className="d-flex justify-content-between align-items-center">
-            <div className="fw-bold text-truncate" style={{ fontSize: "0.9rem" }}>{reservation.user_name || "Guest User"}</div>
-            <span className="badge bg-primary-subtle text-primary rounded-pill small">{reservation.reservation_time.substring(0,5)}</span>
+      <div className="card-body p-2 px-3">
+        <div className="d-flex justify-content-between align-items-start">
+            <div className="overflow-hidden flex-grow-1" {...listeners} {...attributes} style={{cursor: "grab"}}>
+                <div className="fw-bold text-truncate" style={{ fontSize: "0.85rem" }}>{reservation.user_name || "Guest User"}</div>
+                <div className="d-flex gap-2 align-items-center mt-1">
+                    <span className="badge bg-primary-subtle text-primary rounded-pill" style={{fontSize: "0.65rem"}}>{reservation.reservation_time.substring(0,5)}</span>
+                    {getStatusBadge()}
+                </div>
+            </div>
+            
+            <div className="d-flex flex-column gap-1 ms-2">
+                {reservation.status !== 'confirmed' && reservation.status !== 'cancelled' && (
+                    <button className="btn btn-sm btn-success p-1 rounded-circle" onClick={() => onUpdateStatus(reservation.id, 'confirmed')} title="Confirm">
+                        <i className="fas fa-check" style={{fontSize: "0.7rem"}}></i>
+                    </button>
+                )}
+                {reservation.status !== 'cancelled' && (
+                    <button className="btn btn-sm btn-outline-danger p-1 rounded-circle" onClick={() => onUpdateStatus(reservation.id, 'cancelled')} title="Cancel">
+                        <i className="fas fa-times" style={{fontSize: "0.7rem"}}></i>
+                    </button>
+                )}
+            </div>
         </div>
-        <div className="mt-2 d-flex gap-2">
-            <span className="small text-muted"><i className="fas fa-users me-1"></i>{reservation.people_count}</span>
-            {reservation.pet_id && <span className="small text-success"><i className="fas fa-paw me-1"></i>Pet</span>}
+        <div className="mt-2 d-flex gap-2 opacity-75">
+            <span className="small" style={{fontSize: "0.7rem"}}><i className="fas fa-users me-1"></i>{reservation.people_count}</span>
+            {reservation.pet_id && <span className="small text-success" style={{fontSize: "0.7rem"}}><i className="fas fa-paw me-1"></i>Pet</span>}
         </div>
       </div>
     </div>
@@ -161,6 +188,25 @@ function PlaceReservationBoard({ placeId }) {
     } catch (error) { console.error(error); } finally { setLoading(false); }
   };
 
+  const handleUpdateStatus = async (reservationId, status) => {
+    try {
+        const placeToken = localStorage.getItem("placeToken");
+        const res = await fetch(`${backendUrl}/api/reservations/${reservationId}`, {
+            method: "PUT",
+            headers: { 
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${placeToken}`
+            },
+            body: JSON.stringify({ status })
+        });
+        if (res.ok) fetchData();
+        else {
+            const err = await res.json();
+            alert(err.msg || "Error updating status");
+        }
+    } catch (error) { console.error(error); }
+  };
+
   const handleDragEnd = async (event) => {
     const { active, over } = event;
     if (!over) return;
@@ -169,10 +215,14 @@ function PlaceReservationBoard({ placeId }) {
     if (active.data.current.type === "reservation" && over.data.current?.type === "table") {
       const reservationId = active.data.current.reservation.id;
       const tableId = over.data.current.table.id;
+      const placeToken = localStorage.getItem("placeToken");
       await fetch(`${backendUrl}/api/reservations/${reservationId}/seat`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ table_id: tableId })
+        headers: { 
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${placeToken}`
+        },
+        body: JSON.stringify({ table_id: tableId, status: 'confirmed' })
       });
       fetchData();
     }
@@ -235,7 +285,7 @@ function PlaceReservationBoard({ placeId }) {
               <div className="card-body p-3 d-flex flex-column gap-3 overflow-auto" style={{ maxHeight: "80vh" }}>
                 <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
                     {reservations.filter(r => !r.table_id).map(res => (
-                        <DraggableReservation key={res.id} reservation={res} />
+                        <DraggableReservation key={res.id} reservation={res} onUpdateStatus={handleUpdateStatus} />
                     ))}
                 </DndContext>
               </div>
@@ -264,7 +314,11 @@ function PlaceReservationBoard({ placeId }) {
                             reservations={reservations.filter(r => r.table_id === table.id)}
                             onDelete={handleDeleteTable}
                             onEdit={(t) => { setEditingTable(t); /* Trigger modal manually or use state */ }}
-                        />
+                        >
+                            {reservations.filter(r => r.table_id === table.id).map(res => (
+                                <DraggableReservation key={res.id} reservation={res} onUpdateStatus={handleUpdateStatus} />
+                            ))}
+                        </TableFurniture>
                     ))}
                 </DndContext>
               </div>
