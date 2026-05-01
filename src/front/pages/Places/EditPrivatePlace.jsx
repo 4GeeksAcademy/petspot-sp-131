@@ -242,10 +242,9 @@ function EditPrivatePlace() {
             return;
         }
 
+        // Allow saving even if the address is not validated with Google Maps API
         if (trimmedAddress && !isValidated) {
-            setValidationMessage("Please validate the address before submitting.");
-            setValidationMessageType("danger");
-            return;
+            console.warn("Saving with an unvalidated address. Location features may be degraded.");
         }
 
         const body = {

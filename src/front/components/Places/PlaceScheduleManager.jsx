@@ -84,56 +84,67 @@ function PlaceScheduleManager({ placeId }) {
     if (loading) return <div>Loading schedule...</div>;
 
     return (
-        <div className="card shadow-sm border-0 mb-4">
-            <div className="card-header bg-white py-3">
-                <h5 className="mb-0">Weekly Schedule</h5>
+        <div className="card shadow-lg border-0 mb-4" style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.8), rgba(240,240,245,0.9))", backdropFilter: "blur(10px)", borderRadius: "15px" }}>
+            <div className="card-header bg-transparent border-0 py-4 text-center">
+                <h4 className="mb-0 fw-bold" style={{ color: "#2C3E50" }}>
+                    <i className="fa-solid fa-clock me-2 text-primary"></i> Weekly Schedule
+                </h4>
+                <p className="text-muted small mt-2 mb-0">Set your opening hours to allow users to book reservations.</p>
             </div>
-            <div className="card-body">
-                <div className="table-responsive">
-                    <table className="table table-borderless align-middle">
-                        <tbody>
-                            {schedule.map((day, index) => (
-                                <tr key={day.day_of_week}>
-                                    <td style={{ width: '120px' }}><strong>{day.name}</strong></td>
-                                    <td style={{ width: '100px' }}>
-                                        <div className="form-check form-switch">
-                                            <input 
-                                                className="form-check-input" 
-                                                type="checkbox" 
-                                                checked={!day.is_closed}
-                                                onChange={() => handleToggleClosed(index)}
-                                            />
-                                            <label className="form-check-label">
-                                                {day.is_closed ? "Closed" : "Open"}
-                                            </label>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <input 
-                                            type="time" 
-                                            className="form-control form-control-sm"
-                                            value={day.start_time}
-                                            onChange={(e) => handleTimeChange(index, "start_time", e.target.value)}
-                                            disabled={day.is_closed}
-                                        />
-                                    </td>
-                                    <td className="text-center">to</td>
-                                    <td>
-                                        <input 
-                                            type="time" 
-                                            className="form-control form-control-sm"
-                                            value={day.end_time}
-                                            onChange={(e) => handleTimeChange(index, "end_time", e.target.value)}
-                                            disabled={day.is_closed}
-                                        />
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+            <div className="card-body px-4 pb-4">
+                <div className="d-flex flex-column gap-3">
+                    {schedule.map((day, index) => (
+                        <div key={day.day_of_week} className="p-3 bg-white shadow-sm d-flex align-items-center justify-content-between flex-wrap gap-3" style={{ borderRadius: "12px", borderLeft: !day.is_closed ? "5px solid #198754" : "5px solid #dc3545", transition: "all 0.3s ease" }}>
+                            <div style={{ minWidth: '110px' }}>
+                                <strong style={{ fontSize: "1.1rem", color: !day.is_closed ? "#2C3E50" : "#6c757d" }}>{day.name}</strong>
+                            </div>
+                            
+                            <div className="form-check form-switch fs-5 mb-0" style={{ minWidth: '100px' }}>
+                                <input 
+                                    className="form-check-input" 
+                                    type="checkbox" 
+                                    role="switch"
+                                    checked={!day.is_closed}
+                                    onChange={() => handleToggleClosed(index)}
+                                    style={{ cursor: "pointer" }}
+                                />
+                                <label className="form-check-label ms-2 fs-6 mt-1" style={{ color: !day.is_closed ? "#198754" : "#dc3545", fontWeight: "600" }}>
+                                    {day.is_closed ? "Closed" : "Open"}
+                                </label>
+                            </div>
+                            
+                            <div className="d-flex align-items-center gap-2 flex-grow-1 justify-content-end" style={{ opacity: day.is_closed ? 0.4 : 1, transition: "opacity 0.3s" }}>
+                                <div className="input-group" style={{ maxWidth: '140px' }}>
+                                    <span className="input-group-text bg-light border-end-0"><i className="fa-regular fa-clock"></i></span>
+                                    <input 
+                                        type="time" 
+                                        className="form-control border-start-0 ps-0 fw-semibold"
+                                        value={day.start_time}
+                                        onChange={(e) => handleTimeChange(index, "start_time", e.target.value)}
+                                        disabled={day.is_closed}
+                                        style={{ color: "#495057" }}
+                                    />
+                                </div>
+                                <span className="fw-bold text-muted mx-1">to</span>
+                                <div className="input-group" style={{ maxWidth: '140px' }}>
+                                    <span className="input-group-text bg-light border-end-0"><i className="fa-regular fa-clock"></i></span>
+                                    <input 
+                                        type="time" 
+                                        className="form-control border-start-0 ps-0 fw-semibold"
+                                        value={day.end_time}
+                                        onChange={(e) => handleTimeChange(index, "end_time", e.target.value)}
+                                        disabled={day.is_closed}
+                                        style={{ color: "#495057" }}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    ))}
                 </div>
-                <div className="text-end mt-3">
-                    <button className="btn btn-primary" onClick={handleSave}>Save Schedule</button>
+                <div className="text-center mt-5">
+                    <button className="btn btn-primary px-5 py-2 fw-bold" onClick={handleSave} style={{ borderRadius: "30px", background: "linear-gradient(45deg, #0d6efd, #0dcaf0)", border: "none", boxShadow: "0 4px 15px rgba(13, 110, 253, 0.3)" }}>
+                        <i className="fa-solid fa-save me-2"></i> Save Schedule
+                    </button>
                 </div>
             </div>
         </div>
