@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   DndContext,
   useSensor,
@@ -10,8 +10,9 @@ import { useDroppable, useDraggable } from "@dnd-kit/core";
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
-// Componente Mesa (Arrastrable y permite soltar reservas)
-function TableFurniture({ table, reservations, onDelete, onEdit, onMove, children }) {
+// --- COMPONENTES AUXILIARES ---
+
+function TableFurniture({ table, reservations, onDelete, onEdit, onToggleOccupied, children }) {
   const { isOver, setNodeRef: setDropRef } = useDroppable({
     id: `table-drop-${table.id}`,
     data: { type: "table", table }
@@ -26,82 +27,57 @@ function TableFurniture({ table, reservations, onDelete, onEdit, onMove, childre
     position: "absolute",
     left: `${table.pos_x}px`,
     top: `${table.pos_y}px`,
-    width: "140px",
-    height: "140px",
+    width: "150px",
+    height: "150px",
     transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
     zIndex: isDragging ? 1000 : 1,
     opacity: isDragging ? 0.6 : 1,
     transition: isDragging ? "none" : "all 0.2s ease",
   };
 
-  const shapeStyle = table.shape === "round" ? { borderRadius: "50%" } : { borderRadius: "16px" };
-  const hasReservations = reservations.length > 0;
+  const shapeStyle = table.shape === "round" ? { borderRadius: "50%" } : { borderRadius: "18px" };
   const isOccupiedManual = table.is_occupied;
+  const hasReservations = reservations.length > 0;
 
-  let bgColor = "rgba(25, 135, 84, 0.95)"; 
-  let borderColor = "rgba(25, 135, 84, 0.2)";
-  let glowColor = "rgba(25, 135, 84, 0.3)";
-
-  if (isOccupiedManual) {
-    bgColor = "rgba(220, 53, 69, 0.95)"; 
-    borderColor = "rgba(220, 53, 69, 0.5)";
-    glowColor = "rgba(220, 53, 69, 0.4)";
-  } else if (hasReservations) {
-    bgColor = "rgba(13, 110, 253, 0.95)"; 
-    borderColor = "rgba(13, 110, 253, 0.5)";
-    glowColor = "rgba(13, 110, 253, 0.4)";
-  }
+  let bgColor = "rgba(25, 135, 84, 0.9)"; // Verde
+  if (isOccupiedManual) bgColor = "rgba(220, 53, 69, 0.9)"; // Rojo
+  else if (hasReservations) bgColor = "rgba(13, 110, 253, 0.9)"; // Azul
 
   return (
-    <div ref={setDragRef} style={style} className={`furniture-container ${isDragging ? "dragging" : ""}`}>
+    <div ref={setDragRef} style={style} className="furniture-wrapper">
       <div 
         ref={setDropRef}
         {...attributes}
         {...listeners}
-        className={`d-flex flex-column align-items-center justify-content-center shadow-lg border-2 transition-all position-relative`}
+        className="d-flex flex-column align-items-center justify-content-center shadow border-2 position-relative h-100 w-100"
         style={{
-          width: "100%", height: "100%", ...shapeStyle,
-          background: isOver ? "rgba(255, 255, 255, 0.3)" : bgColor,
+          ...shapeStyle,
+          background: isOver ? "rgba(255, 255, 255, 0.4)" : bgColor,
           backdropFilter: "blur(10px)",
-          border: isOver ? "2px dashed white" : `2px solid ${borderColor}`,
-          boxShadow: `0 0 20px ${glowColor}`,
+          border: isOver ? "2px dashed white" : "2px solid rgba(255,255,255,0.2)",
           cursor: "grab", color: "white"
         }}
       >
-        <div className="text-center px-2">
-            <div className="fw-bold small mb-1 text-truncate" style={{maxWidth: "100px"}}>{table.name}</div>
-            <div className="d-flex gap-1 justify-content-center align-items-center opacity-75">
-                <span className="small" style={{fontSize: "0.65rem"}}><i className="fas fa-users me-1"></i>{table.capacity_people}</span>
-                <span className="small" style={{fontSize: "0.65rem"}}><i className="fas fa-paw me-1"></i>{table.capacity_pets}</span>
-            </div>
+        <div className="fw-bold small">{table.name}</div>
+        <div className="small opacity-75" style={{fontSize: "0.7rem"}}>
+            <i className="fas fa-users me-1"></i>{table.capacity_people} 
+            <i className="fas fa-paw ms-2 me-1"></i>{table.capacity_pets}
         </div>
 
-        <div className="position-absolute bottom-0 start-50 translate-middle-x mb-2 d-flex gap-1">
-            {reservations.map(res => (
-                <div key={res.id} className="bg-success rounded-circle shadow-sm" style={{width: "8px", height: "8px"}} title={res.user_name}></div>
-            ))}
-        </div>
-
-        <div className="table-actions position-absolute top-0 end-0 m-1 d-flex flex-column gap-1 opacity-0 transition-all">
-            <button className="btn btn-xs btn-light rounded-circle p-1" onClick={(e) => { e.stopPropagation(); onEdit(table); }} title="Edit">
-                <i className="fas fa-pencil-alt" style={{fontSize: "0.6rem"}}></i>
-            </button>
-            <button className={`btn btn-xs ${table.is_occupied ? 'btn-warning' : 'btn-danger'} rounded-circle p-1`} onClick={(e) => { e.stopPropagation(); onMove(table.id, { is_occupied: !table.is_occupied }); }} title={table.is_occupied ? "Mark Available" : "Mark Occupied"}>
-                <i className={`fas ${table.is_occupied ? 'fa-door-open' : 'fa-user-slash'}`} style={{fontSize: "0.6rem"}}></i>
-            </button>
-            <button className="btn btn-xs btn-dark rounded-circle p-1" onClick={(e) => { e.stopPropagation(); onDelete(table.id); }} title="Delete">
-                <i className="fas fa-times" style={{fontSize: "0.6rem"}}></i>
-            </button>
+        {/* Action Menu */}
+        <div className="position-absolute top-0 end-0 p-1 d-flex flex-column gap-1 action-buttons">
+            <button className="btn btn-sm btn-light p-1 rounded-circle" style={{width: "20px", height: "20px", fontSize: "0.6rem"}} onClick={(e) => { e.stopPropagation(); onEdit(table); }}><i className="fas fa-pencil"></i></button>
+            <button className="btn btn-sm btn-dark p-1 rounded-circle" style={{width: "20px", height: "20px", fontSize: "0.6rem"}} onClick={(e) => { e.stopPropagation(); onDelete(table.id); }}><i className="fas fa-times"></i></button>
+            <button className={`btn btn-sm ${isOccupiedManual ? 'btn-warning' : 'btn-danger'} p-1 rounded-circle`} style={{width: "20px", height: "20px", fontSize: "0.6rem"}} onClick={(e) => { e.stopPropagation(); onToggleOccupied(table); }}><i className="fas fa-user-slash"></i></button>
         </div>
       </div>
-      <div className="seated-reservations mt-2" style={{pointerEvents: "auto"}}>{children}</div>
-      <style>{`.furniture-container:hover .table-actions { opacity: 1 !important; } .btn-xs { width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; }`}</style>
+      <div className="seated-content mt-1">{children}</div>
+      <style>{`.furniture-wrapper:hover .action-buttons { opacity: 1; } .action-buttons { opacity: 0; transition: 0.2s; }`}</style>
     </div>
   );
 }
 
-// Componente Reserva Arrastrable
-function DraggableReservation({ reservation, onUpdateStatus }) {
+function DraggableReservation({ reservation, onUpdateStatus, isSmall = false }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `res-${reservation.id}`,
     data: { type: "reservation", reservation }
@@ -112,32 +88,31 @@ function DraggableReservation({ reservation, onUpdateStatus }) {
   return (
     <div
       ref={setNodeRef}
-      className={`card border-0 shadow-sm mb-2 transition-all ${isDragging ? 'shadow-lg scale-105' : ''}`}
+      className={`card border-0 shadow-sm mb-2 ${isDragging ? 'opacity-50' : ''}`}
       style={{ 
-        ...style, borderRadius: "15px", background: "white", width: "100%", touchAction: "none",
-        borderLeft: reservation.status === 'confirmed' ? "5px solid #198754" : (reservation.status === 'cancelled' ? "5px solid #dc3545" : "5px solid #0d6efd"),
+        ...style, borderRadius: "12px", background: "white", touchAction: "none",
+        fontSize: isSmall ? "0.7rem" : "0.85rem",
+        borderLeft: `5px solid ${reservation.status === 'confirmed' ? '#198754' : '#ffc107'}`
       }}
     >
-      <div className="card-body p-2 px-3">
-        <div className="d-flex justify-content-between align-items-start">
-            <div className="overflow-hidden flex-grow-1" {...listeners} {...attributes} style={{cursor: "grab"}}>
-                <div className="fw-bold text-truncate" style={{ fontSize: "0.85rem" }}>{reservation.user_name || "Guest"}</div>
-                <div className="d-flex gap-2 align-items-center mt-1">
-                    <span className="badge bg-primary-subtle text-primary rounded-pill" style={{fontSize: "0.65rem"}}>{reservation.reservation_time.substring(0,5)}</span>
-                    <span className={`badge rounded-pill text-uppercase ${reservation.status === 'confirmed' ? 'bg-success-subtle text-success' : 'bg-warning-subtle text-warning'}`} style={{fontSize: "0.6rem"}}>{reservation.status}</span>
+      <div className={`card-body ${isSmall ? 'p-1 px-2' : 'p-2 px-3'}`}>
+        <div className="d-flex justify-content-between align-items-center">
+            <div {...listeners} {...attributes} style={{cursor: "grab"}} className="flex-grow-1 overflow-hidden">
+                <div className="fw-bold text-truncate">{reservation.user_name || "Guest"}</div>
+                <div className="small text-muted">{reservation.reservation_time.substring(0,5)}</div>
+            </div>
+            {!isSmall && (
+                <div className="d-flex gap-1">
+                    <button className="btn btn-xs btn-outline-danger" onClick={() => onUpdateStatus(reservation.id, 'cancelled')}><i className="fas fa-times"></i></button>
                 </div>
-            </div>
-            <div className="d-flex flex-column gap-1 ms-2">
-                {reservation.status !== 'confirmed' && (
-                    <button className="btn btn-sm btn-success p-1 rounded-circle" onClick={() => onUpdateStatus(reservation.id, 'confirmed')}><i className="fas fa-check" style={{fontSize: "0.7rem"}}></i></button>
-                )}
-                <button className="btn btn-sm btn-outline-danger p-1 rounded-circle" onClick={() => onUpdateStatus(reservation.id, 'cancelled')}><i className="fas fa-times" style={{fontSize: "0.7rem"}}></i></button>
-            </div>
+            )}
         </div>
       </div>
     </div>
   );
 }
+
+// --- COMPONENTE PRINCIPAL ---
 
 function PlaceReservationBoard({ placeId }) {
   const [tables, setTables] = useState([]);
@@ -147,211 +122,199 @@ function PlaceReservationBoard({ placeId }) {
   const [editingTable, setEditingTable] = useState(null);
   const [newTable, setNewTable] = useState({ name: "", capacity_people: 2, capacity_pets: 1, shape: "square" });
 
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
+    const token = localStorage.getItem("token_place");
+    if (!token) return;
     try {
         setLoading(true);
-        const token = localStorage.getItem("token_place");
-        if (!token) return;
-
-        // Usamos la ruta privada que ya sabemos que funciona en tu perfil
-        const [resT, resR] = await Promise.all([
-            fetch(`${backendUrl}/api/places/${placeId}/tables`, {
-                headers: { "Authorization": `Bearer ${token}` }
-            }),
-            fetch(`${backendUrl}/api/places/private/reservations?date=${selectedDate}`, {
-                headers: { "Authorization": `Bearer ${token}` }
-            })
-        ]);
+        console.log(`Fetching data for date: ${selectedDate}`);
         
-        if (resT.ok) setTables(await resT.json());
-        if (resR.ok) {
-            const data = await resR.json();
-            // Si la ruta devolvió un objeto con msg en lugar de lista, manejamos el error
-            setReservations(Array.isArray(data) ? data : []);
+        const [resT, resR] = await Promise.all([
+            fetch(`${backendUrl}/api/places/${placeId}/tables`, { headers: { "Authorization": `Bearer ${token}` } }),
+            fetch(`${backendUrl}/api/places/private/reservations?date=${selectedDate}`, { headers: { "Authorization": `Bearer ${token}` } })
+        ]);
+
+        if (resT.ok) {
+            const tData = await resT.json();
+            setTables(tData);
+            console.log("Tables loaded:", tData.length);
+        } else {
+            console.error("Failed to load tables", resT.status);
         }
-    } catch (error) { 
-        console.error("Error loading board data:", error); 
-    } finally { 
-        setLoading(false); 
+
+        if (resR.ok) {
+            const rData = await resR.json();
+            setReservations(Array.isArray(rData) ? rData : []);
+            console.log("Reservations loaded:", Array.isArray(rData) ? rData.length : 0);
+        } else {
+            console.error("Failed to load reservations", resR.status);
+        }
+    } catch (error) {
+        console.error("Fetch error:", error);
+    } finally {
+        setLoading(false);
     }
-  };
+  }, [placeId, selectedDate]);
 
-  useEffect(() => { if (placeId) fetchData(); }, [placeId, selectedDate]);
-
-  const handleUpdateStatus = async (id, status) => {
-    const token = localStorage.getItem("token_place");
-    const res = await fetch(`${backendUrl}/api/reservations/${id}`, {
-        method: "PUT", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-        body: JSON.stringify({ status })
-    });
-    if (res.ok) fetchData();
-  };
+  useEffect(() => { fetchData(); }, [fetchData]);
 
   const handleDragEnd = async (event) => {
     const { active, over } = event;
     if (!over) return;
     const token = localStorage.getItem("token_place");
 
+    // Caso A: Sentar reserva en mesa
     if (active.data.current.type === "reservation" && over.data.current?.type === "table") {
-      await fetch(`${backendUrl}/api/reservations/${active.data.current.reservation.id}/seat`, {
-        method: "PUT", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-        body: JSON.stringify({ table_id: over.data.current.table.id, status: 'confirmed' })
-      });
-      fetchData();
+        const resId = active.data.current.reservation.id;
+        const tableId = over.data.current.table.id;
+        await fetch(`${backendUrl}/api/reservations/${resId}/seat`, {
+            method: "PUT", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+            body: JSON.stringify({ table_id: tableId, status: 'confirmed' })
+        });
+        fetchData();
     }
 
+    // Caso B: Mover mesa de sitio
     if (active.data.current.type === "furniture") {
-      const table = active.data.current.table;
-      await fetch(`${backendUrl}/api/tables/${table.id}`, {
-        method: "PUT", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-        body: JSON.stringify({ pos_x: Math.round(table.pos_x + event.delta.x), pos_y: Math.round(table.pos_y + event.delta.y) })
-      });
-      fetchData();
+        const table = active.data.current.table;
+        const newX = table.pos_x + event.delta.x;
+        const newY = table.pos_y + event.delta.y;
+        await fetch(`${backendUrl}/api/tables/${table.id}`, {
+            method: "PUT", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+            body: JSON.stringify({ pos_x: Math.round(newX), pos_y: Math.round(newY) })
+        });
+        fetchData();
     }
   };
 
   const handleSaveTable = async (e) => {
     e.preventDefault();
     const token = localStorage.getItem("token_place");
-    const payload = editingTable || { ...newTable, place_id: placeId };
+    const payload = editingTable || { ...newTable, pos_x: 50, pos_y: 50 };
     const url = editingTable ? `${backendUrl}/api/tables/${editingTable.id}` : `${backendUrl}/api/places/${placeId}/tables`;
     
-    try {
-        const res = await fetch(url, {
-          method: editingTable ? "PUT" : "POST",
-          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-          body: JSON.stringify(payload)
-        });
-        
-        if (res.ok) {
-            setEditingTable(null);
-            setNewTable({ name: "", capacity_people: 2, capacity_pets: 1, shape: "square" });
-            fetchData();
-            // Intentar cerrar el modal
-            const closeBtn = document.querySelector('#tableModal .btn-close');
-            if (closeBtn) closeBtn.click();
-        } else {
-            const error = await res.json();
-            alert(error.msg || "Error saving table");
-        }
-    } catch (err) {
-        alert("Server error while saving table");
+    const res = await fetch(url, {
+        method: editingTable ? "PUT" : "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+        body: JSON.stringify(payload)
+    });
+
+    if (res.ok) {
+        setEditingTable(null);
+        setNewTable({ name: "", capacity_people: 2, capacity_pets: 1, shape: "square" });
+        fetchData();
+        const closeBtn = document.querySelector('[data-bs-dismiss="modal"]');
+        if (closeBtn) closeBtn.click();
+    } else {
+        const err = await res.json();
+        alert("Error: " + (err.msg || err.response || "Unknown error"));
     }
   };
 
-  const handleDeleteTable = async (id) => {
-    if (!confirm("Delete this table?")) return;
+  const onUpdateStatus = async (id, status) => {
     const token = localStorage.getItem("token_place");
-    await fetch(`${backendUrl}/api/tables/${id}`, { 
-        method: 'DELETE',
-        headers: { "Authorization": `Bearer ${token}` }
+    await fetch(`${backendUrl}/api/reservations/${id}`, {
+        method: "PUT", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+        body: JSON.stringify({ status })
     });
     fetchData();
   };
 
-  if (loading) return <div className="text-center p-5"><div className="spinner-border text-primary"></div></div>;
+  if (loading && tables.length === 0) return <div className="text-center p-5"><div className="spinner-border text-primary"></div><p>Loading layout...</p></div>;
 
   return (
-    <div className="board-wrapper min-vh-100 p-3 p-md-5" style={{ background: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)", borderRadius: "30px" }}>
-      <div className="container-fluid">
-        <div className="row g-4">
-          {/* Waitlist */}
-          <div className="col-lg-3">
-            <div className="card border-0 shadow-lg h-100" style={{ borderRadius: "24px", background: "rgba(255,255,255,0.8)", backdropFilter: "blur(20px)" }}>
-              <div className="card-header bg-transparent border-0 pt-4 px-4">
-                <input type="date" className="form-control border-0 shadow-sm rounded-pill mb-3" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} />
-                <h5 className="fw-bold mb-0">Waitlist</h5>
-              </div>
-              <div className="card-body p-3 overflow-auto" style={{ maxHeight: "70vh" }}>
-                <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+    <DndContext sensors={sensors} onDragEnd={handleDragEnd} collisionDetection={closestCenter}>
+      <div className="container-fluid p-4" style={{ background: "rgba(255,255,255,0.4)", borderRadius: "24px", minHeight: "85vh" }}>
+        <div className="row g-4 h-100">
+            {/* Sidebar Waitlist */}
+            <div className="col-lg-3 border-end">
+                <div className="mb-4">
+                    <label className="small fw-bold text-muted text-uppercase mb-2 d-block">Planning Date</label>
+                    <input type="date" className="form-control rounded-pill border-0 shadow-sm" value={selectedDate} onChange={e => setSelectedDate(e.target.value)} />
+                </div>
+                
+                <h5 className="fw-bold mb-3"><i className="fas fa-list-ul me-2 text-primary"></i>Waitlist</h5>
+                <div className="waitlist-scroll pe-2" style={{maxHeight: "65vh", overflowY: "auto"}}>
                     {reservations.filter(r => !r.table_id && r.status !== 'cancelled').map(res => (
-                        <DraggableReservation key={res.id} reservation={res} onUpdateStatus={handleUpdateStatus} />
+                        <DraggableReservation key={res.id} reservation={res} onUpdateStatus={onUpdateStatus} />
                     ))}
                     {reservations.filter(r => !r.table_id && r.status !== 'cancelled').length === 0 && (
-                        <div className="text-center py-5 opacity-50"><i className="fas fa-calendar-day fa-3x mb-2"></i><p>No reservations</p></div>
+                        <div className="text-center py-5 opacity-50"><p className="small">No pending reservations for this day</p></div>
                     )}
-                </DndContext>
-              </div>
+                </div>
             </div>
-          </div>
 
-          {/* Floor Plan */}
-          <div className="col-lg-9">
-            <div className="card border-0 shadow-lg position-relative" style={{ borderRadius: "24px", height: "85vh", background: "rgba(255,255,255,0.6)" }}>
-              <div className="card-header bg-white border-0 py-3 px-4 d-flex justify-content-between align-items-center" style={{borderRadius: "24px 24px 0 0"}}>
-                <h5 className="fw-bold mb-0">Room Layout</h5>
-                <button className="btn btn-primary rounded-pill px-4" onClick={() => { setEditingTable(null); }} data-bs-toggle="modal" data-bs-target="#tableModal">
-                    <i className="fas fa-plus me-2"></i>New Table
-                </button>
-              </div>
-              <div className="floor-canvas flex-grow-1 overflow-hidden" style={{ backgroundImage: "radial-gradient(#d1d1d1 1px, transparent 1px)", backgroundSize: "30px 30px" }}>
-                <DndContext sensors={sensors} onDragEnd={handleDragEnd} collisionDetection={closestCenter}>
+            {/* Floor Plan Designer */}
+            <div className="col-lg-9 position-relative">
+                <div className="d-flex justify-content-between align-items-center mb-4">
+                    <h5 className="fw-bold mb-0"><i className="fas fa-th me-2 text-primary"></i>Establishment Map</h5>
+                    <button className="btn btn-primary rounded-pill px-4" onClick={() => setEditingTable(null)} data-bs-toggle="modal" data-bs-target="#tableModal">
+                        <i className="fas fa-plus me-2"></i>New Table
+                    </button>
+                </div>
+
+                <div className="floor-plan-area rounded-4 shadow-inner position-relative overflow-hidden" style={{ height: "70vh", background: "#fff", backgroundImage: "radial-gradient(#eee 1px, transparent 1px)", backgroundSize: "20px 20px" }}>
                     {tables.map(table => (
                         <TableFurniture 
-                            key={table.id} table={table} onDelete={handleDeleteTable} onEdit={(t) => setEditingTable(t)} onMove={async (id, data) => {
-                                const token = localStorage.getItem("token_place");
-                                await fetch(`${backendUrl}/api/tables/${id}`, {
-                                    method: "PUT", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-                                    body: JSON.stringify(data)
-                                });
-                                fetchData();
-                            }}
+                            key={table.id} 
+                            table={table} 
                             reservations={reservations.filter(r => r.table_id === table.id)}
+                            onDelete={async (id) => { if(confirm("Delete table?")) { await fetch(`${backendUrl}/api/tables/${id}`, { method: 'DELETE', headers: { "Authorization": `Bearer ${localStorage.getItem("token_place")}` } }); fetchData(); } }}
+                            onEdit={(t) => setEditingTable(t)}
+                            onToggleOccupied={async (t) => { await fetch(`${backendUrl}/api/tables/${t.id}`, { method: 'PUT', headers: { "Content-Type": "application/json", "Authorization": `Bearer ${localStorage.getItem("token_place")}` }, body: JSON.stringify({ is_occupied: !t.is_occupied }) }); fetchData(); }}
                         >
                             {reservations.filter(r => r.table_id === table.id).map(res => (
-                                <DraggableReservation key={res.id} reservation={res} onUpdateStatus={handleUpdateStatus} />
+                                <DraggableReservation key={res.id} reservation={res} onUpdateStatus={onUpdateStatus} isSmall={true} />
                             ))}
                         </TableFurniture>
                     ))}
-                </DndContext>
-              </div>
+                </div>
             </div>
-          </div>
         </div>
       </div>
 
-      {/* Modal */}
+      {/* Modal Reutilizable */}
       <div className="modal fade" id="tableModal" tabIndex="-1">
         <div className="modal-dialog modal-dialog-centered">
           <div className="modal-content border-0 shadow-lg" style={{borderRadius: "20px"}}>
             <form onSubmit={handleSaveTable}>
-              <div className="modal-header border-0">
-                <h5 className="fw-bold">{editingTable ? "Edit Table" : "New Table"}</h5>
-                <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              <div className="modal-header border-0 pb-0">
+                <h5 className="fw-bold">{editingTable ? "Edit Table" : "Create New Table"}</h5>
+                <button type="button" className="btn-close" data-bs-dismiss="modal"></button>
               </div>
               <div className="modal-body p-4">
                 <div className="mb-3">
-                  <label className="form-label small fw-bold text-muted">NAME / NUMBER</label>
-                  <input type="text" className="form-control rounded-3" value={editingTable ? editingTable.name : newTable.name} onChange={e => editingTable ? setEditingTable({...editingTable, name: e.target.value}) : setNewTable({...newTable, name: e.target.value})} required placeholder="Table 1" />
+                  <label className="form-label small fw-bold">NAME / NUMBER</label>
+                  <input type="text" className="form-control rounded-3" value={editingTable ? editingTable.name : newTable.name} onChange={e => editingTable ? setEditingTable({...editingTable, name: e.target.value}) : setNewTable({...newTable, name: e.target.value})} required />
                 </div>
-                <div className="row g-3 mb-3">
-                  <div className="col-6">
-                    <label className="form-label small fw-bold text-muted">GUESTS</label>
-                    <input type="number" className="form-control rounded-3" value={editingTable ? editingTable.capacity_people : newTable.capacity_people} onChange={e => editingTable ? setEditingTable({...editingTable, capacity_people: e.target.value}) : setNewTable({...newTable, capacity_people: e.target.value})} />
-                  </div>
-                  <div className="col-6">
-                    <label className="form-label small fw-bold text-muted">PETS</label>
-                    <input type="number" className="form-control rounded-3" value={editingTable ? editingTable.capacity_pets : newTable.capacity_pets} onChange={e => editingTable ? setEditingTable({...editingTable, capacity_pets: e.target.value}) : setNewTable({...newTable, capacity_pets: e.target.value})} />
-                  </div>
+                <div className="row g-3">
+                    <div className="col-6">
+                        <label className="form-label small fw-bold">GUESTS</label>
+                        <input type="number" className="form-control rounded-3" value={editingTable ? editingTable.capacity_people : newTable.capacity_people} onChange={e => editingTable ? setEditingTable({...editingTable, capacity_people: e.target.value}) : setNewTable({...newTable, capacity_people: e.target.value})} />
+                    </div>
+                    <div className="col-6">
+                        <label className="form-label small fw-bold">PETS</label>
+                        <input type="number" className="form-control rounded-3" value={editingTable ? editingTable.capacity_pets : newTable.capacity_pets} onChange={e => editingTable ? setEditingTable({...editingTable, capacity_pets: e.target.value}) : setNewTable({...newTable, capacity_pets: e.target.value})} />
+                    </div>
                 </div>
-                <div className="mb-3">
-                    <label className="form-label small fw-bold text-muted text-uppercase">Shape</label>
-                    <div className="d-flex gap-3">
-                        <button type="button" className={`btn flex-grow-1 rounded-3 ${ (editingTable ? editingTable.shape : newTable.shape) === 'square' ? 'btn-primary' : 'btn-outline-primary'}`} onClick={() => editingTable ? setEditingTable({...editingTable, shape: 'square'}) : setNewTable({...newTable, shape: 'square'})}>Square</button>
-                        <button type="button" className={`btn flex-grow-1 rounded-3 ${ (editingTable ? editingTable.shape : newTable.shape) === 'round' ? 'btn-primary' : 'btn-outline-primary'}`} onClick={() => editingTable ? setEditingTable({...editingTable, shape: 'round'}) : setNewTable({...newTable, shape: 'round'})}>Round</button>
+                <div className="mt-3">
+                    <label className="form-label small fw-bold">SHAPE</label>
+                    <div className="d-flex gap-2">
+                        <button type="button" className={`btn flex-grow-1 ${ (editingTable ? editingTable.shape : newTable.shape) === 'square' ? 'btn-primary' : 'btn-outline-primary'}`} onClick={() => editingTable ? setEditingTable({...editingTable, shape: 'square'}) : setNewTable({...newTable, shape: 'square'})}>Square</button>
+                        <button type="button" className={`btn flex-grow-1 ${ (editingTable ? editingTable.shape : newTable.shape) === 'round' ? 'btn-primary' : 'btn-outline-primary'}`} onClick={() => editingTable ? setEditingTable({...editingTable, shape: 'round'}) : setNewTable({...newTable, shape: 'round'})}>Round</button>
                     </div>
                 </div>
               </div>
               <div className="modal-footer border-0 p-4 pt-0">
-                <button type="submit" className="btn btn-primary w-100 py-3 rounded-3 fw-bold">SAVE TABLE</button>
+                <button type="submit" className="btn btn-primary w-100 py-3 rounded-pill fw-bold shadow-sm">CONFIRM TABLE</button>
               </div>
             </form>
           </div>
         </div>
       </div>
-    </div>
+    </DndContext>
   );
 }
 
