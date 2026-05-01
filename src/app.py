@@ -25,7 +25,7 @@ static_file_dir = os.path.join(os.path.dirname(
 
 app = Flask(__name__)
 app.url_map.strict_slashes = False
-CORS(app)
+CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True)
 
 # SocketIO initialization
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
