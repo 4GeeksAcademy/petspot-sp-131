@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import useGlobalReducer from "../../hooks/useGlobalReducer";
+import PlaceScheduleManager from "../../components/Places/PlaceScheduleManager";
 import LocationMap from "../../components/LocationMap";
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
@@ -540,6 +541,12 @@ function EditPrivatePlace() {
                     <Link to="/places/private" className="btn btn-outline-secondary">Cancel</Link>
                 </div>
             </form>
+            
+            {store.privatePlace?.id && (
+                <div className="mx-auto mt-4" style={{ maxWidth: 600 }}>
+                    <PlaceScheduleManager placeId={store.privatePlace.id} />
+                </div>
+            )}
         </div>
     );
 }

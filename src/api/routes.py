@@ -14,7 +14,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import joinedload
 from sqlalchemy.exc import IntegrityError
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
+from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity, get_jwt
 from sqlalchemy.orm import joinedload
 import base64
 import requests
@@ -1012,7 +1012,7 @@ def login_user():
     if not check_password_hash(user.password, password):
         return jsonify({"msg": "Bad email or password"}), 401
 
-    access_token = create_access_token(identity=str(user.id))
+    access_token = create_access_token(identity=str(user.id), additional_claims={"role": "user"})
     return jsonify(access_token=access_token), 200
 
 
@@ -1340,7 +1340,8 @@ def add_reservation():
     reservation_date_str = data.get("reservation_date")
     reservation_time_str = data.get("reservation_time")
     people_count = data.get("people_count")
-    pet_count = data.get("pet_count")
+    pet_id = data.get("pet_id")
+    amount = float(data.get("amount", 0))
     zone_preference = data.get("zone_preference")
     notes = data.get("notes")
 
@@ -1349,8 +1350,7 @@ def add_reservation():
         place_id,
         reservation_date_str,
         reservation_time_str,
-        people_count is not None,
-        pet_count is not None
+        people_count is not None
     ]):
         return jsonify(response="Missing required fields"), 400
 
@@ -1373,22 +1373,27 @@ def add_reservation():
         if not (place.start_time <= res_time <= place.end_time):
             return jsonify(response=f"The place is closed at that time. Operating hours: {place.start_time.strftime('%H:%M')} - {place.end_time.strftime('%H:%M')}"), 400
 
+    status = ReservationStatus.CONFIRMED if amount == 0 else ReservationStatus.PENDING
+
     new_reservation = Reservation(
         user_id=user_id,
         place_id=place_id,
         reservation_date=res_date,
         reservation_time=res_time,
         people_count=int(people_count),
-        pet_count=int(pet_count),
+        pet_id=int(pet_id) if pet_id else None,
         zone_preference=zone_preference,
         notes=notes,
-        status=ReservationStatus.PENDING
+        status=status
     )
 
     db.session.add(new_reservation)
     db.session.commit()
 
-    return jsonify(new_reservation.serialize()), 201
+    response_data = new_reservation.serialize()
+    response_data["reservation_id"] = new_reservation.id
+
+    return jsonify(response_data), 201
 
 @api.route('/reservations/<int:id>', methods=['PUT'])
 def update_reservation(id):
@@ -1421,8 +1426,10 @@ def update_reservation(id):
         reservation.place_id = int(data['place_id'])
     if 'people_count' in data:
         reservation.people_count = int(data['people_count'])
-    if 'pet_count' in data:
-        reservation.pet_count = int(data['pet_count'])
+    if 'pet_id' in data:
+        reservation.pet_id = int(data['pet_id']) if data['pet_id'] else None
+    if 'table_id' in data:
+        reservation.table_id = int(data['table_id']) if data['table_id'] else None
     if 'zone_preference' in data:
         reservation.zone_preference = data['zone_preference']
     if 'notes' in data:
@@ -1467,11 +1474,17 @@ def get_place_reservations(place_id):
     place = db.session.get(Place, place_id)
     if not place:
         return jsonify(response="Place not found"), 404
-    reservations = db.session.execute(
-        select(Reservation).where(Reservation.place_id == place_id)
-    ).scalars().all()
-    if not reservations:
-        return jsonify(response="No reservations found for this place"), 404
+    date_str = request.args.get('date')
+    query = select(Reservation).where(Reservation.place_id == place_id)
+    
+    if date_str:
+        try:
+            target_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+            query = query.where(Reservation.reservation_date == target_date)
+        except ValueError:
+            return jsonify({"msg": "Invalid date format, use YYYY-MM-DD"}), 400
+
+    reservations = db.session.execute(query).scalars().all()
     return jsonify([res.serialize() for res in reservations]), 200
 
 
@@ -1595,7 +1608,7 @@ def login_place():
     if not check_password_hash(place_password, password):
         return jsonify(response="Incorrect email or password"), 400
 
-    access_token = create_access_token(identity=str(place_exists.id))
+    access_token = create_access_token(identity=str(place_exists.id), additional_claims={"role": "place"})
 
     return jsonify(access_token_place=access_token), 200
 
@@ -2281,7 +2294,7 @@ def add_private_user_reservation():
     reservation_date_str = data.get("reservation_date")
     reservation_time_str = data.get("reservation_time")
     people_count = data.get("people_count")
-    pet_count = data.get("pet_count")
+    pet_id = data.get("pet_id")
     zone_preference = data.get("zone_preference")
     notes = data.get("notes")
 
@@ -2289,8 +2302,7 @@ def add_private_user_reservation():
         place_id is None,
         reservation_date_str is None,
         reservation_time_str is None,
-        people_count is None,
-        pet_count is None
+        people_count is None
     ]):
         return jsonify(response="Missing required fields"), 400
 
@@ -2298,16 +2310,14 @@ def add_private_user_reservation():
         isinstance(place_id, str),
         isinstance(reservation_date_str, str),
         isinstance(reservation_time_str, str),
-        isinstance(people_count, str),
-        isinstance(pet_count, str)
+        isinstance(people_count, str)
     ]):
-        return jsonify(response="Place id, date, time, people count and pet count must be strings"), 400
+        return jsonify(response="Place id, date, time and people count must be strings"), 400
 
     place_id = place_id.strip()
     reservation_date_str = reservation_date_str.strip()
     reservation_time_str = reservation_time_str.strip()
     people_count = people_count.strip()
-    pet_count = pet_count.strip()
 
     if zone_preference is not None:
         if not isinstance(zone_preference, str):
@@ -2325,8 +2335,7 @@ def add_private_user_reservation():
         len(place_id) == 0,
         len(reservation_date_str) == 0,
         len(reservation_time_str) == 0,
-        len(people_count) == 0,
-        len(pet_count) == 0
+        len(people_count) == 0
     ]):
         return jsonify(response="Required fields cannot be empty"), 400
 
@@ -2341,9 +2350,16 @@ def add_private_user_reservation():
 
     try:
         people_count = int(people_count)
-        pet_count = int(pet_count)
     except (TypeError, ValueError):
-        return jsonify(response="People count and pet count must be valid integers"), 400
+        return jsonify(response="People count must be a valid integer"), 400
+
+    if pet_id:
+        try:
+            pet_id = int(pet_id)
+        except (TypeError, ValueError):
+            return jsonify(response="Pet id must be a valid integer"), 400
+    else:
+        pet_id = None
 
     try:
         res_date = datetime.strptime(reservation_date_str, '%Y-%m-%d').date()
@@ -2357,7 +2373,7 @@ def add_private_user_reservation():
         reservation_date=res_date,
         reservation_time=res_time,
         people_count=people_count,
-        pet_count=pet_count,
+        pet_id=pet_id,
         zone_preference=zone_preference,
         notes=notes,
         status=ReservationStatus.PENDING
@@ -2508,3 +2524,189 @@ def add_private_user_review():
     return jsonify(new_review.serialize()), 201
 
 
+
+
+from api.models import Table, PlaceSchedule
+
+@api.route('/places/<int:place_id>/tables', methods=['GET'])
+def get_place_tables(place_id):
+    tables = db.session.execute(select(Table).where(Table.place_id == place_id)).scalars().all()
+    return jsonify([t.serialize() for t in tables]), 200
+
+@api.route('/places/<int:place_id>/tables', methods=['POST'])
+def add_place_table(place_id):
+    data = request.get_json(silent=True) or {}
+    name = data.get('name')
+    
+    def safe_int(val, default=0):
+        try:
+            return int(val) if val not in [None, ""] else default
+        except (ValueError, TypeError):
+            return default
+            
+    capacity_people = safe_int(data.get('capacity_people'), 0)
+    capacity_pets = safe_int(data.get('capacity_pets'), 0)
+    pos_x = safe_int(data.get('pos_x'), 0)
+    pos_y = safe_int(data.get('pos_y'), 0)
+
+    shape = data.get('shape', 'square')
+    is_occupied = data.get('is_occupied', False)
+
+    if not name:
+        return jsonify({"msg": "Name is required"}), 400
+
+    new_table = Table(
+        place_id=place_id,
+        name=name,
+        capacity_people=int(capacity_people),
+        capacity_pets=int(capacity_pets),
+        pos_x=int(pos_x),
+        pos_y=int(pos_y),
+        shape=shape
+    )
+    db.session.add(new_table)
+    db.session.commit()
+    return jsonify(new_table.serialize()), 201
+
+@api.route('/tables/<int:table_id>', methods=['PUT'])
+def update_table(table_id):
+    table = db.session.get(Table, table_id)
+    if not table:
+        return jsonify({"msg": "Table not found"}), 404
+
+    data = request.get_json(silent=True) or {}
+    
+    def safe_int(val, default):
+        try:
+            return int(val) if val not in [None, ""] else default
+        except (ValueError, TypeError):
+            return default
+
+    if 'name' in data: table.name = data['name']
+    if 'capacity_people' in data: table.capacity_people = safe_int(data['capacity_people'], table.capacity_people)
+    if 'capacity_pets' in data: table.capacity_pets = safe_int(data['capacity_pets'], table.capacity_pets)
+    if 'pos_x' in data: table.pos_x = safe_int(data['pos_x'], table.pos_x)
+    if 'pos_y' in data: table.pos_y = safe_int(data['pos_y'], table.pos_y)
+    if 'shape' in data: table.shape = data['shape']
+    if 'is_occupied' in data: table.is_occupied = bool(data['is_occupied'])
+
+    db.session.commit()
+    return jsonify(table.serialize()), 200
+
+@api.route('/tables/<int:table_id>', methods=['DELETE'])
+def delete_table(table_id):
+    table = db.session.get(Table, table_id)
+    if not table:
+        return jsonify({"msg": "Table not found"}), 404
+    db.session.delete(table)
+    db.session.commit()
+    return jsonify({"msg": "Table deleted"}), 200
+
+@api.route('/places/<int:place_id>/schedule', methods=['GET'])
+def get_place_schedule(place_id):
+    schedules = db.session.execute(select(PlaceSchedule).where(PlaceSchedule.place_id == place_id)).scalars().all()
+    return jsonify([s.serialize() for s in schedules]), 200
+
+@api.route('/places/<int:place_id>/schedule', methods=['PUT'])
+def update_place_schedule(place_id):
+    data = request.get_json(silent=True) or []
+    db.session.execute(db.delete(PlaceSchedule).where(PlaceSchedule.place_id == place_id))
+    
+    for item in data:
+        try:
+            start_t = datetime.strptime(item['start_time'][:5], '%H:%M').time() if item.get('start_time') else None
+            end_t = datetime.strptime(item['end_time'][:5], '%H:%M').time() if item.get('end_time') else None
+        except ValueError:
+            start_t, end_t = None, None
+
+        s = PlaceSchedule(
+            place_id=place_id,
+            day_of_week=int(item['day_of_week']),
+            start_time=start_t,
+            end_time=end_t,
+            is_closed=bool(item.get('is_closed', False))
+        )
+        db.session.add(s)
+
+    db.session.commit()
+    schedules = db.session.execute(select(PlaceSchedule).where(PlaceSchedule.place_id == place_id)).scalars().all()
+    return jsonify([s.serialize() for s in schedules]), 200
+
+@api.route('/places/<int:place_id>/availability', methods=['GET'])
+def get_place_availability(place_id):
+    date_str = request.args.get('date')
+    if not date_str:
+        return jsonify({"msg": "date parameter is required"}), 400
+        
+    try:
+        req_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+    except ValueError:
+        return jsonify({"msg": "Invalid date format. Use YYYY-MM-DD"}), 400
+
+    day_of_week = req_date.weekday() # 0 = Monday
+    schedule = db.session.execute(select(PlaceSchedule).where(PlaceSchedule.place_id == place_id, PlaceSchedule.day_of_week == day_of_week)).scalar_one_or_none()
+    
+    if not schedule or schedule.is_closed or not schedule.start_time or not schedule.end_time:
+        return jsonify({"slots": []}), 200
+
+    slots = []
+    from datetime import timedelta
+    current_dt = datetime.combine(req_date, schedule.start_time)
+    end_dt = datetime.combine(req_date, schedule.end_time)
+    
+    while current_dt + timedelta(minutes=30) <= end_dt:
+        slots.append(current_dt.time().strftime("%H:%M"))
+        current_dt += timedelta(minutes=30)
+
+    return jsonify({"slots": slots}), 200
+
+@api.route('/reservations/<int:id>/seat', methods=['PUT'])
+@jwt_required()
+def seat_reservation(id):
+    reservation = db.session.get(Reservation, id)
+    if not reservation:
+        return jsonify({"msg": "Reservation not found"}), 404
+        
+    data = request.get_json(silent=True) or {}
+    table_id = data.get("table_id")
+    
+    if table_id:
+        table = db.session.get(Table, int(table_id))
+        if not table or table.place_id != reservation.place_id:
+            return jsonify({"msg": "Invalid table"}), 400
+        reservation.table_id = int(table_id)
+        
+    if 'status' in data:
+        new_status = data['status']
+        claims = get_jwt()
+        role = claims.get("role")
+        
+        # Security Rules:
+        # 1. Only 'place' can set to CONFIRMED
+        if new_status == 'confirmed' and role != 'place':
+            return jsonify({"msg": "Only establishments can confirm reservations"}), 403
+            
+        # 2. Both can CANCEL (but let's check ownership if needed)
+        # For now, if role is present, allow cancellation
+        if new_status in ['confirmed', 'pending', 'cancelled']:
+            reservation.status = ReservationStatus(new_status)
+
+    db.session.commit()
+    return jsonify(reservation.serialize()), 200
+
+@api.route('/places/<int:place_id>/statistics', methods=['GET'])
+def get_place_statistics(place_id):
+    from sqlalchemy import func
+    from datetime import timedelta
+    thirty_days_ago = datetime.now().date() - timedelta(days=30)
+    
+    stats = db.session.execute(
+        select(Reservation.reservation_date, func.count(Reservation.id))
+        .where(Reservation.place_id == place_id)
+        .where(Reservation.reservation_date >= thirty_days_ago)
+        .group_by(Reservation.reservation_date)
+        .order_by(Reservation.reservation_date)
+    ).all()
+    
+    result = [{"date": str(row[0]), "count": row[1]} for row in stats]
+    return jsonify(result), 200
