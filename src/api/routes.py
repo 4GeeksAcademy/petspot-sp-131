@@ -2435,10 +2435,17 @@ def get_place_tables(place_id):
 def add_place_table(place_id):
     data = request.get_json(silent=True) or {}
     name = data.get('name')
-    capacity_people = data.get('capacity_people', 0)
-    capacity_pets = data.get('capacity_pets', 0)
-    pos_x = data.get('pos_x', 0)
-    pos_y = data.get('pos_y', 0)
+    
+    def safe_int(val, default=0):
+        try:
+            return int(val) if val not in [None, ""] else default
+        except (ValueError, TypeError):
+            return default
+            
+    capacity_people = safe_int(data.get('capacity_people'), 0)
+    capacity_pets = safe_int(data.get('capacity_pets'), 0)
+    pos_x = safe_int(data.get('pos_x'), 0)
+    pos_y = safe_int(data.get('pos_y'), 0)
 
     shape = data.get('shape', 'square')
     is_occupied = data.get('is_occupied', False)
@@ -2466,11 +2473,18 @@ def update_table(table_id):
         return jsonify({"msg": "Table not found"}), 404
 
     data = request.get_json(silent=True) or {}
+    
+    def safe_int(val, default):
+        try:
+            return int(val) if val not in [None, ""] else default
+        except (ValueError, TypeError):
+            return default
+
     if 'name' in data: table.name = data['name']
-    if 'capacity_people' in data: table.capacity_people = int(data['capacity_people'])
-    if 'capacity_pets' in data: table.capacity_pets = int(data['capacity_pets'])
-    if 'pos_x' in data: table.pos_x = int(data['pos_x'])
-    if 'pos_y' in data: table.pos_y = int(data['pos_y'])
+    if 'capacity_people' in data: table.capacity_people = safe_int(data['capacity_people'], table.capacity_people)
+    if 'capacity_pets' in data: table.capacity_pets = safe_int(data['capacity_pets'], table.capacity_pets)
+    if 'pos_x' in data: table.pos_x = safe_int(data['pos_x'], table.pos_x)
+    if 'pos_y' in data: table.pos_y = safe_int(data['pos_y'], table.pos_y)
     if 'shape' in data: table.shape = data['shape']
     if 'is_occupied' in data: table.is_occupied = bool(data['is_occupied'])
 
@@ -2545,6 +2559,7 @@ def get_place_availability(place_id):
     return jsonify({"slots": slots}), 200
 
 @api.route('/reservations/<int:id>/seat', methods=['PUT'])
+@jwt_required()
 def seat_reservation(id):
     reservation = db.session.get(Reservation, id)
     if not reservation:

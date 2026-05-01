@@ -206,9 +206,22 @@ function PlaceReservationBoard({ placeId }) {
             fetch(`${backendUrl}/api/places/${placeId}/tables`),
             fetch(`${backendUrl}/api/places/${placeId}/reservations?date=${selectedDate}`)
         ]);
-        if (resT.ok) setTables(await resT.json());
-        if (resR.ok) setReservations(await resR.json());
-    } catch (error) { console.error(error); } finally { setLoading(false); }
+        if (resT.ok) {
+            setTables(await resT.json());
+        } else {
+            console.error("Failed to fetch tables:", await resT.text());
+        }
+        
+        if (resR.ok) {
+            setReservations(await resR.json());
+        } else {
+            console.error("Failed to fetch reservations:", await resR.text());
+        }
+    } catch (error) { 
+        console.error("Error in fetchData:", error); 
+    } finally { 
+        setLoading(false); 
+    }
   };
 
   const handleUpdateStatus = async (reservationId, status) => {
@@ -282,6 +295,10 @@ function PlaceReservationBoard({ placeId }) {
         setEditingTable(null);
         setNewTable({ name: "", capacity_people: 2, capacity_pets: 1, shape: "square" });
         fetchData();
+    } else {
+        const errText = await res.text();
+        console.error("Failed to save table:", errText);
+        alert(`Error saving table: ${errText}`);
     }
   };
 
