@@ -147,8 +147,8 @@ def setup_commands(app):
                 new_table = Table(
                     place_id=place.id,
                     name=f"Table {t_idx}",
-                    people_capacity=random.choice([2, 4, 6]),
-                    pet_capacity=random.choice([1, 2, 3])
+                    capacity_people=random.choice([2, 4, 6]),
+                    capacity_pets=random.choice([1, 2, 3])
                 )
                 db.session.add(new_table)
 
