@@ -84,6 +84,11 @@ function TableFurniture({ table, reservations, onDelete, onEdit, onMove, childre
                 <span className="small" style={{fontSize: "0.65rem"}}><i className="fas fa-users me-1"></i>{table.capacity_people}</span>
                 <span className="small" style={{fontSize: "0.65rem"}}><i className="fas fa-paw me-1"></i>{table.capacity_pets}</span>
             </div>
+            {hasReservations && (
+                <div className="mt-1 badge bg-light text-primary shadow-sm text-truncate" style={{maxWidth: "90px", fontSize: "0.6rem"}}>
+                   {reservations[0].user_name || "Reserved"}
+                </div>
+            )}
         </div>
 
         {/* Seated Reservations Indicator */}
@@ -253,7 +258,7 @@ function PlaceReservationBoard({ placeId }) {
       const reservationId = active.data.current.reservation.id;
       const tableId = over.data.current.table.id;
       const tokenPlace = localStorage.getItem("token_place");
-      await fetch(`${backendUrl}/api/reservations/${reservationId}/seat`, {
+      const res = await fetch(`${backendUrl}/api/reservations/${reservationId}/seat`, {
         method: "PUT",
         headers: { 
             "Content-Type": "application/json",
@@ -261,6 +266,9 @@ function PlaceReservationBoard({ placeId }) {
         },
         body: JSON.stringify({ table_id: tableId, status: 'confirmed' })
       });
+      if (!res.ok) {
+          alert(`Drop failed: ${await res.text()}`);
+      }
       fetchData();
     }
 
@@ -366,7 +374,7 @@ function PlaceReservationBoard({ placeId }) {
                       <TableFurniture 
                           key={table.id} 
                           table={table} 
-                          reservations={reservations.filter(r => r.table_id === table.id && r.status !== 'cancelled')}
+                          reservations={reservations.filter(r => r.table_id == table.id && r.status !== 'cancelled')}
                           onDelete={handleDeleteTable}
                           onEdit={(t) => { setEditingTable(t); }}
                           onMove={async (id, data) => {
@@ -382,7 +390,7 @@ function PlaceReservationBoard({ placeId }) {
                               fetchData();
                           }}
                       >
-                          {reservations.filter(r => r.table_id === table.id && r.status !== 'cancelled').map(res => (
+                          {reservations.filter(r => r.table_id == table.id && r.status !== 'cancelled').map(res => (
                               <DraggableReservation key={res.id} reservation={res} onUpdateStatus={handleUpdateStatus} />
                           ))}
                       </TableFurniture>
