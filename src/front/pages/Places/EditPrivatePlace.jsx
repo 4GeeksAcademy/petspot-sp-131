@@ -20,6 +20,10 @@ function EditPrivatePlace() {
         start_time: "",
         end_time: ""
     });
+    const [mapPosition, setMapPosition] = useState({
+        lat: store.privatePlace?.latitude || null,
+        lng: store.privatePlace?.longitude || null
+    })
     const [suggestions, setSuggestions] = useState([])
     const [addressSearchTerm, setAddressSearchTerm] = useState("");
 
@@ -153,7 +157,7 @@ function EditPrivatePlace() {
         }
     }
 
-    function handleSuggestionClick(suggestion) {
+    async function handleSuggestionClick(suggestion) {
         setFormData((currentData) => ({
             ...currentData,
             address: suggestion.description,
@@ -161,6 +165,23 @@ function EditPrivatePlace() {
         }));
         setAddressSearchTerm("")
         setSuggestions([])
+
+         try {
+            const response = await fetch(`${backendUrl}/api/places/details?place_id=${suggestion.place_id}`);
+            if (!response.ok) {
+                throw new Error(`Suggestions request failed with status ${response.status}`);
+            }
+            const data = await response.json();
+
+            setMapPosition({
+                lat: data.lat,
+                lng: data.lng,
+            });
+
+        } catch (error) {
+            console.error("Unable to load lat/lng")
+        }
+
     }
 
     function handleRemoveLocation(event) {
@@ -174,6 +195,7 @@ function EditPrivatePlace() {
         }));
         setAddressSearchTerm("");
         setSuggestions([]);
+        setMapPosition(null)
     }
 
     async function handleSubmit(event) {
@@ -458,6 +480,7 @@ function EditPrivatePlace() {
                         </ul>
                     </>
                 )}
+
                 {!formData.address.trim() && (
                     <div className="mb-3">
                         <label htmlFor="placeCity" className="form-label">Fallback city *</label>
@@ -497,6 +520,17 @@ function EditPrivatePlace() {
                         maxLength="250"
                     />
                 </div>
+
+                {mapPosition && (
+                        <iframe
+                            title="map preview"
+                            width="100%"
+                            height="250"
+                            style={{ border: 0 }}
+                            loading="lazy"
+                            src={`https://www.google.com/maps?q=${mapPosition.lat},${mapPosition.lng}&z=16&output=embed`}
+                        />
+                )}
 
                 <p className="text-body-secondary small mb-4">* Required fields</p>
 

@@ -336,11 +336,16 @@ def autocomplete_address():
     params = {
         "input": user_input,
         "key": GOOGLE_API_KEY,
-        "types": "address"
+        "types": "address",
+        "components": "country:es"
     }
     
     response = requests.get(url, params=params)
     response_dict = response.json()
+
+    if response_dict.get("status") != "OK":
+        return jsonify(response="Failed to fetch predictions"), 400
+
     predictions = response_dict.get("predictions", [])
     results = [
         {
@@ -351,6 +356,38 @@ def autocomplete_address():
     ]
     
     return jsonify(results), 200
+
+@api.route('/places/details', methods=['GET'])
+def get_place_details():
+    place_id = request.args.get("place_id")
+    if not place_id:
+        return jsonify(response="palce_id is required"), 400
+    
+    if not GOOGLE_API_KEY:
+        raise ValueError("Google Maps API key is not configured")
+    
+    response = requests.get(
+        "https://maps.googleapis.com/maps/api/place/details/json",
+        params={
+            "place_id": place_id,
+            "fields": "geometry,formatted_address,address_components",
+            "key": os.getenv("GOOGLE_API_KEY"),
+        },
+    )
+
+    data = response.json()
+
+    if data.get("status") != "OK":
+        return jsonify(response="Failed to fetch place details"), 400
+    
+    result = data.get("result", {})
+    
+    return jsonify({
+        "lat": result.get("geometry", {}).get("location", {}).get("lat"),
+        "lng": result.get("geometry", {}).get("location", {}).get("lng"),
+        "formatted_address": result.get("formatted_address"),
+        "address_components": result.get("address_components"),
+    }), 200
 
 
 @api.route('/admin/login', methods=['POST'])
