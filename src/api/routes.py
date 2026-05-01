@@ -78,14 +78,23 @@ def geocode_address_details(address):
 
     status = data.get("status")
     if status == "OK":
-        result = data["results"][0]
-        location = result["geometry"]["location"]
-        return {
-            "formatted_address": result["formatted_address"],
-            "latitude": location["lat"],
-            "longitude": location["lng"],
-            "address_components": result.get("address_components", [])
-        }
+        found_non_spain_result = False
+        for result in data["results"]:
+            address_components = result["address_components"]
+            for element in address_components:
+                if 'Spain' in element["long_name"]:
+                    location = result["geometry"]["location"]
+                    return {
+                        "formatted_address": result["formatted_address"],
+                        "latitude": location["lat"],
+                        "longitude": location["lng"],
+                        "address_components": result.get("address_components", [])
+                    }
+
+            found_non_spain_result = True
+
+        if found_non_spain_result:
+            raise ValueError("Please enter an address in Spain.")
 
     if status == "ZERO_RESULTS":
         raise ValueError("Invalid address")
@@ -208,6 +217,33 @@ def analyze_pet():
     except Exception as e:
         return jsonify({"msg": f"Error analyzing image: {str(e)}"}), 500
 
+def add_city_to_db(geocoded_result):
+    city = extract_city_name_from_geocoded_result(geocoded_result)
+    if not city:
+        return jsonify(response="Unable to detect a city from the provided address"), 400
+
+    existing_city = db.session.execute(
+        select(City).where(City.city == city)
+    ).scalar_one_or_none()
+    if existing_city:
+        return True
+
+    try:
+        geocoded_city = geocode_address_details(f"{city}, Spain")
+    except ValueError as error:
+        return jsonify(response="Invalid city" if str(error) == "Invalid address" else str(error)), 400
+    except RuntimeError as error:
+        return jsonify(response=str(error)), 502
+
+    address = geocoded_city['formatted_address']
+    latitude = geocoded_city["latitude"]
+    longitude = geocoded_city["longitude"]
+
+    add_city = City(city=city, address=address, latitude=latitude, longitude=longitude)
+    db.session.add(add_city)
+    db.session.commit()
+    return True
+
 
 @api.route('/geocode/place-address', methods=['POST'])
 def geocode_place_address():
@@ -229,6 +265,20 @@ def geocode_place_address():
         return jsonify(response=str(error)), 502
 
     matching_city = find_matching_city_for_geocoded_result(geocoded_result)
+
+    if not matching_city:
+        city_to_add_to_db = add_city_to_db(geocoded_result)
+        if city_to_add_to_db is True:
+            matching_city = find_matching_city_for_geocoded_result(geocoded_result)
+            return jsonify({
+                "formatted_address": geocoded_result["formatted_address"],
+                "latitude": geocoded_result["latitude"],
+                "longitude": geocoded_result["longitude"],
+                "detected_city": matching_city.city if matching_city else None,
+                "city_id": matching_city.id if matching_city else None
+            }), 200
+
+        return city_to_add_to_db
 
     return jsonify({
         "formatted_address": geocoded_result["formatted_address"],
@@ -286,11 +336,16 @@ def autocomplete_address():
     params = {
         "input": user_input,
         "key": GOOGLE_API_KEY,
-        "types": "address"
+        "types": "address",
+        "components": "country:es"
     }
     
     response = requests.get(url, params=params)
     response_dict = response.json()
+
+    if response_dict.get("status") != "OK":
+        return jsonify(response="Failed to fetch predictions"), 400
+
     predictions = response_dict.get("predictions", [])
     results = [
         {
@@ -301,6 +356,38 @@ def autocomplete_address():
     ]
     
     return jsonify(results), 200
+
+@api.route('/places/details', methods=['GET'])
+def get_place_details():
+    place_id = request.args.get("place_id")
+    if not place_id:
+        return jsonify(response="palce_id is required"), 400
+    
+    if not GOOGLE_API_KEY:
+        raise ValueError("Google Maps API key is not configured")
+    
+    response = requests.get(
+        "https://maps.googleapis.com/maps/api/place/details/json",
+        params={
+            "place_id": place_id,
+            "fields": "geometry,formatted_address,address_components",
+            "key": os.getenv("GOOGLE_API_KEY"),
+        },
+    )
+
+    data = response.json()
+
+    if data.get("status") != "OK":
+        return jsonify(response="Failed to fetch place details"), 400
+    
+    result = data.get("result", {})
+    
+    return jsonify({
+        "lat": result.get("geometry", {}).get("location", {}).get("lat"),
+        "lng": result.get("geometry", {}).get("location", {}).get("lng"),
+        "formatted_address": result.get("formatted_address"),
+        "address_components": result.get("address_components"),
+    }), 200
 
 
 @api.route('/admin/login', methods=['POST'])
@@ -1630,6 +1717,13 @@ def update_private_place():
         place.address = geocoded_location["formatted_address"]
         place.latitude = geocoded_location["latitude"]
         place.longitude = geocoded_location["longitude"]
+        
+        if 'latitude' in data:
+            place.latitude = data["latitude"]
+        
+        if 'longitude' in data:
+            place.longitude = data["longitude"]
+
     elif city_id_provided:
         place.city = next_city
         
@@ -2043,6 +2137,8 @@ def update_private_user():
     name = data.get("name")
     password = data.get("password")
     address = data.get("address")
+    latitude_pin = data.get("latitude")
+    longitude_pin = data.get("longitude")
 
     if email is not None:
         if not isinstance(email, str):
@@ -2096,11 +2192,17 @@ def update_private_user():
                 return jsonify(response=str(error)), 400
             except RuntimeError as error:
                 return jsonify(response=str(error)), 502
-
+        
             user.address = address
             user.latitude = lat
             user.longitude = lng
     
+        if latitude_pin is not None:
+            user.latitude = latitude_pin
+
+        if longitude_pin is not None:
+            user.longitude = longitude_pin
+            
     db.session.commit()
    
     return jsonify(user.serialize()), 200

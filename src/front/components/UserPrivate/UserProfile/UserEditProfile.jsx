@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import useGlobalReducer from "../../../hooks/useGlobalReducer";
 import { useNavigate } from "react-router-dom";
 import { getPrivateUser } from "../../../services/userPrivateService";
+import LocationMap from "../../LocationMap";
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
@@ -16,6 +17,10 @@ function UserEditProfile() {
     });
     const [suggestions, setSuggestions] = useState([])
     const [addressSearchTerm, setAddressSearchTerm] = useState("");
+    const [mapPosition, setMapPosition] = useState({
+        lat: store.privateUser?.latitude || null,
+        lng: store.privateUser?.longitude || null
+    })
     const navigate = useNavigate()
 
     useEffect(() => {
@@ -84,13 +89,29 @@ function UserEditProfile() {
         loadSuggestions()
     }, [addressSearchTerm])
 
-    function handleSuggestionClick(suggestion) {
+    async function handleSuggestionClick(suggestion) {
         setFormData((currentData) => ({
             ...currentData,
             address: suggestion.description
         }));
         setAddressSearchTerm("")
         setSuggestions([])
+
+        try {
+            const response = await fetch(`${backendUrl}/api/places/details?place_id=${suggestion.place_id}`);
+            if (!response.ok) {
+                throw new Error(`Suggestions request failed with status ${response.status}`);
+            }
+            const data = await response.json();
+
+            setMapPosition({
+                lat: data.lat,
+                lng: data.lng,
+            });
+
+        } catch (error) {
+            console.error("Unable to load lat/lng")
+        }
     }
 
     function handleRemoveLocation(event) {
@@ -100,6 +121,7 @@ function UserEditProfile() {
             address: ""
         }))
         setAddressSearchTerm("")
+        setMapPosition(null)
     }
 
     function handleSubmit(event) {
@@ -122,6 +144,8 @@ function UserEditProfile() {
 
                 if (trimmedAddress) {
                     body.address = trimmedAddress
+                    body.latitude = mapPosition.lat
+                    body.longitude = mapPosition.lng
                 } else {
                     body.address = ""
                 }
@@ -251,6 +275,15 @@ function UserEditProfile() {
                     )}
 
                     <p className="text-body-secondary small mb-4">* Required fields</p>
+
+                    {mapPosition && (
+                        <LocationMap
+                            latitude={mapPosition.lat}
+                            longitude={mapPosition.lng}
+                            draggable
+                            onPositionChange={setMapPosition}
+                        />
+                    )}
 
                     <div className="d-grid d-sm-flex gap-2 justify-content-sm-center mt-5">
                         <button type="submit" className="btn btn-success">Save Changes</button>

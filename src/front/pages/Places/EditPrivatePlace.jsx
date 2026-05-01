@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import useGlobalReducer from "../../hooks/useGlobalReducer";
 import PlaceScheduleManager from "../../components/Places/PlaceScheduleManager";
+import LocationMap from "../../components/LocationMap";
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
@@ -10,20 +11,25 @@ function EditPrivatePlace() {
     const navigate = useNavigate();
     const [validationMessage, setValidationMessage] = useState("");
     const [validationMessageType, setValidationMessageType] = useState("");
-    const [isValidated, setIsValidated] = useState(false);
     const [formData, setFormData] = useState({
         email: "",
         name: "",
         establishment_type: "",
         city_id: "",
         address: "",
+        place_id: "",
         pet_rules: "",
         start_time: "",
         end_time: ""
     });
+    const [mapPosition, setMapPosition] = useState({
+        lat: store.privatePlace?.latitude || null,
+        lng: store.privatePlace?.longitude || null
+    })
     const [suggestions, setSuggestions] = useState([])
     const [addressSearchTerm, setAddressSearchTerm] = useState("");
 
+    // Get PRIVATE PLACE
     useEffect(() => {
         async function loadPrivatePlace() {
             const tokenPlace = localStorage.getItem("token_place");
@@ -41,6 +47,7 @@ function EditPrivatePlace() {
                     establishment_type: store.privatePlace.establishment_type || "",
                     city_id: store.privatePlace.city?.id ? String(store.privatePlace.city.id) : "",
                     address: store.privatePlace.address || "",
+                    place_id: "",
                     pet_rules: store.privatePlace.pet_rules || "",
                     start_time: store.privatePlace.start_time ? store.privatePlace.start_time.substring(0, 5) : "",
                     end_time: store.privatePlace.end_time ? store.privatePlace.end_time.substring(0, 5) : ""
@@ -75,6 +82,7 @@ function EditPrivatePlace() {
                     establishment_type: responseJSON.establishment_type || "",
                     city_id: responseJSON.city?.id ? String(responseJSON.city.id) : "",
                     address: responseJSON.address || "",
+                    place_id: "",
                     pet_rules: responseJSON.pet_rules || "",
                     start_time: responseJSON.start_time ? responseJSON.start_time.substring(0, 5) : "",
                     end_time: responseJSON.end_time ? responseJSON.end_time.substring(0, 5) : ""
@@ -139,12 +147,11 @@ function EditPrivatePlace() {
             setValidationMessage("");
             setValidationMessageType("");
         }
-        if (name === "address") {
-            setIsValidated(false);
-        }
+
         setFormData((currentData) => ({
             ...currentData,
-            [name]: value
+            [name]: value,
+            ...(name === "address" ? { place_id: "" } : {})
         }));
 
         if (event.target.name === "address") {
@@ -152,88 +159,64 @@ function EditPrivatePlace() {
         }
     }
 
-    function handleSuggestionClick(suggestion) {
+    async function handleSuggestionClick(suggestion) {
         setFormData((currentData) => ({
             ...currentData,
-            address: suggestion.description
+            address: suggestion.description,
+            place_id: suggestion.place_id
         }));
         setAddressSearchTerm("")
         setSuggestions([])
-    }
-
-    async function handleValidateAddress(event) {
-        event.preventDefault();
-
-        const trimmedAddress = formData.address.trim();
-        if (!trimmedAddress) {
-            setValidationMessage("Please enter an address first.");
-            setValidationMessageType("danger");
-            setIsValidated(false);
-            return;
-        }
 
         try {
-            const response = await fetch(`${backendUrl}/api/geocode/place-address`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    address: trimmedAddress
-                })
-            });
-            const responseJSON = await response.json();
-
+            const response = await fetch(`${backendUrl}/api/places/details?place_id=${suggestion.place_id}`);
             if (!response.ok) {
-                const backendMessage = responseJSON.response || responseJSON.message || "Unknown backend error";
-                setValidationMessage(backendMessage === "Invalid address" ? "Invalid address" : backendMessage);
-                setValidationMessageType("danger");
-                setIsValidated(false);
-                return;
+                throw new Error(`Suggestions request failed with status ${response.status}`);
             }
+            const data = await response.json();
 
-            setFormData((currentData) => ({
-                ...currentData,
-                address: responseJSON.formatted_address || currentData.address,
-                city_id: responseJSON.city_id ? String(responseJSON.city_id) : currentData.city_id
-            }));
+            setMapPosition({
+                lat: data.lat,
+                lng: data.lng,
+            });
 
-            if (responseJSON.city_id) {
-                setValidationMessage(`Address validated. City updated to ${responseJSON.detected_city}.`);
-                setValidationMessageType("success");
-            } else {
-                setValidationMessage("Address validated, but no matching city was found. Please review the city selection.");
-                setValidationMessageType("warning");
-            }
-            setIsValidated(true);
         } catch (error) {
-            setValidationMessage("Unable to validate the address right now. Please try again.");
-            setValidationMessageType("danger");
-            setIsValidated(false);
+            console.error("Unable to load lat/lng")
         }
+
     }
 
     function handleRemoveLocation(event) {
         event.preventDefault();
         setValidationMessage("");
         setValidationMessageType("");
-        setIsValidated(false);
         setFormData((currentData) => ({
             ...currentData,
-            address: ""
+            address: "",
+            place_id: ""
         }));
+        setAddressSearchTerm("");
+        setSuggestions([]);
+        setMapPosition(null)
     }
 
-    function handleSubmit(event) {
+    async function handleSubmit(event) {
         event.preventDefault();
 
         const trimmedName = formData.name.trim();
         const trimmedCityId = formData.city_id.trim();
         const trimmedPetRules = formData.pet_rules.trim();
         const trimmedAddress = formData.address.trim();
+        const trimmedPlaceId = formData.place_id.trim();
 
-        if (!trimmedName || !formData.establishment_type || !trimmedCityId) {
+        if (!trimmedName || !formData.establishment_type) {
             alert("Please complete all required fields before submitting the form.");
+            return;
+        }
+
+        if (!trimmedAddress && !trimmedCityId) {
+            setValidationMessage("Enter an address or choose a fallback city.");
+            setValidationMessageType("danger");
             return;
         }
 
@@ -242,75 +225,116 @@ function EditPrivatePlace() {
             return;
         }
 
-        // Allow saving even if the address is not validated with Google Maps API
-        if (trimmedAddress && !isValidated) {
-            console.warn("Saving with an unvalidated address. Location features may be degraded.");
+        let validatedAddress = trimmedAddress;
+        let validatedCityId = trimmedCityId;
+
+        if (trimmedAddress) {
+            try {
+                const validationPayload = { address: trimmedAddress };
+                if (trimmedPlaceId) {
+                    validationPayload.place_id = trimmedPlaceId;
+                }
+
+                const validationResponse = await fetch(`${backendUrl}/api/geocode/place-address`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(validationPayload)
+                });
+                const validationResponseJSON = await validationResponse.json();
+
+                if (!validationResponse.ok) {
+                    const backendMessage = validationResponseJSON.response || validationResponseJSON.message || "Unable to validate the address.";
+                    setValidationMessage(backendMessage);
+                    setValidationMessageType("danger");
+                    return;
+                }
+
+                validatedAddress = validationResponseJSON.formatted_address || trimmedAddress;
+                validatedCityId = validationResponseJSON.city_id ? String(validationResponseJSON.city_id) : "";
+
+                setFormData((currentData) => ({
+                    ...currentData,
+                    address: validatedAddress,
+                    city_id: validatedCityId || currentData.city_id,
+                    place_id: trimmedPlaceId
+                }));
+                setValidationMessage("");
+                setValidationMessageType("");
+            } catch (error) {
+                setValidationMessage("Unable to validate the address right now. Please try again.");
+                setValidationMessageType("danger");
+                return;
+            }
         }
 
         const body = {
             name: trimmedName,
             establishment_type: formData.establishment_type,
-            city_id: trimmedCityId,
             pet_rules: trimmedPetRules,
             start_time: formData.start_time || null,
             end_time: formData.end_time || null
         };
 
-        if (trimmedAddress) {
-            body.address = trimmedAddress;
+        if (validatedAddress) {
+            body.address = validatedAddress
+            body.latitude = mapPosition.lat
+            body.longitude = mapPosition.lng
+        } else {
+            body.city_id = validatedCityId;
         }
 
-        async function updatePrivatePlace() {
-            try {
-                const tokenPlace = localStorage.getItem("token_place");
-                if (!tokenPlace) {
-                    alert("Please log in first.");
-                    navigate("/places/login");
-                    return;
-                }
-
-                const response = await fetch(`${backendUrl}/api/places/private`, {
-                    method: "PUT",
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${tokenPlace}`
-                    },
-                    body: JSON.stringify(body)
-                });
-
-                const responseJSON = await response.json();
-
-                if (!response.ok) {
-                    const backendMessage = responseJSON.response || responseJSON.message || "Unknown backend error";
-                    alert(`Error ${response.status}: ${backendMessage}`);
-                    return;
-                }
-
-                dispatch({
-                    type: "GET_PRIVATE_PLACE",
-                    payload: responseJSON
-                });
-
-                setFormData((currentData) => ({
-                    ...currentData,
-                    email: responseJSON.email || currentData.email,
-                    name: responseJSON.name || "",
-                    establishment_type: responseJSON.establishment_type || "",
-                    city_id: responseJSON.city?.id ? String(responseJSON.city.id) : "",
-                    address: responseJSON.address || "",
-                    pet_rules: responseJSON.pet_rules || "",
-                    start_time: responseJSON.start_time ? responseJSON.start_time.substring(0, 5) : "",
-                    end_time: responseJSON.end_time ? responseJSON.end_time.substring(0, 5) : ""
-                }));
-
-                alert("Profile updated successfully!");
-                navigate("/places/private");
-            } catch (error) {
-                alert("Unable to update the profile right now. Please try again.");
+        try {
+            const tokenPlace = localStorage.getItem("token_place");
+            if (!tokenPlace) {
+                alert("Please log in first.");
+                navigate("/places/login");
+                return;
             }
-        }
 
-        updatePrivatePlace();
+            const response = await fetch(`${backendUrl}/api/places/private`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${tokenPlace}`
+                },
+                body: JSON.stringify(body)
+            });
+
+            const responseJSON = await response.json();
+
+            if (!response.ok) {
+                const backendMessage = responseJSON.response || responseJSON.message || "Unknown backend error";
+                setValidationMessage(backendMessage);
+                setValidationMessageType("danger");
+                return;
+            }
+
+            dispatch({
+                type: "GET_PRIVATE_PLACE",
+                payload: responseJSON
+            });
+
+            setFormData((currentData) => ({
+                ...currentData,
+                email: responseJSON.email || currentData.email,
+                name: responseJSON.name || "",
+                establishment_type: responseJSON.establishment_type || "",
+                city_id: responseJSON.city?.id ? String(responseJSON.city.id) : "",
+                address: responseJSON.address || "",
+                place_id: "",
+                pet_rules: responseJSON.pet_rules || "",
+                start_time: responseJSON.start_time ? responseJSON.start_time.substring(0, 5) : "",
+                end_time: responseJSON.end_time ? responseJSON.end_time.substring(0, 5) : ""
+            }));
+
+            alert("Profile updated successfully!");
+            navigate("/places/private");
+        } catch (error) {
+            setValidationMessage("Unable to update the profile right now. Please try again.");
+            setValidationMessageType("danger");
+        }
     }
 
     if (!formData.email && !store.privatePlace?.id) {
@@ -396,24 +420,6 @@ function EditPrivatePlace() {
                     </div>
                 </div>
 
-                <div className="mb-3">
-                    <label htmlFor="placeCity" className="form-label">City *</label>
-                    <select
-                        id="placeCity"
-                        name="city_id"
-                        className="form-select"
-                        value={formData.city_id}
-                        onChange={handleChange}
-                        required
-                    >
-                        <option value="">Select a city</option>
-                        {store.cities.map((cityObj, index) => (
-                            <option value={String(cityObj.id)} key={`${cityObj.city}-${index}`}>
-                                {cityObj.city}
-                            </option>
-                        ))}
-                    </select>
-                </div>
                 <div className="row mb-3">
                     <div className="col-md-6">
                         <label htmlFor="startTime" className="form-label">Opening Time</label>
@@ -443,7 +449,7 @@ function EditPrivatePlace() {
                 </div>
 
                 <div className="mb-3 position-relative">
-                    <label htmlFor="placeEditAddress" className="form-label">Address *</label>
+                    <label htmlFor="placeEditAddress" className="form-label">Address</label>
                     <div className="input-group">
                         <input
                             id="placeEditAddress"
@@ -478,21 +484,33 @@ function EditPrivatePlace() {
                         </ul>
                     </>
                 )}
+
+                {!formData.address.trim() && (
+                    <div className="mb-3">
+                        <label htmlFor="placeCity" className="form-label">Fallback city *</label>
+                        <select
+                            id="placeCity"
+                            name="city_id"
+                            className="form-select"
+                            value={formData.city_id}
+                            onChange={handleChange}
+                            required={!formData.address.trim()}
+                        >
+                            <option value="">Select a city</option>
+                            {store.cities.map((cityObj, index) => (
+                                <option value={String(cityObj.id)} key={`${cityObj.city}-${index}`}>
+                                    {cityObj.city}
+                                </option>
+                            ))}
+                        </select>
+                        <small className="form-text text-muted">Used only when no address is provided.</small>
+                    </div>
+                )}
                 {validationMessage ? (
                     <div className={`alert alert-${validationMessageType} py-2`} role="alert">
                         {validationMessage}
                     </div>
                 ) : null}
-                <div className="d-flex justify-content-center">
-
-                    <button
-                        type="button"
-                        className="btn btn-sm btn-primary mt-2 me-2"
-                        onClick={handleValidateAddress}
-                    >
-                        Validate address
-                    </button>
-                </div>
 
                 <div className="mb-3">
                     <label htmlFor="petRules" className="form-label">Pet rules</label>
@@ -506,6 +524,15 @@ function EditPrivatePlace() {
                         maxLength="250"
                     />
                 </div>
+
+                {mapPosition && (
+                    <LocationMap
+                        latitude={mapPosition.lat}
+                        longitude={mapPosition.lng}
+                        draggable
+                        onPositionChange={setMapPosition}
+                    />
+                )}
 
                 <p className="text-body-secondary small mb-4">* Required fields</p>
 
