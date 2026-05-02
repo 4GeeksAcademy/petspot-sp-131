@@ -2,6 +2,7 @@ import UserPlaceCard from "./UserPlaceCard"
 import useGlobalReducer from "../../../hooks/useGlobalReducer";
 import { useEffect, useState } from "react";
 import { getPlaces } from "../../../services/userPrivateService";
+import UserPlacesMap from "./UserPlacesMap";
 
 function UserPlacesList({ setRadius, radius }) {
 
@@ -10,8 +11,6 @@ function UserPlacesList({ setRadius, radius }) {
     const [city, setCity] = useState("")
 
     const userHasLocation = store.privateUser.latitude && store.privateUser.longitude ? true : false
-
-
 
     return (
         <>
@@ -26,6 +25,9 @@ function UserPlacesList({ setRadius, radius }) {
                     </button>
                     <button className={`btn shadow-0 ${viewMode === 'city' ? 'btn-warning' : 'btn-outline-warning'}`} onClick={() => setViewMode('city')} style={{ width: 200 }}>
                         Filter by City
+                    </button>
+                    <button className={`btn shadow-0 ${viewMode === 'map' ? 'btn-warning' : 'btn-outline-warning'}`} onClick={() => setViewMode('map')} style={{ width: 200 }}>
+                        View Map
                     </button>
                 </div>
 
@@ -53,7 +55,7 @@ function UserPlacesList({ setRadius, radius }) {
                         <div className="input-group mx-auto mb-3" style={{ maxWidth: 200 }}>
                             <select className="form-select text-center" aria-label="Default select example " value={city} onChange={(e) => setCity(Number(e.target.value))}>
                                 <option value="">Select a city</option>
-                                {store.cities.map((cityObj, index) => (
+                                {store.citiesWithPlaces.map((cityObj, index) => (
                                     <option value={String(cityObj.id)} key={`${cityObj.city}-${index}`}>
                                         {cityObj.city}
                                     </option>
@@ -64,6 +66,9 @@ function UserPlacesList({ setRadius, radius }) {
                             return <UserPlaceCard placeObj={place} key={place.id} />
                         })}
                     </>
+                }
+                {
+                    viewMode === 'map' && <UserPlacesMap />
                 }
             </div>
         </>

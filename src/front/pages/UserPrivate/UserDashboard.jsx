@@ -89,7 +89,7 @@ function UserDashboard() {
 
     // Get cities that have places assigned to them
     useEffect(() => {
-                async function getCities() {
+                async function getCitiesWithPlaces() {
                     try {
                         const response = await fetch(`${backendUrl}/api/cities/with-places`);
                         if (!response.ok) {
@@ -97,17 +97,18 @@ function UserDashboard() {
                         }
     
                         const responseJSON = await response.json();
+                        console.log(responseJSON)
                         dispatch({
-                            type: "GET_CITIES",
+                            type: "GET_CITIES_WITH_PLACES",
                             payload: responseJSON
                         });
                     } catch (error) {
                         alert("Unable to load cities right now. Please try again.");
                     }
                 }
-                getCities();
+                getCitiesWithPlaces();
             
-        }, [dispatch, store.cities.length]);
+        }, []);
 
     return (
         <>
