@@ -672,6 +672,10 @@ def update_place(place_id):
     pet_rules = data.get("pet_rules")
     image_url = data.get("image_url")
     city_id = data.get("city_id")
+    address_provided = "address" in data
+    address = data.get("address")
+    city_id_provided = "city_id" in data
+    next_city = place.city
 
     if email is not None:
         if not isinstance(email, str):
@@ -722,16 +726,15 @@ def update_place(place_id):
                 return jsonify(response="pet_rules cannot exceed 250 characters"), 400
             place.pet_rules = pet_rules or None
 
-    if city_id is not None:
+    if city_id_provided:
         try:
             city_id = int(city_id)
         except (TypeError, ValueError):
             return jsonify(response="city_id must be a valid integer"), 400
 
-        city = db.session.get(City, city_id)
-        if city is None:
+        next_city = db.session.get(City, city_id)
+        if next_city is None:
             return jsonify(response="City not found"), 404
-        place.city = city
 
     if 'start_time' in data:
         try:
@@ -744,6 +747,67 @@ def update_place(place_id):
             place.end_time = datetime.strptime(data['end_time'], "%H:%M").time() if data['end_time'] else None
         except ValueError:
             return jsonify(response="Invalid end_time format (HH:MM)"), 400
+
+    geocoded_location = None
+
+    if address_provided:
+        if not isinstance(address, str):
+            return jsonify(response="Address must be a string"), 400
+
+        address = address.strip()
+        if not address:
+            return jsonify(response="Address or city is required"), 400
+
+        try:
+            geocoded_location = geocode_address_details(address)
+        except ValueError as error:
+            return jsonify(response=str(error)), 400
+        except RuntimeError as error:
+            return jsonify(response=str(error)), 502
+
+        if city_id_provided and not geocoded_result_matches_city(geocoded_location, next_city.city):
+            return jsonify(response="Address does not belong to the selected city"), 400
+
+        matching_city = find_matching_city_for_geocoded_result(geocoded_location)
+        if not matching_city:
+            city_to_add_to_db = add_city_to_db(geocoded_location)
+            if city_to_add_to_db is not True:
+                response, status_code = city_to_add_to_db
+                error_data = response.get_json(silent=True) or {}
+                backend_message = error_data.get("response") or "Unable to resolve city for address"
+                return jsonify(response=backend_message), status_code
+
+            matching_city = find_matching_city_for_geocoded_result(geocoded_location)
+
+        if not city_id_provided:
+            next_city = matching_city
+    else:
+        if not city_id_provided:
+            return jsonify(response="Address or city is required"), 400
+
+        try:
+            geocoded_location = geocode_address_details(f"{next_city.city}, Spain")
+        except ValueError as error:
+            return jsonify(response=str(error)), 400
+        except RuntimeError as error:
+            return jsonify(response=str(error)), 502
+
+    if geocoded_location:
+        place.city = next_city
+        place.address = geocoded_location["formatted_address"]
+        place.latitude = geocoded_location["latitude"]
+        place.longitude = geocoded_location["longitude"]
+
+        if "latitude" in data:
+            place.latitude = data["latitude"]
+
+        if "longitude" in data:
+            place.longitude = data["longitude"]
+    elif city_id_provided:
+        place.city = next_city
+
+    if image_url is not None:
+        place.image_url = str(image_url).strip() or None
 
     db.session.commit()
 

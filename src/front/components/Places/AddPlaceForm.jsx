@@ -182,8 +182,10 @@ function AddPlaceForm() {
 
         let validatedAddress = trimmedAddress;
         let validatedCityId = trimmedCityId;
-        let resolvedLatitude = mapPosition?.lat ?? null;
-        let resolvedLongitude = mapPosition?.lng ?? null;
+        const manualLatitude = mapPosition?.lat ?? null;
+        const manualLongitude = mapPosition?.lng ?? null;
+        let resolvedLatitude = manualLatitude;
+        let resolvedLongitude = manualLongitude;
 
         if (trimmedAddress) {
             try {
@@ -210,8 +212,8 @@ function AddPlaceForm() {
 
                 validatedAddress = validationResponseJSON.formatted_address || trimmedAddress;
                 validatedCityId = validationResponseJSON.city_id ? String(validationResponseJSON.city_id) : "";
-                resolvedLatitude = validationResponseJSON.latitude ?? resolvedLatitude;
-                resolvedLongitude = validationResponseJSON.longitude ?? resolvedLongitude;
+                resolvedLatitude = manualLatitude ?? validationResponseJSON.latitude ?? null;
+                resolvedLongitude = manualLongitude ?? validationResponseJSON.longitude ?? null;
 
                 setFormData((currentData) => ({
                     ...currentData,
@@ -482,6 +484,8 @@ function AddPlaceForm() {
                 <LocationMap
                     latitude={mapPosition.lat}
                     longitude={mapPosition.lng}
+                    draggable
+                    onPositionChange={setMapPosition}
                 />
             )}
 
