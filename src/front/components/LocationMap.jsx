@@ -19,7 +19,7 @@ function LocationMap({ latitude, longitude, label = "Location", draggable = fals
         <GoogleMap
             mapContainerStyle={{ height: "300px", width: "100%", borderRadius: "5px" }}
             center={position}
-            zoom={20}
+            zoom={15}
         >
             <MarkerF
                 position={position}

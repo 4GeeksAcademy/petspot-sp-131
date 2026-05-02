@@ -15,6 +15,7 @@ export const initialStore = () => {
     ],
     places: [],
     cities: [],
+    citiesWithPlaces: [],
     privatePlace: {},
     reservations: [],
     news: [],
@@ -101,6 +102,12 @@ export default function storeReducer(store, action = {}) {
       return {
         ...store,
         cities: store.cities.filter((city) => city.id !== action.payload)
+      }
+
+    case 'GET_CITIES_WITH_PLACES':
+      return {
+        ...store,
+        citiesWithPlaces: action.payload
       }
 
     case 'set_auth_user':
