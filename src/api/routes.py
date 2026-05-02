@@ -550,21 +550,15 @@ def add_place():
     pet_rules = data.get("pet_rules")
     image_url = data.get("image_url")
     city_id = data.get("city_id")
+    address = data.get("address")
+    latitude = data.get("latitude")
+    longitude = data.get("longitude")
 
-    if not all([x for x in [email, password, name, establishment_type, city_id]]):
-        return jsonify(response="Email, password, name, establishment type, and city_id are required"), 400
+    if not all([x for x in [email, password, name, establishment_type]]):
+        return jsonify(response="Email, password, name, and establishment type are required"), 400
 
     if not all([isinstance(x, str) for x in [email, password, name, establishment_type]]):
         return jsonify(response="Email, password, name, and establishment_type must be strings"), 400
-
-    try:
-        city_id = int(city_id)
-    except (TypeError, ValueError):
-        return jsonify(response="city_id must be a valid integer"), 400
-
-    city = db.session.get(City, city_id)
-    if city is None:
-        return jsonify(response="City not found"), 404
 
     try:
         establishment_type = establishment_type.strip().lower()
@@ -587,6 +581,52 @@ def add_place():
     if not all([x for x in [email, password, name]]):
         return jsonify(response="Email, password, city, and name cannot be empty"), 400
 
+    address_provided = isinstance(address, str) and address.strip()
+    city = None
+    resolved_address = None
+    resolved_latitude = None
+    resolved_longitude = None
+
+    if address_provided:
+        try:
+            resolved_place_address = resolve_place_address_geocode(address)
+        except ValueError as error:
+            return jsonify(response=str(error)), 400
+        except RuntimeError as error:
+            return jsonify(response=str(error)), 502
+
+        city_id = resolved_place_address["city_id"]
+        resolved_address = resolved_place_address["formatted_address"]
+        resolved_latitude = resolved_place_address["latitude"]
+        resolved_longitude = resolved_place_address["longitude"]
+
+        city = db.session.get(City, city_id) if city_id else None
+        if city is None:
+            return jsonify(response="Unable to resolve city for address"), 400
+    else:
+        if city_id is None:
+            return jsonify(response="Address or city is required"), 400
+
+        try:
+            city_id = int(city_id)
+        except (TypeError, ValueError):
+            return jsonify(response="city_id must be a valid integer"), 400
+
+        city = db.session.get(City, city_id)
+        if city is None:
+            return jsonify(response="City not found"), 404
+
+        try:
+            geocoded_city = geocode_address_details(f"{city.city}, Spain")
+        except ValueError as error:
+            return jsonify(response=str(error)), 400
+        except RuntimeError as error:
+            return jsonify(response=str(error)), 502
+
+        resolved_address = geocoded_city["formatted_address"]
+        resolved_latitude = geocoded_city["latitude"]
+        resolved_longitude = geocoded_city["longitude"]
+
     email_exists = db.session.execute(
         select(Place).where(Place.email == email)
     ).scalar_one_or_none()
@@ -600,6 +640,9 @@ def add_place():
         password=hashed_password,
         city=city,
         establishment_type=establishment_type,
+        address=resolved_address,
+        latitude=resolved_latitude,
+        longitude=resolved_longitude,
         pet_rules=pet_rules or None,
         image_url=image_url or None
     )
