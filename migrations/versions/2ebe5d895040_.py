@@ -1,8 +1,8 @@
-"""Init
+"""empty message
 
-Revision ID: cb0140322d7e
+Revision ID: 2ebe5d895040
 Revises: 
-Create Date: 2026-05-01 01:02:01.144740
+Create Date: 2026-05-01 19:23:13.584681
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'cb0140322d7e'
+revision = '2ebe5d895040'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -136,6 +136,8 @@ def upgrade():
     sa.Column('capacity_pets', sa.Integer(), nullable=False),
     sa.Column('pos_x', sa.Integer(), nullable=True),
     sa.Column('pos_y', sa.Integer(), nullable=True),
+    sa.Column('shape', sa.String(length=20), nullable=True),
+    sa.Column('is_occupied', sa.Boolean(), nullable=True),
     sa.ForeignKeyConstraint(['place_id'], ['places.id'], ),
     sa.PrimaryKeyConstraint('id')
     )

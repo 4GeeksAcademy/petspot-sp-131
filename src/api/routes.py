@@ -18,6 +18,7 @@ from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identi
 from sqlalchemy.orm import joinedload
 import base64
 import requests
+import math
 
 
 api = Blueprint('api', __name__)
@@ -2522,6 +2523,52 @@ def add_private_user_review():
     db.session.commit()
 
     return jsonify(new_review.serialize()), 201
+
+def calculate_distance(lat1, lon1, lat2, lon2):
+    R = 6371  # Earth radius in km
+
+    dlat = math.radians(lat2 - lat1)
+    dlon = math.radians(lon2 - lon1)
+
+    a = (
+        math.sin(dlat / 2) ** 2 +
+        math.cos(math.radians(lat1)) *
+        math.cos(math.radians(lat2)) *
+        math.sin(dlon / 2) ** 2
+    )
+
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+    return R * c
+
+@api.route('/users/private/nearby-places', methods=['GET'])
+@jwt_required()
+def get_private_user_nearby_places():
+    user_id = get_jwt_identity()
+    user = db.session.execute(select(User).where(User.id == user_id)).scalar_one_or_none()
+    if user is None:
+        return jsonify(response="User not found"), 404
+    
+    radius = request.args.get("radius", 10, type=float)
+    radius = min(max(radius, 1), 50)
+    
+    all_places = db.session.execute(select(Place)).scalars().all()
+    if user.latitude is None and user.longitude is None:
+        return jsonify([place.serialize() for place in all_places]), 200
+    
+    nearby_places = []
+    for place in all_places:
+        distance = calculate_distance(
+        user.latitude,
+        user.longitude,
+        place.latitude,
+        place.longitude
+        )
+
+        if distance <= radius:
+            nearby_places.append(place)
+    
+    return jsonify([place.serialize() for place in nearby_places]), 200
 
 
 

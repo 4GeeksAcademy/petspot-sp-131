@@ -279,6 +279,9 @@ function EditPrivatePlace() {
 
         if (validatedAddress) {
             body.address = validatedAddress
+            if (validatedCityId) {
+                body.city_id = validatedCityId;
+            }
             body.latitude = mapPosition.lat
             body.longitude = mapPosition.lng
         } else {

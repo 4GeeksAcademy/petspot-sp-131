@@ -22,7 +22,8 @@ export const initialStore = () => {
     authAdmin: true,
     authUser: false,
     privateUser: {},
-    userToken: null
+    userToken: null,
+    nearbyPlaces: []
   }
 }
 
@@ -192,6 +193,14 @@ export default function storeReducer(store, action = {}) {
         ...store,
         userToken: action.payload
       }
+
+    case "GET_NEARBY_PLACES":
+
+      return {
+        ...store,
+        nearbyPlaces: action.payload
+      }
+
 
     default:
       throw Error('Unknown action.');
