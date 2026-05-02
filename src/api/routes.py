@@ -2549,11 +2549,13 @@ def get_private_user_nearby_places():
     if user is None:
         return jsonify(response="User not found"), 404
     
+    radius = request.args.get("radius", 10, type=float)
+    radius = min(max(radius, 1), 50)
+    
     all_places = db.session.execute(select(Place)).scalars().all()
     if user.latitude is None and user.longitude is None:
         return jsonify([place.serialize() for place in all_places]), 200
     
-    radius = 10  # km
     nearby_places = []
     for place in all_places:
         distance = calculate_distance(

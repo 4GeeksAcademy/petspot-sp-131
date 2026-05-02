@@ -3,7 +3,7 @@ import useGlobalReducer from "../../../hooks/useGlobalReducer";
 import { useEffect, useState } from "react";
 import { getPlaces } from "../../../services/userPrivateService";
 
-function UserPlacesList() {
+function UserPlacesList({ setRadius, radius }) {
 
     const { store, dispatch } = useGlobalReducer();
     const [nearbyPlaces, setNearbyPlaces] = useState(true)
@@ -29,7 +29,13 @@ function UserPlacesList() {
                         View All Places
                     </button>
                 </div>
-                {nearbyPlaces === true && <p className="form-control mx-auto text-center" style={{ maxWidth: 800 }}>{"\u{1F4CC}"} Places near <span className="fw-bold">{store.privateUser.address}</span> </p>}
+                {nearbyPlaces === true && <p className=" mx-auto text-center mb-2 form-control" style={{ maxWidth: 800 }}>{"\u{1F4CC}"} Places near <span className="fw-bold">{store.privateUser.address}</span> </p>}
+                {nearbyPlaces === true &&
+                    <div className="input-group mx-auto mb-3" style={{ maxWidth: 200 }}>
+                        <input type="numeric" className="form-control text-center" value={radius} aria-label="radius" aria-describedby="basic-addon1" onChange={(e) => setRadius(Number(e.target.value))} />
+                        <span className="input-group-text" id="basic-addon1">km</span>
+                    </div>
+                }
                 {nearbyPlaces === true
                     ?
                     store.nearbyPlaces.map((place) => {

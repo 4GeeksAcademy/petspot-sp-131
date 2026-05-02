@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import useGlobalReducer from "../../hooks/useGlobalReducer";
 import UserPlacesList from "../../components/UserPrivate/UserPlaces/UserPlacesList";
 import { Navigate, useNavigate } from "react-router-dom";
@@ -12,6 +12,7 @@ function UserDashboard() {
 
     const { store, dispatch } = useGlobalReducer();
     const navigate = useNavigate()
+    const [ radius, setRadius] = useState(10)
 
     // Get logged in user data
     useEffect(() => {
@@ -60,7 +61,7 @@ function UserDashboard() {
                     return;
                 }
 
-                const response = await fetch(`${backendUrl}/api/users/private/nearby-places`, {
+                const response = await fetch(`${backendUrl}/api/users/private/nearby-places?radius=${radius}`, {
                     headers: {
                         Authorization: `Bearer ${userToken}`
                     }
@@ -84,7 +85,7 @@ function UserDashboard() {
         }
         getNearbyPlaces()
 
-    }, [])
+    }, [radius])
 
     return (
         <>
@@ -95,7 +96,7 @@ function UserDashboard() {
                     View latest news
                 </Link>
             </div>
-            <UserPlacesList />
+            <UserPlacesList setRadius={setRadius} radius={radius} />
         </>
     )
 }
