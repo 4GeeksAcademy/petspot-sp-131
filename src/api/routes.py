@@ -246,48 +246,51 @@ def add_city_to_db(geocoded_result):
     return True
 
 
-@api.route('/geocode/place-address', methods=['POST'])
-def geocode_place_address():
-    data = request.get_json(silent=True) or {}
-    address = data.get("address")
-
+def resolve_place_address_geocode(address):
     if not isinstance(address, str):
-        return jsonify(response="Address must be a string"), 400
+        raise ValueError("Address must be a string")
 
     address = address.strip()
     if not address:
-        return jsonify(response="Address is required"), 400
+        raise ValueError("Address is required")
 
-    try:
-        geocoded_result = geocode_address_details(address)
-    except ValueError as error:
-        return jsonify(response=str(error)), 400
-    except RuntimeError as error:
-        return jsonify(response=str(error)), 502
-
+    geocoded_result = geocode_address_details(address)
     matching_city = find_matching_city_for_geocoded_result(geocoded_result)
 
     if not matching_city:
         city_to_add_to_db = add_city_to_db(geocoded_result)
-        if city_to_add_to_db is True:
-            matching_city = find_matching_city_for_geocoded_result(geocoded_result)
-            return jsonify({
-                "formatted_address": geocoded_result["formatted_address"],
-                "latitude": geocoded_result["latitude"],
-                "longitude": geocoded_result["longitude"],
-                "detected_city": matching_city.city if matching_city else None,
-                "city_id": matching_city.id if matching_city else None
-            }), 200
+        if city_to_add_to_db is not True:
+            response, status_code = city_to_add_to_db
+            error_data = response.get_json(silent=True) or {}
+            error_message = error_data.get("response") or "Unable to resolve city for address"
+            if status_code >= 500:
+                raise RuntimeError(error_message)
+            raise ValueError(error_message)
 
-        return city_to_add_to_db
+        matching_city = find_matching_city_for_geocoded_result(geocoded_result)
 
-    return jsonify({
+    return {
         "formatted_address": geocoded_result["formatted_address"],
         "latitude": geocoded_result["latitude"],
         "longitude": geocoded_result["longitude"],
         "detected_city": matching_city.city if matching_city else None,
         "city_id": matching_city.id if matching_city else None
-    }), 200
+    }
+
+
+@api.route('/geocode/place-address', methods=['POST'])
+def geocode_place_address():
+    data = request.get_json(silent=True) or {}
+    address = data.get("address")
+
+    try:
+        geocoded_place = resolve_place_address_geocode(address)
+    except ValueError as error:
+        return jsonify(response=str(error)), 400
+    except RuntimeError as error:
+        return jsonify(response=str(error)), 502
+
+    return jsonify(geocoded_place), 200
 
 
 @api.route('/geocode/city', methods=['POST'])
