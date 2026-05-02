@@ -7,7 +7,7 @@ import {
 
 function UserPlaceCard({ placeObj }) {
     const { store, dispatch } = useGlobalReducer();
-    const { name, pet_rules, city, establishment_type, id, image_url } = placeObj
+    const { name, pet_rules, city, establishment_type, id, image_url, address } = placeObj
     const isFavorite = (store.privateUser?.favorite_places || []).includes(id);
 
     const establishmentTypeEmoji = {
@@ -58,7 +58,10 @@ function UserPlaceCard({ placeObj }) {
                         <span className="fst-italic">{establishment_type.toUpperCase()}</span>
                     </h6>
                     <div className="mb-3 d-flex flex-wrap gap-2 fw-bold">
-                        {"\u{1F4CC}"}{city.city}
+                        {"\u{1F4CC}"} 
+                        {address}  ({city.city})
+                    </div>
+                    <div>
                     </div>
                     <div className="d-flex flex-column gap-3">
                         <p className="card-text m-0">{pet_rules}</p>
