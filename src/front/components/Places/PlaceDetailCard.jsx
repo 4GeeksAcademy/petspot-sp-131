@@ -1,5 +1,6 @@
 import useGlobalReducer from "../../hooks/useGlobalReducer";
 import { useParams } from "react-router-dom";
+import LocationMap from "../LocationMap";
 
 function PlaceDetailCard() {
 
@@ -26,29 +27,36 @@ function PlaceDetailCard() {
                     />
                 )}
 
-                <div className="mb-3">
+                <div className="mb-2">
                     <span className="fw-bold">Name: </span>{activePlace.name}
                 </div>
-                <div className="mb-3">
+                <div className="mb-2">
                     <span className="fw-bold">Email: </span>{activePlace.email}
                 </div>
-                <div className="mb-3">
+                <div className="mb-2">
                     <span className="fw-bold">Establishment type: </span>{activePlace.establishment_type}
                 </div>
-                <div className="mb-3">
+                <div className="mb-2">
+                    <span className="fw-bold">Address: </span>{activePlace.address}
+                </div>
+                <div className="mb-2">
                     <span className="fw-bold">City: </span>
                     {activePlace.city.city}
                 </div>
-                <div className="mb-3">
+                <div className="mb-2">
                     <span className="fw-bold"><i className="fas fa-clock me-1"></i> Hours: </span>
                     {activePlace.start_time && activePlace.end_time ? 
                         `${activePlace.start_time.substring(0, 5)} - ${activePlace.end_time.substring(0, 5)}` : 
                         "Not specified"}
                 </div>
-                <div>
+                <div className="mb-3">
                     <span className="fw-bold">Pet rules: </span>{activePlace.pet_rules ? activePlace.pet_rules : "-"}
                 </div>
-
+                <LocationMap
+                    latitude={activePlace.latitude}
+                    longitude={activePlace.longitude}
+                    label="Place location"
+                />
             </div>
         </>
     )

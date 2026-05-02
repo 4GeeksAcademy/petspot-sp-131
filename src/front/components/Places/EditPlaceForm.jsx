@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import LocationMap from "../LocationMap";
 import useGlobalReducer from "../../hooks/useGlobalReducer";
+import { Link } from "react-router-dom";
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
@@ -445,8 +446,9 @@ function EditPlaceForm() {
             )}
 
             <p className="text-body-secondary small mb-4">* Required fields</p>
-            <div className="mt-5">
-                <button type="submit" className="btn btn-success d-block mx-auto">Submit</button>
+            <div className="mt-5 text-center">
+                <button type="submit" className="btn btn-success me-3 mx-auto">Submit</button>
+                <Link to="/places" className="btn btn-outline-secondary">Cancel</Link>
             </div>
         </form>
     );

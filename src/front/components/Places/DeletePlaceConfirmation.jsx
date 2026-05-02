@@ -42,16 +42,19 @@ function DeletePlaceConfirmation() {
             <p className="text-danger fw-semibold text-center mb-4">
                 Are you sure you want to delete this place?
             </p>
-            <div className="mb-3">
+            <div className="mb-2">
                 <span className="fw-bold">Name: </span>{activePlace.name}
             </div>
-            <div className="mb-3">
+            <div className="mb-2">
                 <span className="fw-bold">Email: </span>{activePlace.email}
             </div>
-            <div className="mb-3">
+            <div className="mb-2">
                 <span className="fw-bold">Establishment type: </span>{activePlace.establishment_type}
             </div>
-            <div className="mb-3">
+            <div className="mb-2">
+                <span className="fw-bold">Address: </span>{activePlace.address}
+            </div>
+            <div className="mb-2">
                 <span className="fw-bold">City: </span>
                 {activePlace.city.city}
             </div>
