@@ -1,65 +1,63 @@
 import React, { useEffect, useState } from "react";
+import { handleAddToFavorites } from "../../services/userPrivateService";
+import useGlobalReducer from "../../hooks/useGlobalReducer";
+
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 function PlaceMatcher() {
+
+    const { store, dispatch } = useGlobalReducer()
+
     const [places, setPlaces] = useState([]);
     const [currentIndex, setCurrentIndex] = useState(0);
-    const [likedPlaces, setLikedPlaces] = useState([]);
 
-    function handleLike() {
-        saveFavorite(currentPlace.name);
-        goToNextPlace();
-    }
+    const currentPlace = places[currentIndex];
 
-    async function saveFavorite(placeName) {
+    async function getUserNotFavorites() {
         try {
-            const backendUrl = import.meta.env.VITE_BACKEND_URL;
-
-            const response = await fetch(`${backendUrl}/api/users/private/favorites`, {
-                method: "POST",
+            const userToken = localStorage.getItem("userToken");
+            if (!userToken) {
+                return null;
+            }
+            const response = await fetch(`${backendUrl}/api/users/private/not-favorites`, {
                 headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    user: "???",
-                    place: placeName
-                })
+                    Authorization: `Bearer ${userToken}`
+                }
             });
 
-            const data = await response.json();
-            console.log("FAVORITE SAVED:", data);
+            if (!response.ok) {
+                throw new Error(`User request failed with status ${response.status}`);
+            }
+
+            const responseJSON = await response.json()
+            console.log(responseJSON)
+
+            setPlaces(responseJSON)
 
         } catch (error) {
-            console.error("Error saving favorite:", error);
+            alert("Unable to load not favorites places right now. Please try again.");
         }
     }
 
-    function handleDislike() {
-        goToNextPlace();
-    }
-
+    // Get places not favorited by the logged-in user.
+    // This provides the list of available places the user can still like.
+    // The Favorites model prevents the same user from favoriting the same place more than once.
     useEffect(() => {
-        const getPlaces = async () => {
-            try {
-                const backendUrl = import.meta.env.VITE_BACKEND_URL;
-                const response = await fetch(`${backendUrl}/api/places`);
-                const data = await response.json();
+        getUserNotFavorites()
+    }, [])
 
-                console.log("PLACES FROM API:", data);
-
-                setPlaces(data);
-            } catch (error) {
-                console.error("Error fetching places:", error);
-            }
-        };
-
-        getPlaces();
-    }, []);
-
-    const currentPlace = places[currentIndex];
-    console.log("LIKED:", likedPlaces);
-
-    function goToNextPlace() {
-        setCurrentIndex(currentIndex + 1);
+    // Add to favorites
+    async function addToFavorites(id) {
+        try {
+            const updatedPrivateUser = await handleAddToFavorites(id);
+            dispatch({
+                type: "GET_PRIVATE_USER",
+                payload: updatedPrivateUser
+            });
+            getUserNotFavorites()
+        } catch (error) {
+            alert("Unable to add favorite right now. Please try again.");
+        }
     }
 
     return (
@@ -70,11 +68,13 @@ function PlaceMatcher() {
                 Find places based on your preferences.
             </p>
 
-            {places.length > 0 && !currentPlace && (
+            {places.length === 0 && !currentPlace && (
                 <div className="alert alert-info mx-auto mt-4" style={{ maxWidth: 500 }}>
                     No more places to show.
                 </div>
             )}
+
+            {places.length > 0 && !currentPlace && <button className="btn btn-primary mt-3" onClick={() => setCurrentIndex(0)}>Restart</button>}
 
             {currentPlace && (
                 <>
@@ -109,7 +109,7 @@ function PlaceMatcher() {
                         <button
                             type="button"
                             className="btn btn-outline-danger border-2 fw-bold px-4 py-2"
-                            onClick={handleDislike}
+                            onClick={() => setCurrentIndex(currentIndex + 1)}
                             aria-label={`Dislike ${currentPlace.name}`}
                         >
                             <span aria-hidden="true">✕</span> Dislike
@@ -118,7 +118,7 @@ function PlaceMatcher() {
                         <button
                             type="button"
                             className="btn btn-success fw-bold px-4 py-2"
-                            onClick={handleLike}
+                            onClick={() => addToFavorites(places[currentIndex].id)}
                             aria-label={`Like ${currentPlace.name}`}
                         >
                             <span aria-hidden="true">♥</span> Like

@@ -2365,6 +2365,21 @@ def delete_private_user_favorite():
     
     return jsonify(response="Favorite deleted"), 200
 
+@api.route("/users/private/not-favorites", methods=['GET'])
+@jwt_required()
+def get_private_user_not_favorites():
+    user_id = get_jwt_identity()
+    user = db.session.execute(select(User).where(User.id == user_id)).scalar_one_or_none()
+    if user is None:
+        return jsonify(response="User not found"), 404
+    
+    favorite_place_ids = db.session.execute(select(Favorite.place_id).where(Favorite.user_id == user_id)).scalars().all()
+    places_not_favorited = db.session.execute(select(Place).where(Place.id.not_in(favorite_place_ids),Place.is_active.is_(True))).scalars().all()
+    if not favorite_place_ids:
+        places_not_favorited = db.session.execute(select(Place).where(Place.is_active.is_(True))).scalars().all()
+    
+    return jsonify([place.serialize() for place in places_not_favorited]), 200
+
 @api.route("/users/private/favorites", methods=['POST'])
 @jwt_required()
 def add_private_user_favorite():
