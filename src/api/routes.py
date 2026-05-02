@@ -994,6 +994,12 @@ def update_city(city_id):
 
     return jsonify(city_exists.serialize()), 200
 
+@api.route("/cities/with-places", methods=["GET"])
+def get_cities_with_places():
+    cities = db.session.execute(select(City).join(Place).where(Place.is_active.is_(True)).distinct().order_by(City.city)).scalars().all()
+    
+    return jsonify([city.serialize() for city in cities]), 200
+
 # LOGIN & SIGNUP #
 # USER #
 
