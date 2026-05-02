@@ -6,8 +6,31 @@ function PlaceMatcher() {
     const [likedPlaces, setLikedPlaces] = useState([]);
 
     function handleLike() {
-        setLikedPlaces([...likedPlaces, currentPlace]);
+        saveFavorite(currentPlace.name);
         goToNextPlace();
+    }
+
+    async function saveFavorite(placeName) {
+        try {
+            const backendUrl = import.meta.env.VITE_BACKEND_URL;
+
+            const response = await fetch(`${backendUrl}/api/users/private/favorites`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    user: "???",
+                    place: placeName
+                })
+            });
+
+            const data = await response.json();
+            console.log("FAVORITE SAVED:", data);
+
+        } catch (error) {
+            console.error("Error saving favorite:", error);
+        }
     }
 
     function handleDislike() {
@@ -20,6 +43,8 @@ function PlaceMatcher() {
                 const backendUrl = import.meta.env.VITE_BACKEND_URL;
                 const response = await fetch(`${backendUrl}/api/places`);
                 const data = await response.json();
+
+                console.log("PLACES FROM API:", data);
 
                 setPlaces(data);
             } catch (error) {
