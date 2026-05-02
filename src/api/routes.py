@@ -2567,6 +2567,8 @@ def get_private_user_nearby_places():
     
     nearby_places = []
     for place in all_places:
+        if place.latitude is None and place.longitude is None:
+            continue
         distance = calculate_distance(
         user.latitude,
         user.longitude,
