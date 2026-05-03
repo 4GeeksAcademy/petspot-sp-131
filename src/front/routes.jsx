@@ -60,7 +60,6 @@ import NewsDetail from "./pages/News/NewsDetail";
 
 import Chat from "./pages/Chat/Chat";
 import AddChat from "./pages/Chat/AddChat";
-import EditChat from "./pages/Chat/EditChat";
 
 import Favorites from "./pages/Favorites/Favorites";
 import AddFavorite from "./pages/Favorites/AddFavorite";

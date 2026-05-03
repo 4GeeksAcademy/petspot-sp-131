@@ -99,34 +99,24 @@ const ChatPanelMDB = ({ type }) => {
         fetchMessages(true);
 
         const backendUrl = import.meta.env.VITE_BACKEND_URL;
-        console.log("DEBUG: Connecting to socket (Polling only) at", backendUrl);
         const socket = io(backendUrl, { transports: ["polling"] });
         socketRef.current = socket;
 
         const { identity } = getAuth();
-        console.log("DEBUG: My identity is", identity, "type", type);
 
         socket.on("connect", () => {
-            console.log("DEBUG: Socket connected! ID:", socket.id);
             if (identity) {
                 socket.emit("join", { id: identity, type: type });
-                console.log("DEBUG: Sent join event for", identity);
             }
         });
 
         socket.on("reconnect", () => {
-            console.log("DEBUG: Socket reconnected!");
             if (identity) {
                 socket.emit("join", { id: identity, type: type });
             }
         });
 
-        socket.on("connect_error", (err) => {
-            console.error("DEBUG: Socket connection error:", err);
-        });
-
         socket.on("new_message", (msg) => {
-            console.log("DEBUG: Received new_message:", msg);
             const otherId = type === "user" ? msg.place_id : msg.user_id;
             
             setMessages(prev => {
@@ -214,7 +204,6 @@ const ChatPanelMDB = ({ type }) => {
                 sender: type,
                 [type === "user" ? "place_id" : "user_id"]: selectedConvId
             };
-            console.log("DEBUG: Sending message with payload:", payload);
             
             const response = await fetch(`${backendUrl}/api/chat`, {
                 method: "POST",

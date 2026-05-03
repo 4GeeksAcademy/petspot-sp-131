@@ -1,7 +1,7 @@
 
 import click, random, requests
 from api.cities import cities
-from api.routes import resolve_place_address_geocode
+from api.routes.geocoding import resolve_place_address_geocode
 from datetime import datetime
 from api.models import db, User, Place, EstablishmentType, City, Favorite, AdminUser, Review, Reservation, ReservationStatus, Chat, News, PostType, Race, Pet, PetAnimalType, PetSize, PlaceSchedule, Table
 from werkzeug.security import generate_password_hash
