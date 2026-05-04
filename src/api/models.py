@@ -1,9 +1,10 @@
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import String, Boolean, Text, ForeignKey, Date, Time, UniqueConstraint, Float
+from sqlalchemy import String, Boolean, Text, ForeignKey, Date, Time, UniqueConstraint, Float, Numeric
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from enum import Enum
 from datetime import datetime
+from decimal import Decimal
 
 
 db = SQLAlchemy()
@@ -79,6 +80,8 @@ class Place(db.Model):
     latitude: Mapped[float | None] = mapped_column(Float, nullable=True)
     longitude: Mapped[float | None] = mapped_column(Float, nullable=True)
     address: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    requires_reservation_payment: Mapped[bool] = mapped_column(Boolean(), nullable=False, default=False)
+    reservation_price: Mapped[ Decimal | None] = mapped_column(Numeric(10, 2), nullable=True)
 
     city: Mapped["City"] = relationship("City", back_populates="places")
     favorites: Mapped[list["Favorite"]] = relationship("Favorite", back_populates="place", cascade="all, delete-orphan")
@@ -109,7 +112,9 @@ class Place(db.Model):
             "image_url": self.image_url,
             "start_time": str(self.start_time) if self.start_time else None,
             "end_time": str(self.end_time) if self.end_time else None,
-            "reviews": [review.serialize() for reservation in self.reservations for review in reservation.reviews]
+            "reviews": [review.serialize() for reservation in self.reservations for review in reservation.reviews],
+            "requires_reservation_payment": self.requires_reservation_payment,
+            "reservation_price": self.reservation_price if self.reservation_price else None
         }
 
 class PlaceSchedule(db.Model):
@@ -268,6 +273,10 @@ class Reservation(db.Model):
         nullable=False,
         default=ReservationStatus.PENDING
     )
+    paypal_order_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    paypal_capture_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    payment_status: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    refunded_at: Mapped[datetime | None] = mapped_column(db.DateTime, nullable=True)
 
     user: Mapped["User"] = relationship("User", back_populates="reservations")
     place: Mapped["Place"] = relationship("Place", back_populates="reservations")
@@ -291,7 +300,11 @@ class Reservation(db.Model):
             "table_name": self.table.name if self.table else None,
             "zone_preference": self.zone_preference,
             "notes": self.notes,
-            "status": self.status.value
+            "status": self.status.value,
+            "paypal_order_id": self.paypal_order_id,
+            "paypal_capture_id": self.paypal_capture_id,
+            "payment_status": self.payment_status,
+            "refunded_at": self.refunded_at.isoformat() if self.refunded_at else None
         }
     
 
