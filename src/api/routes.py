@@ -2651,6 +2651,92 @@ def paypal_create_order():
 
     return jsonify(orderID=order_id), 200
 
+@api.route('/users/private/paypal/capture-order', methods=['POST'])
+@jwt_required()
+def paypal_capture_order():
+    user_id = get_jwt_identity()
+    user = db.session.execute(select(User).where(User.id == user_id)).scalar_one_or_none()
+    if user is None:
+        return jsonify(response="User not found"), 404
+
+    data = request.get_json(silent=True) or {}
+    reservation_id = data.get("reservation_id")
+    order_id = data.get("order_id")
+
+    if reservation_id is None or order_id is None:
+        return jsonify(response="Reservation id and order id are required"), 400
+
+    try:
+        reservation_id = int(reservation_id)
+    except (TypeError, ValueError):
+        return jsonify(response="Reservation id must be a valid integer"), 400
+
+    if not isinstance(order_id, str):
+        return jsonify(response="Order id must be a string"), 400
+
+    order_id = order_id.strip()
+    if not order_id:
+        return jsonify(response="Order id cannot be empty"), 400
+
+    reservation = db.session.execute(
+        select(Reservation).where(
+            Reservation.id == reservation_id,
+            Reservation.user_id == user_id
+        )
+    ).scalar_one_or_none()
+    if reservation is None:
+        return jsonify(response="Reservation not found"), 404
+
+    if reservation.status != ReservationStatus.PENDING:
+        return jsonify(response="Reservation is not pending payment"), 400
+
+    place = reservation.place
+    if not place.requires_reservation_payment:
+        return jsonify(response="This reservation does not require payment"), 400
+
+    if place.reservation_price is None:
+        return jsonify(response="Reservation price is missing"), 400
+
+    access_token = get_paypal_access_token()
+    if not access_token:
+        return jsonify(response="Unable to authenticate with PayPal"), 502
+
+    paypal_url = f"{os.getenv('PAYPAL_BASE_URL')}/v2/checkout/orders/{order_id}/capture"
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {access_token}"
+    }
+
+    try:
+        paypal_res = requests.post(paypal_url, headers=headers)
+    except requests.RequestException:
+        return jsonify(response="Unable to capture PayPal order"), 502
+
+    paypal_data = paypal_res.json()
+    if paypal_res.status_code not in [200, 201]:
+        return jsonify(
+            response="Error capturing PayPal order",
+            paypal_status=paypal_data.get("name"),
+            paypal_details=paypal_data.get("details")
+        ), 502
+
+    capture_status = paypal_data.get("status")
+    if capture_status != "COMPLETED":
+        return jsonify(
+            response="PayPal payment was not completed",
+            paypal_status=capture_status,
+            paypal_details=paypal_data
+        ), 400
+
+    reservation.status = ReservationStatus.CONFIRMED
+    db.session.commit()
+
+    return jsonify({
+        "reservation_id": reservation.id,
+        "status": reservation.status.value,
+        "paypal_status": capture_status,
+        "paypal_details": paypal_data
+    }), 200
 
 @api.route('/users/private/reservations', methods=['DELETE'])
 @jwt_required()
