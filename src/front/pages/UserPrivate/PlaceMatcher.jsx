@@ -1,65 +1,59 @@
 import React, { useEffect, useState } from "react";
+import { handleAddToFavorites } from "../../services/userPrivateService";
 
 function PlaceMatcher() {
     const [places, setPlaces] = useState([]);
     const [currentIndex, setCurrentIndex] = useState(0);
-    const [likedPlaces, setLikedPlaces] = useState([]);
+    const [swipeDirection, setSwipeDirection] = useState("");
 
-    function handleLike() {
-        saveFavorite(currentPlace.name);
-        goToNextPlace();
-    }
-
-    async function saveFavorite(placeName) {
+    async function handleLike() {
         try {
-            const backendUrl = import.meta.env.VITE_BACKEND_URL;
-
-            const response = await fetch(`${backendUrl}/api/users/private/favorites`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    user: "???",
-                    place: placeName
-                })
-            });
-
-            const data = await response.json();
-            console.log("FAVORITE SAVED:", data);
-
+            await handleAddToFavorites(currentPlace.id);
+            console.log("Favorite saved:", currentPlace.name);
         } catch (error) {
-            console.error("Error saving favorite:", error);
+            console.error("Error adding favorite:", error);
         }
+
+        goToNextPlace("right");
     }
 
     function handleDislike() {
-        goToNextPlace();
+        goToNextPlace("left");
+    }
+
+    async function getPlaces() {
+        try {
+            const backendUrl = import.meta.env.VITE_BACKEND_URL;
+            const userToken = localStorage.getItem("userToken");
+
+            const response = await fetch(`${backendUrl}/api/users/private/not-favorites`, {
+                headers: {
+                    Authorization: `Bearer ${userToken}`
+                }
+            });
+            const data = await response.json();
+
+            console.log("PLACES FROM API:", data);
+
+            setPlaces(data);
+        } catch (error) {
+            console.error("Error fetching places:", error);
+        }
     }
 
     useEffect(() => {
-        const getPlaces = async () => {
-            try {
-                const backendUrl = import.meta.env.VITE_BACKEND_URL;
-                const response = await fetch(`${backendUrl}/api/places`);
-                const data = await response.json();
-
-                console.log("PLACES FROM API:", data);
-
-                setPlaces(data);
-            } catch (error) {
-                console.error("Error fetching places:", error);
-            }
-        };
-
         getPlaces();
     }, []);
 
     const currentPlace = places[currentIndex];
-    console.log("LIKED:", likedPlaces);
 
-    function goToNextPlace() {
-        setCurrentIndex(currentIndex + 1);
+    function goToNextPlace(direction) {
+        setSwipeDirection(direction);
+
+        setTimeout(() => {
+            setCurrentIndex(currentIndex + 1);
+            setSwipeDirection("");
+        }, 300);
     }
 
     return (
@@ -78,7 +72,20 @@ function PlaceMatcher() {
 
             {currentPlace && (
                 <>
-                    <div className="card mx-auto mt-4 shadow-sm" style={{ maxWidth: 420 }}>
+                    <div
+                        className="card mx-auto mt-4 shadow-sm"
+                        style={{
+                            maxWidth: 420,
+                            transition: "transform 0.3s ease, opacity 0.3s ease",
+                            transform:
+                                swipeDirection === "right"
+                                    ? "translateX(250px) rotate(12deg)"
+                                    : swipeDirection === "left"
+                                        ? "translateX(-250px) rotate(-12deg)"
+                                        : "translateX(0)",
+                            opacity: swipeDirection ? 0 : 1
+                        }}
+                    >
                         {currentPlace.image_url && (
                             <img
                                 src={currentPlace.image_url}

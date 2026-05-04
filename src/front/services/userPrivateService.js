@@ -45,7 +45,9 @@ export async function handleAddToFavorites(placeId) {
     });
 
     if (!response.ok) {
-        throw new Error(`Request failed with status ${response.status}`);
+        const errorData = await response.json();
+        console.log("FAVORITE ERROR:", errorData);
+        throw new Error(errorData.msg || errorData.response || `Request failed with status ${response.status}`);
     }
 
     return response.json();
