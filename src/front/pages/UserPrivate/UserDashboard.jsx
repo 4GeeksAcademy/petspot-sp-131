@@ -10,9 +10,9 @@ const backendUrl = import.meta.env.VITE_BACKEND_URL;
 function UserDashboard() {
     const { store, dispatch } = useGlobalReducer();
     const [dataMode, setDataMode] = useState("all");
-    const [viewMode, setViewMode] = useState("list");
     const [radius, setRadius] = useState(10);
     const [city, setCity] = useState("");
+    const [selectedPlace, setSelectedPlace] = useState(null);
 
     const userHasLocation = store.privateUser.latitude && store.privateUser.longitude ? true : false;
 
@@ -22,6 +22,20 @@ function UserDashboard() {
             : dataMode === "city"
                 ? store.places.filter((place) => String(place.city?.id) === city)
                 : store.places;
+
+    useEffect(() => {
+        if (!selectedPlace) {
+            return;
+        }
+
+        const selectedPlaceExists = currentPlaces.some(
+            (place) => String(place.id) === String(selectedPlace.id)
+        );
+
+        if (!selectedPlaceExists) {
+            setSelectedPlace(null);
+        }
+    }, [currentPlaces, selectedPlace]);
 
     // Get logged in user data
     useEffect(() => {
@@ -162,23 +176,6 @@ function UserDashboard() {
                 </button>
             </div>
 
-            <div className="d-flex justify-content-center gap-3 mb-4 align-items-center flex-wrap">
-                <button
-                    className={`btn btn-sm shadow-0 ${viewMode === "map" ? "btn-primary" : "btn-outline-primary"}`}
-                    onClick={() => setViewMode("map")}
-                    style={{ width: 100 }}
-                >
-                    View Map
-                </button>
-                <button
-                    className={`btn btn-sm shadow-0 ${viewMode === "list" ? "btn-primary" : "btn-outline-primary"}`}
-                    onClick={() => setViewMode("list")}
-                    style={{ width: 100 }}
-                >
-                    View List
-                </button>
-            </div>
-
             {dataMode === "nearby" && (
                 <div className="mx-auto mb-4" style={{ maxWidth: 800 }}>
                     <p className="text-center mb-2 form-control">
@@ -217,17 +214,26 @@ function UserDashboard() {
                 </div>
             )}
 
-            {viewMode === "list" && (
-                <UserPlacesList places={currentPlaces} />
-            )}
-
-            {viewMode === "map" && (
-                <UserPlacesMap
-                    places={currentPlaces}
-                    user={store.privateUser}
-                    includeUserLocation={dataMode === "nearby" && userHasLocation}
-                />
-            )}
+            <div className="container-fluid px-3 px-lg-4 mb-4" style={{height: 600}}>
+                <div className="row g-4 align-items-start">
+                    <div className="col-12 col-xl-5">
+                        <UserPlacesList
+                            places={currentPlaces}
+                            selectedPlace={selectedPlace}
+                            setSelectedPlace={setSelectedPlace}
+                        />
+                    </div>
+                    <div className="col-12 col-xl-7">
+                        <UserPlacesMap
+                            places={currentPlaces}
+                            user={store.privateUser}
+                            includeUserLocation={dataMode === "nearby" && userHasLocation}
+                            selectedPlace={selectedPlace}
+                            setSelectedPlace={setSelectedPlace}
+                        />
+                    </div>
+                </div>
+            </div>
         </>
     );
 }
