@@ -6,6 +6,7 @@ from datetime import datetime
 from api.models import db, User, Place, EstablishmentType, City, Favorite, AdminUser, Review, Reservation, ReservationStatus, Chat, News, PostType, Race, Pet, PetAnimalType, PetSize, PlaceSchedule, Table
 from werkzeug.security import generate_password_hash
 from sqlalchemy import select
+from decimal import Decimal
 
 """
 In this file, you can add as many commands as you want using the @app.cli.command decorator
@@ -135,6 +136,12 @@ def setup_commands(app):
             place.longitude = resolved_place_address["longitude"]
             place.pet_rules = "Pets allowed under supervision"
             place.image_url = place_image_urls[place.establishment_type]
+            place.requires_reservation_payment = random.choice([True, False])
+            if place.requires_reservation_payment:
+                place.reservation_price = Decimal("5.00")
+            else:
+                place.reservation_price = None
+
             db.session.add(place)
             db.session.commit()
             
@@ -167,7 +174,6 @@ def setup_commands(app):
 
         print("All test places created")
 
-
     @app.cli.command("insert-test-admins")
     @click.argument("count") # argument of out command
     def insert_test_admins(count):
@@ -198,7 +204,6 @@ def setup_commands(app):
             next_index += 1
 
         print("All test admins created")
-
 
     @app.cli.command("insert-cities") # name of our command
     def insert_cities():
@@ -277,6 +282,11 @@ def setup_commands(app):
             user_pets = db.session.execute(select(Pet).where(Pet.user_id == user.id)).scalars().all()
             chosen_pet_id = random.choice(user_pets).id if user_pets and random.random() > 0.3 else None
 
+            if place.requires_reservation_payment is True:
+                status = ReservationStatus.PENDING
+            else:
+                status = ReservationStatus.CONFIRMED
+
             new_reservation = Reservation(
                 user_id=user.id,
                 place_id=place.id,
@@ -286,7 +296,7 @@ def setup_commands(app):
                 pet_id=chosen_pet_id,
                 zone_preference=random.choice(zone_preferences),
                 notes="Test reservation created from CLI command",
-                status=ReservationStatus.CONFIRMED
+                status=status
             )
 
             db.session.add(new_reservation)
@@ -298,10 +308,10 @@ def setup_commands(app):
     @app.cli.command('insert-test-reviews')
     @click.argument("count") # argument of out command
     def insert_reviews(count):
-        reservations = db.session.execute(select(Reservation)).scalars().all() or None
+        reservations_confirmed = db.session.execute(select(Reservation).where(Reservation.status == "CONFIRMED")).scalars().all() or None
 
-        if reservations is None:
-            return print('Unable to insert test reviews. Make sure reservations exist in the database')
+        if reservations_confirmed is None:
+            return print('Unable to insert test reviews. Make sure reservations with status "CONFIRMED" exist in the database')
 
         review_titles = [
             "Great experience",
@@ -320,7 +330,7 @@ def setup_commands(app):
         ]
 
         for x in range(1, int(count) + 1):
-            reservation = random.choice(reservations)
+            reservation = random.choice(reservations_confirmed)
 
             new_review = Review(
                 user_id=reservation.user_id,
@@ -446,11 +456,6 @@ def setup_commands(app):
             print(f'News post "{new_post.title}" added')
 
         return print(f"Test news sync complete. {created_count} new posts added.")
-
-    
-    @app.cli.command("insert-test-data")
-    def insert_test_data():
-        pass
 
     @app.cli.command("insert-external-races")
     def insert_external_races():
