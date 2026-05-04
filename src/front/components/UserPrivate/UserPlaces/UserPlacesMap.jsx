@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useRef } from "react";
-import { GoogleMap, MarkerF, useJsApiLoader } from "@react-google-maps/api";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { GoogleMap, InfoWindowF, MarkerF, useJsApiLoader } from "@react-google-maps/api";
+import { Link } from "react-router-dom";
 
 const FALLBACK_CENTER = { lat: 40.4168, lng: -3.7038 };
 const FIT_BOUNDS_PADDING = { top: 150, right: 80, bottom: 110, left: 80 };
@@ -10,6 +11,7 @@ function UserPlacesMap({ places = [], user, includeUserLocation = false }) {
         googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
     });
     const mapRef = useRef(null);
+    const [selectedPlace, setSelectedPlace] = useState(null);
 
     const userPosition = useMemo(() => {
         if (!user?.latitude || !user?.longitude) {
@@ -35,6 +37,20 @@ function UserPlacesMap({ places = [], user, includeUserLocation = false }) {
                 })),
         [places]
     );
+
+    useEffect(() => {
+        if (!selectedPlace) {
+            return;
+        }
+
+        const selectedPlaceExists = placesWithCoordinates.some(
+            (place) => String(place.id) === String(selectedPlace.id)
+        );
+
+        if (!selectedPlaceExists) {
+            setSelectedPlace(null);
+        }
+    }, [placesWithCoordinates, selectedPlace]);
 
     useEffect(() => {
         if (!isLoaded || !mapRef.current || !window.google?.maps) {
@@ -109,8 +125,36 @@ function UserPlacesMap({ places = [], user, includeUserLocation = false }) {
                     key={place.id}
                     position={place.position}
                     title={place.name}
+                    onClick={() => {
+                        setSelectedPlace(place);
+                        mapRef.current?.panTo(place.position);
+                    }}
                 />
             ))}
+
+            {selectedPlace && (
+                <InfoWindowF
+                    position={selectedPlace.position}
+                    onCloseClick={() => setSelectedPlace(null)}
+                >
+                    <div style={{ minWidth: "180px" }}>
+                        <h6 className="mb-1">{selectedPlace.name}</h6>
+                        <p className="mb-1 text-muted">
+                            {selectedPlace.establishment_type
+                                ? selectedPlace.establishment_type.toUpperCase()
+                                : "Establishment"}
+                        </p>
+                        {(selectedPlace.city?.city || selectedPlace.address) && (
+                            <p className="mb-2 small">
+                                {selectedPlace.city?.city || selectedPlace.address}
+                            </p>
+                        )}
+                        <Link to={`/user/private/places/view/${selectedPlace.id}`}>
+                            View details
+                        </Link>
+                    </div>
+                </InfoWindowF>
+            )}
         </GoogleMap>
     );
 }
