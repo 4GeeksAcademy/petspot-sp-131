@@ -23,6 +23,20 @@ def get_cities():
     return jsonify([city.serialize() for city in cities]), 200
 
 
+@api.route("/cities/with-places", methods=["GET"])
+def get_cities_with_places():
+    from api.models import Place
+    cities = db.session.execute(
+        select(City)
+        .join(Place)
+        .where(Place.is_active.is_(True))
+        .distinct()
+        .order_by(City.city)
+    ).scalars().all()
+
+    return jsonify([city.serialize() for city in cities]), 200
+
+
 @api.route('/cities', methods=['POST'])
 def add_city():
     data = request.get_json(silent=True) or {}
