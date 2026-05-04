@@ -20,12 +20,7 @@ from api.models import db, Place, City, EstablishmentType, Reservation, Review, 
 # ===========================================================================
 
 @api.route("/places", methods=["GET"])
-@jwt_required()
 def get_places():
-    claims = get_jwt()
-    if claims.get("role") != "admin":
-        return jsonify({"msg": "Admin access required"}), 403
-
     places = db.session.execute(
         select(Place).order_by(Place.id.desc())
     ).scalars().all()
