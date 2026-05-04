@@ -296,6 +296,20 @@ function UserAddReservationForm() {
                         </div>
 
                         <div className="mt-5 text-center">
+                            <div className={`mb-3 p-3 rounded-4 ${selectedPlace?.requires_reservation_payment ? "bg-warning-subtle border border-warning-subtle" : "bg-light border border-light"}`}>
+                                {selectedPlace?.requires_reservation_payment ? (
+                                    <p className="mb-0 fw-bold text-dark">
+                                        <i className="fas fa-credit-card me-2"></i>
+                                        This reservation requires a payment of {selectedPlace.reservation_price} EUR
+                                    </p>
+                                ) : (
+                                    <p className="mb-0 text-muted">
+                                        <i className="fas fa-info-circle me-2"></i>
+                                        This reservation is free.
+                                    </p>
+                                )}
+                            </div>
+
                             <button
                                 type="submit"
                                 className="btn btn-primary btn-lg rounded-pill px-5 py-3 shadow-lg fw-bold w-100"
@@ -308,7 +322,12 @@ function UserAddReservationForm() {
                             >
                                 <i className="fas fa-check-circle me-2"></i> {isSubmitting ? "Creating Reservation..." : "Confirm Reservation"}
                             </button>
-                            <p className="mt-3 text-muted small"><i className="fas fa-info-circle me-1"></i> Instant confirmation. No payment required today.</p>
+                            <p className="mt-3 text-muted small">
+                                <i className="fas fa-info-circle me-1"></i>
+                                {selectedPlace?.requires_reservation_payment
+                                    ? "If required, payment will be completed in the next step."
+                                    : "Instant confirmation. No payment required today."}
+                            </p>
                         </div>
                     </form>
 
