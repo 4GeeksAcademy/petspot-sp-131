@@ -9,7 +9,7 @@ from flask import request, jsonify
 from sqlalchemy import select, func
 from sqlalchemy.exc import IntegrityError
 from werkzeug.security import generate_password_hash
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
 
 from api.routes import api
 from api.models import db, Place, City, EstablishmentType, Reservation, Review, Table, PlaceSchedule
@@ -20,7 +20,12 @@ from api.models import db, Place, City, EstablishmentType, Reservation, Review, 
 # ===========================================================================
 
 @api.route("/places", methods=["GET"])
+@jwt_required()
 def get_places():
+    claims = get_jwt()
+    if claims.get("role") != "admin":
+        return jsonify({"msg": "Admin access required"}), 403
+
     places = db.session.execute(
         select(Place).order_by(Place.id.desc())
     ).scalars().all()
@@ -28,7 +33,12 @@ def get_places():
 
 
 @api.route("/places", methods=["POST"])
+@jwt_required()
 def add_place():
+    claims = get_jwt()
+    if claims.get("role") != "admin":
+        return jsonify({"msg": "Admin access required"}), 403
+
     data = request.get_json(silent=True) or {}
     email = data.get("email")
     password = data.get("password")
@@ -97,7 +107,12 @@ def add_place():
 
 
 @api.route("/places/<int:place_id>", methods=["DELETE"])
+@jwt_required()
 def delete_place(place_id):
+    claims = get_jwt()
+    if claims.get("role") != "admin":
+        return jsonify({"msg": "Admin access required"}), 403
+
     place_exists = db.get_or_404(Place, place_id)
     db.session.delete(place_exists)
     db.session.commit()
@@ -105,7 +120,12 @@ def delete_place(place_id):
 
 
 @api.route("/places/<int:place_id>", methods=["PUT"])
+@jwt_required()
 def update_place(place_id):
+    claims = get_jwt()
+    if claims.get("role") != "admin":
+        return jsonify({"msg": "Admin access required"}), 403
+
     place = db.get_or_404(Place, place_id)
     data = request.get_json(silent=True) or {}
     email = data.get("email")
@@ -175,18 +195,6 @@ def update_place(place_id):
         if city is None:
             return jsonify(response="City not found"), 404
         place.city = city
-
-    if 'start_time' in data:
-        try:
-            place.start_time = datetime.strptime(data['start_time'], "%H:%M").time() if data['start_time'] else None
-        except ValueError:
-            return jsonify(response="Invalid start_time format (HH:MM)"), 400
-
-    if 'end_time' in data:
-        try:
-            place.end_time = datetime.strptime(data['end_time'], "%H:%M").time() if data['end_time'] else None
-        except ValueError:
-            return jsonify(response="Invalid end_time format (HH:MM)"), 400
 
     db.session.commit()
 
@@ -259,17 +267,20 @@ def update_private_place():
         if not next_city:
             return jsonify(response="City not found"), 404
 
-    if 'start_time' in data:
-        try:
-            place.start_time = datetime.strptime(data['start_time'], "%H:%M").time() if data['start_time'] else None
-        except ValueError:
-            return jsonify(response="Invalid start_time format"), 400
+    if 'password' in data:
+        password = data.get("password")
+        if not isinstance(password, str):
+            return jsonify(response="Password must be a string"), 400
+        password = password.strip()
+        if len(password) == 0:
+            return jsonify(response="Password cannot be empty"), 400
+        place.password = generate_password_hash(password)
 
-    if 'end_time' in data:
-        try:
-            place.end_time = datetime.strptime(data['end_time'], "%H:%M").time() if data['end_time'] else None
-        except ValueError:
-            return jsonify(response="Invalid end_time format"), 400
+    if 'image_url' in data:
+        image_url = data.get("image_url")
+        if image_url is not None and not isinstance(image_url, str):
+            return jsonify(response="Image URL must be a string"), 400
+        place.image_url = image_url.strip() if image_url else None
 
     geocoded_location = None
 

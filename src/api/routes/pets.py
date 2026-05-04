@@ -11,7 +11,7 @@ import base64
 import requests
 from flask import request, jsonify
 from sqlalchemy import select
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
 
 from api.routes import api
 from api.models import db, Pet, Race, User, PetAnimalType, PetSize
@@ -400,7 +400,8 @@ def update_pet(pet_id):
     if not pet:
         return jsonify({"msg": "Pet not found"}), 404
 
-    if pet.user_id != user.id:
+    claims = get_jwt()
+    if pet.user_id != user.id and claims.get("role") != "admin":
         return jsonify({"msg": "Unauthorized to update this pet"}), 403
 
     body = request.get_json(silent=True)
@@ -469,7 +470,8 @@ def delete_pet(pet_id):
     if not pet:
         return jsonify({"msg": "Pet not found"}), 404
 
-    if pet.user_id != user.id:
+    claims = get_jwt()
+    if pet.user_id != user.id and claims.get("role") != "admin":
         return jsonify({"msg": "Unauthorized to delete this pet"}), 403
 
     db.session.delete(pet)

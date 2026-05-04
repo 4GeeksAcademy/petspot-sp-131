@@ -7,7 +7,7 @@ from flask import request, jsonify
 import math
 from sqlalchemy import select
 from werkzeug.security import generate_password_hash
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
 
 from api.routes import api
 from api.models import db, User, Favorite, Place, Reservation, Review, ReservationStatus
@@ -26,13 +26,23 @@ def handle_hello():
 
 
 @api.route('/users', methods=['GET'])
+@jwt_required()
 def get_users():
+    claims = get_jwt()
+    if claims.get("role") != "admin":
+        return jsonify({"msg": "Admin access required"}), 403
+
     users = db.session.execute(db.select(User)).scalars().all()
     return jsonify([user.serialize() for user in users]), 200
 
 
 @api.route('/users', methods=['POST'])
+@jwt_required()
 def create_user():
+    claims = get_jwt()
+    if claims.get("role") != "admin":
+        return jsonify({"msg": "Admin access required"}), 403
+
     body = request.get_json()
 
     name = body.get("name", None)
@@ -76,7 +86,12 @@ def get_user(user_id):
 
 
 @api.route("/users/<int:user_id>", methods=["PUT"])
+@jwt_required()
 def update_user(user_id):
+    claims = get_jwt()
+    if claims.get("role") != "admin":
+        return jsonify({"msg": "Admin access required"}), 403
+
     body = request.get_json()
 
     user = db.session.get(User, user_id)
@@ -108,7 +123,12 @@ def update_user(user_id):
 
 
 @api.route("/users/<int:user_id>", methods=["DELETE"])
+@jwt_required()
 def delete_user(user_id):
+    claims = get_jwt()
+    if claims.get("role") != "admin":
+        return jsonify({"msg": "Admin access required"}), 403
+
     user = db.session.get(User, user_id)
 
     if user is None:
