@@ -2469,12 +2469,21 @@ def add_private_user_reservation():
         people_count = int(people_count)
     except (TypeError, ValueError):
         return jsonify(response="People count must be a valid integer"), 400
+    
+    if people_count < 1:
+        return jsonify(response="People count must be greater than 0"), 400
 
     if pet_id:
         try:
             pet_id = int(pet_id)
         except (TypeError, ValueError):
             return jsonify(response="Pet id must be a valid integer"), 400
+
+        pet = db.session.execute(
+            select(Pet).where(Pet.id == pet_id, Pet.user_id == user_id)
+        ).scalar_one_or_none()
+        if pet is None:
+            return jsonify(response="Pet not found for this user"), 404
     else:
         pet_id = None
 
@@ -2483,6 +2492,50 @@ def add_private_user_reservation():
         res_time = datetime.strptime(reservation_time_str[:5], '%H:%M').time()
     except ValueError:
         return jsonify(response="Invalid date or time format. Use YYYY-MM-DD and HH:MM"), 400
+
+    if res_date < datetime.now().date():
+        return jsonify(response="Reservation date cannot be in the past"), 400
+
+    day_schedule = db.session.execute(
+        select(PlaceSchedule).where(
+            PlaceSchedule.place_id == place_id,
+            PlaceSchedule.day_of_week == res_date.weekday()
+        )
+    ).scalar_one_or_none()
+
+    if day_schedule:
+        if day_schedule.is_closed or not day_schedule.start_time or not day_schedule.end_time:
+            return jsonify(response="The place is closed on the selected date"), 400
+
+        if not (day_schedule.start_time <= res_time < day_schedule.end_time):
+            return jsonify(
+                response=(
+                    "The selected time is outside the place schedule. "
+                    f"Available hours: {day_schedule.start_time.strftime('%H:%M')} - "
+                    f"{day_schedule.end_time.strftime('%H:%M')}"
+                )
+            ), 400
+    elif place.start_time and place.end_time:
+        if not (place.start_time <= res_time <= place.end_time):
+            return jsonify(
+                response=(
+                    "The selected time is outside the place schedule. "
+                    f"Available hours: {place.start_time.strftime('%H:%M')} - "
+                    f"{place.end_time.strftime('%H:%M')}"
+                )
+            ), 400
+    
+    if place.requires_reservation_payment is True:
+        if place.reservation_price is None:
+            return jsonify(response="Reservation price is required for paid reservations"), 400
+        
+        status = ReservationStatus.PENDING
+        requires_payment = True
+        amount = str(place.reservation_price)
+    else:
+        status = ReservationStatus.CONFIRMED
+        requires_payment = False
+        amount = None
 
     new_reservation = Reservation(
         user_id=user_id,
@@ -2493,13 +2546,34 @@ def add_private_user_reservation():
         pet_id=pet_id,
         zone_preference=zone_preference,
         notes=notes,
-        status=ReservationStatus.PENDING
+        status=status
     )
 
     db.session.add(new_reservation)
     db.session.commit()
 
-    return jsonify(new_reservation.serialize()), 201
+    response = {
+            "id": new_reservation.id,
+            "user_id": new_reservation.user_id,
+            "user_name": new_reservation.user.name,
+            "place_id": new_reservation.place_id,
+            "place_name": new_reservation.place.name,
+            "reservation_date": str(new_reservation.reservation_date),
+            "reservation_time": str(new_reservation.reservation_time),
+            "people_count": new_reservation.people_count,
+            "pet_id": new_reservation.pet_id,
+            "pet_name": new_reservation.pet.name if new_reservation.pet else None,
+            "table_id": new_reservation.table_id,
+            "table_name": new_reservation.table.name if new_reservation.table else None,
+            "zone_preference": new_reservation.zone_preference,
+            "notes": new_reservation.notes,
+            "status": new_reservation.status.value,
+            "amount": amount,
+            "currency": "EUR",
+            "requires_payment": requires_payment
+        }
+
+    return jsonify(response), 201
 
 
 @api.route('/users/private/reservations', methods=['DELETE'])

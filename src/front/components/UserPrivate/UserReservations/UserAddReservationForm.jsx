@@ -96,14 +96,18 @@ function UserAddReservationForm() {
 
         try {
             const userToken = localStorage.getItem("userToken");
-            const response = await fetch(`${backendUrl}/api/reservations`, {
+            if (!userToken) {
+                alert("You need to sign in before creating a reservation.");
+                return;
+            }
+
+            const response = await fetch(`${backendUrl}/api/users/private/reservations`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                     Authorization: `Bearer ${userToken}`
                 },
                 body: JSON.stringify({
-                    user_id: store.privateUser?.id,
                     place_id: id.toString(),
                     reservation_date: reservationDate,
                     reservation_time: reservationTime,
@@ -111,7 +115,6 @@ function UserAddReservationForm() {
                     pet_id: petId || null,
                     zone_preference: trimmedZonePreference || null,
                     notes: trimmedNotes || null,
-                    amount: 0 // Optional: sending 0 makes it confirmed by default per backend logic
                 })
             });
 
@@ -122,6 +125,7 @@ function UserAddReservationForm() {
                 return;
             }
 
+            await response.json();
             await loadPrivateUser();
             navigate("/user/private/reservations");
         } catch (error) {
