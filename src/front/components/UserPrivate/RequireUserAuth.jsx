@@ -1,12 +1,16 @@
 import { useEffect, useState } from "react";
 import { Navigate, Outlet } from "react-router-dom";
 import useGlobalReducer from "../../hooks/useGlobalReducer";
+import { useNavigate } from "react-router-dom";
+
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 
 function RequireUserAuth() {
 
     const { store, dispatch } = useGlobalReducer();
     const [token, setToken] = useState(() => localStorage.getItem("userToken"));
+    const navigate = useNavigate()
 
     useEffect(() => {
 
@@ -22,8 +26,24 @@ function RequireUserAuth() {
                 setToken(currentToken); // <- esto fuerza el re-render
                 if (!currentToken) {
                     dispatch({ type: "USER_LOGOUT" });
+                    navigate('/user/login', { replace: true })
                 }
             }
+            async function tokenHasExpired() {
+                const response = await fetch(`${backendUrl}/api/users/private`, {
+                    headers: {
+                        Authorization: `Bearer ${currentToken}`
+                    }
+                });
+    
+                if (response.status === 401) {
+                    localStorage.removeItem("userToken")
+                    dispatch({ type: "USER_LOGOUT" });
+                    navigate('/user/login', { replace: true })
+                    return;
+                }
+            }
+            tokenHasExpired()
 
         }, 500);
 
@@ -31,7 +51,10 @@ function RequireUserAuth() {
         const handleStorage = () => {
             const currentToken = localStorage.getItem("userToken");
             setToken(currentToken);
-            if (!currentToken) dispatch({ type: "USER_LOGOUT" });
+            if (!currentToken) {
+                dispatch({ type: "USER_LOGOUT" })
+                navigate('/user/login', { replace: true })
+            }
         };
 
         window.addEventListener("storage", handleStorage);

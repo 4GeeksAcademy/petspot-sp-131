@@ -76,9 +76,9 @@ class Place(db.Model):
     pet_rules: Mapped[str | None] = mapped_column(Text, nullable=True)
     city_id: Mapped[int] = mapped_column(ForeignKey("cities.id"), nullable=False)
     image_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
-    latitude: Mapped[float] = mapped_column(Float, nullable=True)
-    longitude: Mapped[float] = mapped_column(Float, nullable=True)
-    address: Mapped[str] = mapped_column(String(255), nullable=True)
+    latitude: Mapped[float | None] = mapped_column(Float, nullable=True)
+    longitude: Mapped[float | None] = mapped_column(Float, nullable=True)
+    address: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
     city: Mapped["City"] = relationship("City", back_populates="places")
     favorites: Mapped[list["Favorite"]] = relationship("Favorite", back_populates="place", cascade="all, delete-orphan")
@@ -101,9 +101,9 @@ class Place(db.Model):
             "name": self.name,
             "establishment_type": self.establishment_type.value,
             "pet_rules": self.pet_rules,
-            "latitude": self.latitude,
-            "longitude": self.longitude,
-            "address": self.address,
+            "latitude": self.latitude if self.latitude is not None else None,
+            "longitude": self.longitude if self.longitude is not None else None,
+            "address": self.address if self.address else None,
             "city": self.city.serialize(),
             "favorited_by_users": [favorite.user_id for favorite in self.favorites],
             "image_url": self.image_url,

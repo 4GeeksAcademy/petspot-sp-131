@@ -1,40 +1,31 @@
-import UserPlaceCard from "./UserPlaceCard"
-import useGlobalReducer from "../../../hooks/useGlobalReducer";
-import { useEffect } from "react";
-import { getPlaces } from "../../../services/userPrivateService";
+import UserPlaceCard from "./UserPlaceCard";
 
-function UserPlacesList() {
-
-    const { store, dispatch } = useGlobalReducer();
-
-    useEffect(() => {
-        async function loadPlaces() {
-            try {
-                const responseJSON = await getPlaces();
-                dispatch({
-                    type: "GET_PLACES",
-                    payload: responseJSON
-                })
-
-            } catch (error) {
-                alert("Unable to load places right now. Please try again.")
-            }
-        }
-        loadPlaces()
-    }, [])
-
-
+function UserPlacesList({ places, selectedPlace, setSelectedPlace }) {
     return (
-        <>
-            {store.places.length > 0
-                ? store.places.map((place) => {
-                    return <UserPlaceCard placeObj={place} key={place.id} />
-                })
-                : (
-                    <p className="text-center">No places yet</p>
-                    )}
-        </>
-    )
+        <div
+            style={{
+                maxHeight: "600px",
+                overflowY: "auto",
+                overflowX: "hidden",
+                paddingRight: "0.5rem"
+            }}
+        >
+            {places.length > 0 ? (
+                <div className="d-flex flex-wrap gap-3 align-items-start justify-content-center" >
+                    {places.map((place) => (
+                        <UserPlaceCard
+                            placeObj={place}
+                            key={place.id}
+                            isSelected={String(place.id) === String(selectedPlace?.id)}
+                            onSelect={() => setSelectedPlace(place)}
+                        />
+                    ))}
+                </div>
+            ) : (
+                <p className="text-center text-muted">No places available for the current filter.</p>
+            )}
+        </div>
+    );
 }
 
 export default UserPlacesList;

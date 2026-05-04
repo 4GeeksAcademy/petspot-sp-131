@@ -15,6 +15,7 @@ export const initialStore = () => {
     ],
     places: [],
     cities: [],
+    citiesWithPlaces: [],
     privatePlace: {},
     reservations: [],
     news: [],
@@ -22,7 +23,8 @@ export const initialStore = () => {
     authAdmin: true,
     authUser: false,
     privateUser: {},
-    userToken: null
+    userToken: null,
+    nearbyPlaces: []
   }
 }
 
@@ -100,6 +102,12 @@ export default function storeReducer(store, action = {}) {
       return {
         ...store,
         cities: store.cities.filter((city) => city.id !== action.payload)
+      }
+
+    case 'GET_CITIES_WITH_PLACES':
+      return {
+        ...store,
+        citiesWithPlaces: action.payload
       }
 
     case 'set_auth_user':
@@ -192,6 +200,14 @@ export default function storeReducer(store, action = {}) {
         ...store,
         userToken: action.payload
       }
+
+    case "GET_NEARBY_PLACES":
+
+      return {
+        ...store,
+        nearbyPlaces: action.payload
+      }
+
 
     default:
       throw Error('Unknown action.');

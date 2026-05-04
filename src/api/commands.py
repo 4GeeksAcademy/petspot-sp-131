@@ -1,6 +1,7 @@
 
 import click, random, requests
 from api.cities import cities
+from api.routes import resolve_place_address_geocode
 from datetime import datetime
 from api.models import db, User, Place, EstablishmentType, City, Favorite, AdminUser, Review, Reservation, ReservationStatus, Chat, News, PostType, Race, Pet, PetAnimalType, PetSize, PlaceSchedule, Table
 from werkzeug.security import generate_password_hash
@@ -93,14 +94,12 @@ def setup_commands(app):
     @click.argument("count") # argument of out command
     def insert_test_places(count):
         print("Creating test places")
-        existing_cities = db.session.execute(select(City)).scalars().all() or None
-        if existing_cities is None:
-            return print("Unable to add places. Cities must exist first in the database")
         place_image_urls = {
             EstablishmentType.RESTAURANT: "https://images.unsplash.com/photo-1755632540801-8eaf8eb22e1d?q=80&w=2064&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
             EstablishmentType.BAR: "https://images.unsplash.com/photo-1659514149185-e8f007131309?q=80&w=1548&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
             EstablishmentType.CAFE: "https://images.unsplash.com/photo-1571168136613-46401b03904e?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
         }
+        seed_addresses = [city_data[0] for city_data in cities.values()]
         added_count = 0
         next_index = 1
 
@@ -115,17 +114,25 @@ def setup_commands(app):
                 next_index += 1
                 continue
 
-            city = random.choice(existing_cities)
+            seed_address = random.choice(seed_addresses)
+
+            try:
+                resolved_place_address = resolve_place_address_geocode(seed_address)
+            except (ValueError, RuntimeError) as error:
+                print(f"Unable to create place {email} from address '{seed_address}': {error}")
+                next_index += 1
+                continue
 
             place = Place()
             place.email = email
             place.password = generate_password_hash("123456")
+            place.is_active = True
             place.name = "Name_Place_" + str(next_index)
             place.establishment_type = random.choice(list(EstablishmentType))
-            place.city_id = city.id
-            place.address=city.address
-            place.latitude=city.latitude
-            place.longitude=city.longitude
+            place.city_id = resolved_place_address["city_id"]
+            place.address = resolved_place_address["formatted_address"]
+            place.latitude = resolved_place_address["latitude"]
+            place.longitude = resolved_place_address["longitude"]
             place.pet_rules = "Pets allowed under supervision"
             place.image_url = place_image_urls[place.establishment_type]
             db.session.add(place)
