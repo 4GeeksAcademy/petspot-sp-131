@@ -2580,12 +2580,21 @@ def add_private_user_reservation():
         people_count = int(people_count)
     except (TypeError, ValueError):
         return jsonify(response="People count must be a valid integer"), 400
+    
+    if people_count < 1:
+        return jsonify(response="People count must be greater than 0"), 400
 
     if pet_id:
         try:
             pet_id = int(pet_id)
         except (TypeError, ValueError):
             return jsonify(response="Pet id must be a valid integer"), 400
+
+        pet = db.session.execute(
+            select(Pet).where(Pet.id == pet_id, Pet.user_id == user_id)
+        ).scalar_one_or_none()
+        if pet is None:
+            return jsonify(response="Pet not found for this user"), 404
     else:
         pet_id = None
 
@@ -2594,6 +2603,52 @@ def add_private_user_reservation():
         res_time = datetime.strptime(reservation_time_str[:5], '%H:%M').time()
     except ValueError:
         return jsonify(response="Invalid date or time format. Use YYYY-MM-DD and HH:MM"), 400
+
+    if res_date < datetime.now().date():
+        return jsonify(response="Reservation date cannot be in the past"), 400
+
+    day_schedule = db.session.execute(
+        select(PlaceSchedule).where(
+            PlaceSchedule.place_id == place_id,
+            PlaceSchedule.day_of_week == res_date.weekday()
+        )
+    ).scalar_one_or_none()
+
+    if day_schedule:
+        if day_schedule.is_closed or not day_schedule.start_time or not day_schedule.end_time:
+            return jsonify(response="The place is closed on the selected date"), 400
+
+        if not (day_schedule.start_time <= res_time < day_schedule.end_time):
+            return jsonify(
+                response=(
+                    "The selected time is outside the place schedule. "
+                    f"Available hours: {day_schedule.start_time.strftime('%H:%M')} - "
+                    f"{day_schedule.end_time.strftime('%H:%M')}"
+                )
+            ), 400
+    elif place.start_time and place.end_time:
+        if not (place.start_time <= res_time <= place.end_time):
+            return jsonify(
+                response=(
+                    "The selected time is outside the place schedule. "
+                    f"Available hours: {place.start_time.strftime('%H:%M')} - "
+                    f"{place.end_time.strftime('%H:%M')}"
+                )
+            ), 400
+    
+    if place.requires_reservation_payment is True:
+        if place.reservation_price is None:
+            return jsonify(response="Reservation price is required for paid reservations"), 400
+        
+        status = ReservationStatus.PENDING
+        requires_payment = True
+        amount = str(place.reservation_price)
+        payment_status = "pending"
+    else:
+        status = ReservationStatus.CONFIRMED
+        requires_payment = False
+        amount = None
+        payment_status = None
 
     new_reservation = Reservation(
         user_id=user_id,
@@ -2604,14 +2659,224 @@ def add_private_user_reservation():
         pet_id=pet_id,
         zone_preference=zone_preference,
         notes=notes,
-        status=ReservationStatus.PENDING
+        status=status,
+        payment_status=payment_status
     )
 
     db.session.add(new_reservation)
     db.session.commit()
 
-    return jsonify(new_reservation.serialize()), 201
+    response = {
+            "reservation_id": new_reservation.id,
+            "user_id": new_reservation.user_id,
+            "user_name": new_reservation.user.name,
+            "place_id": new_reservation.place_id,
+            "place_name": new_reservation.place.name,
+            "reservation_date": str(new_reservation.reservation_date),
+            "reservation_time": str(new_reservation.reservation_time),
+            "people_count": new_reservation.people_count,
+            "pet_id": new_reservation.pet_id,
+            "pet_name": new_reservation.pet.name if new_reservation.pet else None,
+            "table_id": new_reservation.table_id,
+            "table_name": new_reservation.table.name if new_reservation.table else None,
+            "zone_preference": new_reservation.zone_preference,
+            "notes": new_reservation.notes,
+            "status": new_reservation.status.value,
+            "amount": amount,
+            "currency": "EUR",
+            "requires_payment": requires_payment
+        }
 
+    return jsonify(response), 201
+
+def get_paypal_access_token():
+    url = f"{os.getenv('PAYPAL_BASE_URL')}/v1/oauth2/token"
+
+    response = requests.post(
+        url,
+        auth=(os.getenv("PAYPAL_CLIENT_ID"), os.getenv("PAYPAL_CLIENT_SECRET")),
+        data={"grant_type": "client_credentials"}
+    )
+
+    data = response.json()
+    return data.get("access_token")
+
+
+def extract_paypal_capture_id(paypal_capture_response):
+    purchase_units = paypal_capture_response.get("purchase_units") or []
+    for purchase_unit in purchase_units:
+        payments = purchase_unit.get("payments") or {}
+        captures = payments.get("captures") or []
+        for capture in captures:
+            capture_id = capture.get("id")
+            if capture_id:
+                return capture_id
+    return None
+
+@api.route('/users/private/paypal/create-order', methods=['POST'])
+@jwt_required()
+def paypal_create_order():
+    user_id = get_jwt_identity()
+    user = db.session.execute(select(User).where(User.id == user_id)).scalar_one_or_none()
+    if user is None:
+        return jsonify(response="User not found"), 404
+
+    data = request.get_json(silent=True) or {}
+    reservation_id = data.get("reservation_id")
+    if reservation_id is None:
+        return jsonify(response="Reservation ID is required"), 400
+    
+    try:
+        reservation_id = int(reservation_id)
+    except (TypeError, ValueError):
+        return jsonify(response="Reservation id must be a valid integer"), 400
+    
+    reservation_exists = db.session.execute(select(Reservation).where(Reservation.id == reservation_id, Reservation.user_id == user_id)).scalar_one_or_none()
+    if reservation_exists is None:
+        return jsonify(response="Reservation not found"), 404
+    
+    if reservation_exists.status != ReservationStatus.PENDING:
+        return jsonify(response="Reservation is not pending payment"), 400
+    
+    place = reservation_exists.place
+    
+    if place.requires_reservation_payment is False:
+        return jsonify(response="This reservation does not require payment"), 400
+    
+    if place.reservation_price is None:
+        return jsonify(response="Reservation price is missing"), 400
+    
+    amount = str(place.reservation_price)
+    
+    access_token = get_paypal_access_token()
+
+    paypal_url = f"{os.getenv('PAYPAL_BASE_URL')}/v2/checkout/orders"
+    payload = {
+        "intent": "CAPTURE",
+        "purchase_units": [
+            {
+                "amount": {
+                    "currency_code": "EUR",
+                    "value": amount
+                }
+            }
+        ]
+    }
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {access_token}"
+    }
+
+    paypal_res = requests.post(paypal_url, json=payload, headers=headers)
+
+    if paypal_res.status_code not in [200, 201]:
+        return jsonify(response="Error creating PayPal order"), 500
+    
+    paypal_data = paypal_res.json()
+    order_id = paypal_data.get("id")
+
+    return jsonify({"orderID":order_id, "reservation_id": reservation_id, "amount": amount}), 200
+
+@api.route('/users/private/paypal/capture-order', methods=['POST'])
+@jwt_required()
+def paypal_capture_order():
+    user_id = get_jwt_identity()
+    user = db.session.execute(select(User).where(User.id == user_id)).scalar_one_or_none()
+    if user is None:
+        return jsonify(response="User not found"), 404
+
+    data = request.get_json(silent=True) or {}
+    reservation_id = data.get("reservation_id")
+    order_id = data.get("order_id")
+
+    if reservation_id is None or order_id is None:
+        return jsonify(response="Reservation id and order id are required"), 400
+
+    try:
+        reservation_id = int(reservation_id)
+    except (TypeError, ValueError):
+        return jsonify(response="Reservation id must be a valid integer"), 400
+
+    if not isinstance(order_id, str):
+        return jsonify(response="Order id must be a string"), 400
+
+    order_id = order_id.strip()
+    if not order_id:
+        return jsonify(response="Order id cannot be empty"), 400
+
+    reservation = db.session.execute(
+        select(Reservation).where(
+            Reservation.id == reservation_id,
+            Reservation.user_id == user_id
+        )
+    ).scalar_one_or_none()
+    if reservation is None:
+        return jsonify(response="Reservation not found"), 404
+
+    if reservation.status != ReservationStatus.PENDING:
+        return jsonify(response="Reservation is not pending payment"), 400
+
+    place = reservation.place
+    if not place.requires_reservation_payment:
+        return jsonify(response="This reservation does not require payment"), 400
+
+    if place.reservation_price is None:
+        return jsonify(response="Reservation price is missing"), 400
+
+    access_token = get_paypal_access_token()
+    if not access_token:
+        return jsonify(response="Unable to authenticate with PayPal"), 502
+
+    paypal_url = f"{os.getenv('PAYPAL_BASE_URL')}/v2/checkout/orders/{order_id}/capture"
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {access_token}"
+    }
+
+    try:
+        paypal_res = requests.post(paypal_url, headers=headers)
+    except requests.RequestException:
+        return jsonify(response="Unable to capture PayPal order"), 502
+
+    paypal_data = paypal_res.json()
+    if paypal_res.status_code not in [200, 201]:
+        return jsonify(
+            response="Error capturing PayPal order",
+            paypal_status=paypal_data.get("name"),
+            paypal_details=paypal_data.get("details")
+        ), 502
+
+    capture_status = paypal_data.get("status")
+    if capture_status != "COMPLETED":
+        return jsonify(
+            response="PayPal payment was not completed",
+            paypal_status=capture_status,
+            paypal_details=paypal_data
+        ), 400
+
+    capture_id = extract_paypal_capture_id(paypal_data)
+    if not capture_id:
+        return jsonify(
+            response="PayPal capture id was not returned",
+            paypal_status=capture_status,
+            paypal_details=paypal_data
+        ), 502
+
+    reservation.status = ReservationStatus.CONFIRMED
+    reservation.paypal_order_id = order_id
+    reservation.paypal_capture_id = capture_id
+    reservation.payment_status = "paid"
+    db.session.commit()
+
+    return jsonify({
+        "reservation_id": reservation.id,
+        "status": reservation.status.value,
+        "paypal_status": capture_status,
+        "payment_status": reservation.payment_status,
+        "paypal_order_id": reservation.paypal_order_id,
+        "paypal_capture_id": reservation.paypal_capture_id,
+        "paypal_details": paypal_data
+    }), 200
 
 @api.route('/users/private/reservations', methods=['DELETE'])
 @jwt_required()
@@ -2648,6 +2913,44 @@ def cancel_private_user_reservation():
     ).scalar_one_or_none()
     if reservation is None:
         return jsonify(response="Reservation not found"), 404
+
+    if reservation.payment_status == "paid":
+        if not reservation.paypal_capture_id:
+            return jsonify(response="Paid reservation is missing PayPal capture data"), 400
+
+        access_token = get_paypal_access_token()
+        if not access_token:
+            return jsonify(response="Unable to authenticate with PayPal"), 502
+
+        paypal_url = f"{os.getenv('PAYPAL_BASE_URL')}/v2/payments/captures/{reservation.paypal_capture_id}/refund"
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {access_token}"
+        }
+
+        try:
+            paypal_res = requests.post(paypal_url, headers=headers)
+        except requests.RequestException:
+            return jsonify(response="Unable to refund PayPal payment"), 502
+
+        paypal_data = paypal_res.json()
+        if paypal_res.status_code not in [200, 201]:
+            return jsonify(
+                response="Error refunding PayPal payment",
+                paypal_status=paypal_data.get("name"),
+                paypal_details=paypal_data.get("details")
+            ), 502
+
+        refund_status = paypal_data.get("status")
+        if refund_status not in ["COMPLETED", "PENDING"]:
+            return jsonify(
+                response="PayPal refund was not accepted",
+                paypal_status=refund_status,
+                paypal_details=paypal_data
+            ), 400
+
+        reservation.payment_status = "refunded"
+        reservation.refunded_at = datetime.utcnow()
 
     reservation.status = ReservationStatus.CANCELLED
     db.session.commit()

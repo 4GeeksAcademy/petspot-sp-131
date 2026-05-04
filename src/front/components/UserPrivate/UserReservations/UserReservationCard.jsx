@@ -110,6 +110,7 @@ function UserReservationCard({ reservationObj, onCancelReservation }) {
                                 </button>
                             )}
                         </div>
+
                     </div>
                 </div>
             </div>
