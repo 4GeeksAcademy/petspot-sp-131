@@ -32,23 +32,35 @@ function UserReservationsList() {
         if (!confirm("Are you sure you want to cancel this reservation?")) return;
         try {
             const userToken = localStorage.getItem("userToken");
-            const response = await fetch(`${backendUrl}/api/reservations/${reservationId}`, {
-                method: "PUT",
+            if (!userToken) {
+                throw new Error("You need to sign in before cancelling a reservation.");
+            }
+
+            const response = await fetch(`${backendUrl}/api/users/private/reservations`, {
+                method: "DELETE",
                 headers: {
                     "Content-Type": "application/json",
                     Authorization: `Bearer ${userToken}`
                 },
                 body: JSON.stringify({
-                    status: "cancelled"
+                    reservation_id: reservationId.toString()
                 })
             });
 
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.msg || `Request failed with status ${response.status}`);
+                throw new Error(errorData.response || errorData.msg || `Request failed with status ${response.status}`);
             }
 
+            const responseJSON = await response.json();
             await loadPrivateUser();
+
+            if (responseJSON.payment_status === "refunded") {
+                alert("Your reservation was cancelled and your payment has been refunded.");
+            } else {
+                alert("Your reservation was cancelled successfully.");
+            }
+            
         } catch (error) {
             alert(error.message || "Unable to cancel reservation right now. Please try again.");
         }

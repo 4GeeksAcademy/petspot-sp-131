@@ -273,6 +273,10 @@ class Reservation(db.Model):
         nullable=False,
         default=ReservationStatus.PENDING
     )
+    paypal_order_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    paypal_capture_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    payment_status: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    refunded_at: Mapped[datetime | None] = mapped_column(db.DateTime, nullable=True)
 
     user: Mapped["User"] = relationship("User", back_populates="reservations")
     place: Mapped["Place"] = relationship("Place", back_populates="reservations")
@@ -296,7 +300,11 @@ class Reservation(db.Model):
             "table_name": self.table.name if self.table else None,
             "zone_preference": self.zone_preference,
             "notes": self.notes,
-            "status": self.status.value
+            "status": self.status.value,
+            "paypal_order_id": self.paypal_order_id,
+            "paypal_capture_id": self.paypal_capture_id,
+            "payment_status": self.payment_status,
+            "refunded_at": self.refunded_at.isoformat() if self.refunded_at else None
         }
     
 

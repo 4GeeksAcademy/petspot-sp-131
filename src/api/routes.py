@@ -2532,10 +2532,12 @@ def add_private_user_reservation():
         status = ReservationStatus.PENDING
         requires_payment = True
         amount = str(place.reservation_price)
+        payment_status = "pending"
     else:
         status = ReservationStatus.CONFIRMED
         requires_payment = False
         amount = None
+        payment_status = None
 
     new_reservation = Reservation(
         user_id=user_id,
@@ -2546,7 +2548,8 @@ def add_private_user_reservation():
         pet_id=pet_id,
         zone_preference=zone_preference,
         notes=notes,
-        status=status
+        status=status,
+        payment_status=payment_status
     )
 
     db.session.add(new_reservation)
@@ -2586,6 +2589,18 @@ def get_paypal_access_token():
 
     data = response.json()
     return data.get("access_token")
+
+
+def extract_paypal_capture_id(paypal_capture_response):
+    purchase_units = paypal_capture_response.get("purchase_units") or []
+    for purchase_unit in purchase_units:
+        payments = purchase_unit.get("payments") or {}
+        captures = payments.get("captures") or []
+        for capture in captures:
+            capture_id = capture.get("id")
+            if capture_id:
+                return capture_id
+    return None
 
 @api.route('/users/private/paypal/create-order', methods=['POST'])
 @jwt_required()
@@ -2728,13 +2743,27 @@ def paypal_capture_order():
             paypal_details=paypal_data
         ), 400
 
+    capture_id = extract_paypal_capture_id(paypal_data)
+    if not capture_id:
+        return jsonify(
+            response="PayPal capture id was not returned",
+            paypal_status=capture_status,
+            paypal_details=paypal_data
+        ), 502
+
     reservation.status = ReservationStatus.CONFIRMED
+    reservation.paypal_order_id = order_id
+    reservation.paypal_capture_id = capture_id
+    reservation.payment_status = "paid"
     db.session.commit()
 
     return jsonify({
         "reservation_id": reservation.id,
         "status": reservation.status.value,
         "paypal_status": capture_status,
+        "payment_status": reservation.payment_status,
+        "paypal_order_id": reservation.paypal_order_id,
+        "paypal_capture_id": reservation.paypal_capture_id,
         "paypal_details": paypal_data
     }), 200
 
@@ -2772,6 +2801,44 @@ def cancel_private_user_reservation():
     ).scalar_one_or_none()
     if reservation is None:
         return jsonify(response="Reservation not found"), 404
+
+    if reservation.payment_status == "paid":
+        if not reservation.paypal_capture_id:
+            return jsonify(response="Paid reservation is missing PayPal capture data"), 400
+
+        access_token = get_paypal_access_token()
+        if not access_token:
+            return jsonify(response="Unable to authenticate with PayPal"), 502
+
+        paypal_url = f"{os.getenv('PAYPAL_BASE_URL')}/v2/payments/captures/{reservation.paypal_capture_id}/refund"
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {access_token}"
+        }
+
+        try:
+            paypal_res = requests.post(paypal_url, headers=headers)
+        except requests.RequestException:
+            return jsonify(response="Unable to refund PayPal payment"), 502
+
+        paypal_data = paypal_res.json()
+        if paypal_res.status_code not in [200, 201]:
+            return jsonify(
+                response="Error refunding PayPal payment",
+                paypal_status=paypal_data.get("name"),
+                paypal_details=paypal_data.get("details")
+            ), 502
+
+        refund_status = paypal_data.get("status")
+        if refund_status not in ["COMPLETED", "PENDING"]:
+            return jsonify(
+                response="PayPal refund was not accepted",
+                paypal_status=refund_status,
+                paypal_details=paypal_data
+            ), 400
+
+        reservation.payment_status = "refunded"
+        reservation.refunded_at = datetime.utcnow()
 
     reservation.status = ReservationStatus.CANCELLED
     db.session.commit()
