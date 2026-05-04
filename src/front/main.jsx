@@ -5,6 +5,7 @@ import { RouterProvider } from "react-router-dom";  // Import RouterProvider to 
 import { router } from "./routes";  // Import the router configuration
 import { StoreProvider } from './hooks/useGlobalReducer';  // Import the StoreProvider for global state management
 import { BackendURL } from './components/BackendURL';
+import { PayPalScriptProvider } from "@paypal/react-paypal-js";
 
 const Main = () => {
     
@@ -16,11 +17,13 @@ const Main = () => {
     return (
         <React.StrictMode>  
             {/* Provide global state to all components */}
-            <StoreProvider> 
-                {/* Set up routing for the application */} 
-                <RouterProvider router={router}>
-                </RouterProvider>
-            </StoreProvider>
+            <PayPalScriptProvider options={{ clientId: import.meta.env.VITE_PAYPAL_CLIENT_ID || "", currency: "EUR" }}>
+                <StoreProvider> 
+                    {/* Set up routing for the application */} 
+                    <RouterProvider router={router}>
+                    </RouterProvider>
+                </StoreProvider>
+            </PayPalScriptProvider>
         </React.StrictMode>
     );
 }

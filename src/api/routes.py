@@ -2649,7 +2649,7 @@ def paypal_create_order():
     paypal_data = paypal_res.json()
     order_id = paypal_data.get("id")
 
-    return jsonify(orderID=order_id), 200
+    return jsonify({"orderID":order_id, "reservation_id": reservation_id, "amount": amount}), 200
 
 @api.route('/users/private/paypal/capture-order', methods=['POST'])
 @jwt_required()
