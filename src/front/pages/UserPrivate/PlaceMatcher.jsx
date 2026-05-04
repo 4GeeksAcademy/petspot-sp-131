@@ -9,9 +9,12 @@ function PlaceMatcher() {
     async function handleLike() {
         try {
             await handleAddToFavorites(currentPlace.id);
-            console.log("Favorite saved:", currentPlace.name);
         } catch (error) {
-            console.error("Error adding favorite:", error);
+            if (error.message.includes("already exists")) {
+                console.warn("Already in favorites");
+            } else {
+                console.error("Error adding favorite:", error);
+            }
         }
 
         goToNextPlace("right");
@@ -51,7 +54,7 @@ function PlaceMatcher() {
         setSwipeDirection(direction);
 
         setTimeout(() => {
-            setCurrentIndex(currentIndex + 1);
+            setCurrentIndex(prev => prev + 1);
             setSwipeDirection("");
         }, 300);
     }
@@ -65,9 +68,18 @@ function PlaceMatcher() {
             </p>
 
             {places.length > 0 && !currentPlace && (
-                <div className="alert alert-info mx-auto mt-4" style={{ maxWidth: 500 }}>
-                    No more places to show.
-                </div>
+                <>
+                    <div className="alert alert-info mx-auto mt-4" style={{ maxWidth: 500 }}>
+                        No more places to show.
+                    </div>
+
+                    <button
+                        className="btn btn-primary mt-3"
+                        onClick={() => setCurrentIndex(0)}
+                    >
+                        Restart
+                    </button>
+                </>
             )}
 
             {currentPlace && (
