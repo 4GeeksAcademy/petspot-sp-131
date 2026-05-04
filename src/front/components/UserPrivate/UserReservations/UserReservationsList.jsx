@@ -23,10 +23,8 @@ function UserReservationsList() {
     };
 
     useEffect(() => {
-        if (!store.privateUser?.id) {
-            loadPrivateUser();
-        }
-    }, [dispatch, store.privateUser?.id]);
+        loadPrivateUser();
+    }, [dispatch]);
 
     async function handleCancelReservation(reservationId) {
         if (!confirm("Are you sure you want to cancel this reservation?")) return;
@@ -72,7 +70,7 @@ function UserReservationsList() {
         <>
             {reservations.length > 0
                 ? reservations.map((reservation, i) => {
-                    return <UserReservationCard reservationObj={reservation} onCancelReservation={handleCancelReservation} key={`${reservation}-${i}`} />
+                    return <UserReservationCard reservationObj={reservation} onCancelReservation={handleCancelReservation} onPaymentSuccess={loadPrivateUser} key={`${reservation}-${i}`} />
                 })
                 : (
                     <p className="text-center">No reservations yet</p>
