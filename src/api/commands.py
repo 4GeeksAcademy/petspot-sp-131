@@ -269,7 +269,7 @@ def setup_commands(app):
     @click.argument("count") # argument of out command
     def insert_reservations(count):
         users = db.session.execute(select(User)).scalars().all() or None
-        places = db.session.execute(select(Place)).scalars().all() or None
+        places = db.session.execute(select(Place).where(Place.requires_reservation_payment.is_(False))).scalars().all() or None
 
         if users is None or places is None:
             return print('Unable to insert test reservations. Make sure users and places exist in the database')
@@ -282,11 +282,6 @@ def setup_commands(app):
             user_pets = db.session.execute(select(Pet).where(Pet.user_id == user.id)).scalars().all()
             chosen_pet_id = random.choice(user_pets).id if user_pets and random.random() > 0.3 else None
 
-            if place.requires_reservation_payment is True:
-                status = ReservationStatus.PENDING
-            else:
-                status = ReservationStatus.CONFIRMED
-
             new_reservation = Reservation(
                 user_id=user.id,
                 place_id=place.id,
@@ -296,7 +291,7 @@ def setup_commands(app):
                 pet_id=chosen_pet_id,
                 zone_preference=random.choice(zone_preferences),
                 notes="Test reservation created from CLI command",
-                status=status
+                status=ReservationStatus.CONFIRMED
             )
 
             db.session.add(new_reservation)

@@ -36,7 +36,7 @@ function RequireUserAuth() {
                     }
                 });
     
-                if (response.status === 401) {
+                if (response.status === 401 || response.status === 404) {
                     localStorage.removeItem("userToken")
                     dispatch({ type: "USER_LOGOUT" });
                     navigate('/user/login', { replace: true })
