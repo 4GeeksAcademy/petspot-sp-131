@@ -9,15 +9,18 @@ function PlaceMatcher() {
     async function handleLike() {
         try {
             await handleAddToFavorites(currentPlace.id);
-        } catch (error) {
-            if (error.message.includes("already exists")) {
-                console.warn("Already in favorites");
-            } else {
-                console.error("Error adding favorite:", error);
-            }
-        }
+            console.log("Favorite saved:", currentPlace.name);
 
-        goToNextPlace("right");
+            goToNextPlace("right");
+
+            setTimeout(async () => {
+                await getPlaces();
+            }, 300);
+
+        } catch (error) {
+            console.error("Error adding favorite:", error);
+            goToNextPlace("right");
+        }
     }
 
     function handleDislike() {
