@@ -1,7 +1,6 @@
 import { Link } from "react-router-dom";
-import PayPalPayment from "./PayPalPayment";
 
-function UserReservationCard({ reservationObj, onCancelReservation, onPaymentSuccess }) {
+function UserReservationCard({ reservationObj, onCancelReservation }) {
 
     const {
         id,
@@ -13,13 +12,8 @@ function UserReservationCard({ reservationObj, onCancelReservation, onPaymentSuc
         reservation_date,
         reservation_time,
         status,
-        place_id,
-        requires_payment,
-        amount,
-        currency
+        place_id
     } = reservationObj;
-
-    const showPendingPayment = status === "pending" && requires_payment === true;
 
     return (
         <div className="card mb-4 mx-auto w-100 shadow-lg border-0" style={{ 
@@ -94,14 +88,6 @@ function UserReservationCard({ reservationObj, onCancelReservation, onPaymentSuc
                             </div>
                         )}
 
-                        {showPendingPayment && (
-                            <div className="mb-4 p-3 rounded-3 border-start border-4 border-warning bg-warning-subtle">
-                                <small className="d-block text-uppercase fw-bold text-muted mb-1" style={{ fontSize: "0.6rem" }}>Payment</small>
-                                <p className="mb-2 fw-bold text-dark">Payment pending. Complete payment to confirm your reservation.</p>
-                                <p className="mb-0 text-muted small">Amount due: {amount} {currency}</p>
-                            </div>
-                        )}
-
                         <div className="d-flex flex-wrap gap-2 pt-3 border-top justify-content-end">
                             {status === "confirmed" && (
                                 <Link to={`/user/private/reviews/add/${id}`} className="btn btn-sm btn-outline-warning rounded-pill px-3">
@@ -125,14 +111,6 @@ function UserReservationCard({ reservationObj, onCancelReservation, onPaymentSuc
                             )}
                         </div>
 
-                        {showPendingPayment ? (
-                            <PayPalPayment
-                                reservationId={id}
-                                amount={amount}
-                                currency={currency}
-                                onSuccess={onPaymentSuccess}
-                            />
-                        ) : null}
                     </div>
                 </div>
             </div>
