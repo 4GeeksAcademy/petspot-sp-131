@@ -2553,7 +2553,7 @@ def add_private_user_reservation():
     db.session.commit()
 
     response = {
-            "id": new_reservation.id,
+            "reservation_id": new_reservation.id,
             "user_id": new_reservation.user_id,
             "user_name": new_reservation.user.name,
             "place_id": new_reservation.place_id,
@@ -2574,6 +2574,82 @@ def add_private_user_reservation():
         }
 
     return jsonify(response), 201
+
+def get_paypal_access_token():
+    url = f"{os.getenv('PAYPAL_BASE_URL')}/v1/oauth2/token"
+
+    response = requests.post(
+        url,
+        auth=(os.getenv("PAYPAL_CLIENT_ID"), os.getenv("PAYPAL_CLIENT_SECRET")),
+        data={"grant_type": "client_credentials"}
+    )
+
+    data = response.json()
+    return data.get("access_token")
+
+@api.route('/users/private/paypal/create-order', methods=['POST'])
+@jwt_required()
+def paypal_create_order():
+    user_id = get_jwt_identity()
+    user = db.session.execute(select(User).where(User.id == user_id)).scalar_one_or_none()
+    if user is None:
+        return jsonify(response="User not found"), 404
+
+    data = request.get_json(silent=True) or {}
+    reservation_id = data.get("reservation_id")
+    if reservation_id is None:
+        return jsonify(response="Reservation ID is required"), 400
+    
+    try:
+        reservation_id = int(reservation_id)
+    except (TypeError, ValueError):
+        return jsonify(response="Reservation id must be a valid integer"), 400
+    
+    reservation_exists = db.session.execute(select(Reservation).where(Reservation.id == reservation_id, Reservation.user_id == user_id)).scalar_one_or_none()
+    if reservation_exists is None:
+        return jsonify(response="Reservation not found"), 404
+    
+    if reservation_exists.status != ReservationStatus.PENDING:
+        return jsonify(response="Reservation is not pending payment"), 400
+    
+    place = reservation_exists.place
+    
+    if place.requires_reservation_payment is False:
+        return jsonify(response="This reservation does not require payment"), 400
+    
+    if place.reservation_price is None:
+        return jsonify(response="Reservation price is missing"), 400
+    
+    amount = str(place.reservation_price)
+    
+    access_token = get_paypal_access_token()
+
+    paypal_url = f"{os.getenv('PAYPAL_BASE_URL')}/v2/checkout/orders"
+    payload = {
+        "intent": "CAPTURE",
+        "purchase_units": [
+            {
+                "amount": {
+                    "currency_code": "EUR",
+                    "value": amount
+                }
+            }
+        ]
+    }
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {access_token}"
+    }
+
+    paypal_res = requests.post(paypal_url, json=payload, headers=headers)
+
+    if paypal_res.status_code not in [200, 201]:
+        return jsonify(response="Error creating PayPal order"), 500
+    
+    paypal_data = paypal_res.json()
+    order_id = paypal_data.get("id")
+
+    return jsonify(orderID=order_id), 200
 
 
 @api.route('/users/private/reservations', methods=['DELETE'])
