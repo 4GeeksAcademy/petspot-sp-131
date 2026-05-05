@@ -1,0 +1,54 @@
+.admin-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  border-radius: 999px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+/* Estados de reserva */
+.admin-badge--pending {
+  background-color: rgba(212, 165, 116, 0.2);
+  color: #9a6520;
+}
+
+.admin-badge--confirmed {
+  background-color: rgba(123, 160, 91, 0.18);
+  color: #4e7230;
+}
+
+.admin-badge--cancelled {
+  background-color: rgba(184, 84, 80, 0.14);
+  color: #8b3532;
+}
+
+/* Semánticos */
+.admin-badge--success {
+  background-color: rgba(123, 160, 91, 0.18);
+  color: #4e7230;
+}
+
+.admin-badge--warning {
+  background-color: rgba(212, 165, 116, 0.2);
+  color: #9a6520;
+}
+
+.admin-badge--danger {
+  background-color: rgba(184, 84, 80, 0.14);
+  color: #8b3532;
+}
+
+.admin-badge--neutral {
+  background-color: rgba(61, 43, 37, 0.08);
+  color: var(--admin-text-muted);
+}
+
+/* Primary (acento salmón) */
+.admin-badge--primary {
+  background-color: var(--admin-primary-soft);
+  color: var(--admin-accent);
+}

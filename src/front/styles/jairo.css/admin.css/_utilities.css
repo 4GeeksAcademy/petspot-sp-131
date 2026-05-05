@@ -1,0 +1,32 @@
+.admin-text-salmon { color: var(--admin-primary); }
+.admin-text-accent  { color: var(--admin-accent); }
+.admin-text-muted   { color: var(--admin-text-muted); }
+
+.admin-bg-salmon-soft { background-color: var(--admin-primary-soft); }
+.admin-bg-surface-alt { background-color: var(--admin-surface-alt); }
+.admin-bg-surface     { background-color: var(--admin-surface); }
+
+.admin-fw-semibold { font-weight: 600; }
+.admin-fw-bold     { font-weight: 700; }
+
+.admin-rounded    { border-radius: var(--admin-radius); }
+.admin-rounded-sm { border-radius: var(--admin-radius-sm); }
+.admin-rounded-lg { border-radius: var(--admin-radius-lg); }
+
+.admin-shadow    { box-shadow: var(--admin-shadow); }
+.admin-shadow-sm { box-shadow: var(--admin-shadow-sm); }
+.admin-shadow-lg { box-shadow: var(--admin-shadow-lg); }
+
+.admin-border { border: 1px solid var(--admin-border); }
+
+.admin-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-divider {
+  border: none;
+  border-top: 1px solid var(--admin-border);
+  margin: 8px 0;
+}
