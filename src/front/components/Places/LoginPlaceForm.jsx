@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
@@ -33,7 +33,7 @@ function LoginPlaceForm() {
                     headers: {
                         "Content-Type": "application/json"
                     }
-                    
+
                 })
 
                 const responseJS = await response.json();
@@ -54,40 +54,48 @@ function LoginPlaceForm() {
 
 
     return (
-        <>
-            <form onSubmit={handleSubmit} className="mx-auto p-5 bg-secondary-subtle border-0 rounded text-start" style={{ maxWidth: 600 }}>
-                <div className="mb-3">
-                    <label htmlFor="placeLoginEmail" className="form-label">Email *</label>
-                    <input
-                        onChange={(event) => setEmail(event.target.value)}
-                        value={email}
-                        type="email"
-                        className="form-control"
-                        id="placeLoginEmail"
-                        name="email"
-                        required
-                        placeholder="youremail@email.com"
-                    />
-                </div>
-                <div className="mb-3">
-                    <label htmlFor="placeLoginPassword" className="form-label">Password *</label>
-                    <input
-                        onChange={(event) => setPassword(event.target.value)}
-                        value={password}
-                        type="password"
-                        className="form-control"
-                        id="placeLoginPassword"
-                        name="password"
-                        required
-                    />
-                </div>
-                <p className="text-body-secondary small mb-4">* Required fields</p>
-                <div className="mt-5">
-                    <button type="submit" className="btn btn-success d-block mx-auto">Submit</button>
-                </div>
-            </form >
-        </>
-    )
+        <form onSubmit={handleSubmit} className="auth-card">
+
+            <h2 className="auth-title">Welcome Back</h2>
+            <p className="auth-subtitle">Login to manage your place</p>
+
+            <div className="auth-field">
+                <label htmlFor="placeLoginEmail">Email Address</label>
+                <input
+                    onChange={(event) => setEmail(event.target.value)}
+                    value={email}
+                    type="email"
+                    id="placeLoginEmail"
+                    name="email"
+                    required
+                    placeholder="Email Address"
+                />
+            </div>
+
+            <div className="auth-field">
+                <label htmlFor="placeLoginPassword">Password</label>
+                <input
+                    onChange={(event) => setPassword(event.target.value)}
+                    value={password}
+                    type="password"
+                    id="placeLoginPassword"
+                    name="password"
+                    required
+                    placeholder="Password"
+                />
+            </div>
+
+            <div className="auth-actions">
+                <button type="submit" className="auth-btn">
+                    Sign in
+                </button>
+
+                <Link to="/places/signup" className="auth-secondary-btn">
+                    Register
+                </Link>
+            </div>
+        </form>
+    );
 }
 
 export default LoginPlaceForm;
