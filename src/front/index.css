@@ -79,7 +79,7 @@ footer {
 
 .auth-page {
   min-height: calc(100vh - 80px);
-  /* display: grid; */
+  display: grid;
   grid-template-columns: 51% 49%;
   background: var(--ps-bg-soft);
 }
@@ -465,7 +465,7 @@ footer {
 
 /* ===== RESPONSIVE AUTH ===== */
 
-@media (max-width: 992px) {
+@media (max-width: 768px) {
   .auth-page {
     grid-template-columns: 1fr;
     min-height: auto;
