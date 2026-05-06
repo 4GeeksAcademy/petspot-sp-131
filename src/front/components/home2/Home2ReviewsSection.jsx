@@ -37,7 +37,7 @@ function Home2ReviewsSection() {
     };
 
     return (
-        <section className="home2-reviews" aria-labelledby="home2-reviews-title">
+        <section id="home2-reviews" className="home2-reviews" aria-labelledby="home2-reviews-title">
             <div className="container">
                 <div className="home2-reviews__card">
                     <div className="home2-reviews__content">

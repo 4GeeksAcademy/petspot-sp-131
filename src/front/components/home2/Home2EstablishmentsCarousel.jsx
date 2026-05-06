@@ -16,11 +16,6 @@ function Home2EstablishmentsCarousel() {
 
     return (
         <section className="home2-establishments" aria-labelledby="home2-establishments-title">
-            <div className="container">
-                <h2 id="home2-establishments-title" className="home2-establishments__title">
-                    Who trusts us
-                </h2>
-            </div>
 
             <div className="home2-establishments__carousel">
                 <div className="home2-establishments__track">

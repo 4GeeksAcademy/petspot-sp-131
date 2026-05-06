@@ -6,7 +6,7 @@ const navLinks = [
     { to: "/#explore-places", label: "Explore Places" },
     { to: "/#how-it-works", label: "How It Works" },
     { to: "/#for-businesses", label: "For Businesses" },
-    { to: "/#reviews", label: "What our community says" },
+    { to: "/#home2-reviews", label: "What our community says" },
     { to: "/about", label: "About us" }
 ];
 

@@ -1,9 +1,7 @@
+import Footer from "../Footer";
+
 function Home2Footer() {
-    return (
-        <>
-            <p>Home2Footer</p>
-        </>
-    );
+    return <Footer />;
 }
 
 export default Home2Footer;

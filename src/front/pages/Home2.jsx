@@ -8,7 +8,6 @@ import Home2ExplorePlacesSection from "../components/home2/Home2ExplorePlacesSec
 import Home2PhotoCollageSection from "../components/home2/Home2PhotoCollageSection";
 import Home2ReviewsSection from "../components/home2/Home2ReviewsSection";
 import Home2LatestNewsSection from "../components/home2/Home2LatestNewsSection";
-import Home2Footer from "../components/home2/Home2Footer";
 import "../styles/home2.css";
 
 function Home2() {
@@ -48,9 +47,7 @@ function Home2() {
                 </section>
             </main>
 
-            <footer className="home2-page__footer">
-                <Home2Footer />
-            </footer>
+           
         </div>
     );
 }

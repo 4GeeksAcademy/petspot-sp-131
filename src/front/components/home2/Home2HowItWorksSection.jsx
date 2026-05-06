@@ -73,7 +73,7 @@ function Home2HowItWorksSection() {
                     </article>
 
                     <div className="home2-how__visuals" aria-hidden="true">
-                        <div className="home2-how__badge home2-how__badge--top">Pet owner flow</div>
+                        
 
                         <div className="home2-how__image-card home2-how__image-card--top">
                             <img
@@ -91,7 +91,7 @@ function Home2HowItWorksSection() {
                             />
                         </div>
 
-                        <div className="home2-how__badge home2-how__badge--bottom">Simple, social, pet-friendly</div>
+                       
                     </div>
                 </div>
             </div>
