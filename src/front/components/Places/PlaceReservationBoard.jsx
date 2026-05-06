@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { DndContext, useSensor, useSensors, PointerSensor, closestCenter } from "@dnd-kit/core";
 import { useDroppable, useDraggable } from "@dnd-kit/core";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
 
 const rawBackendUrl = import.meta.env.VITE_BACKEND_URL;
 const backendUrl = rawBackendUrl
@@ -247,15 +248,18 @@ function TableFurniture({ table, reservations, onDelete, onEdit, onMove, editMod
 
 // ─── Room Element (wall, stage, text, etc.) ───────────────────────────────────
 const ELEMENT_PRESETS = {
-  wall:      { color: "#5d6d7e", label: "Wall",     icon: "fa-minus" },
-  stage:     { color: "#7d6608", label: "Stage",    icon: "fa-music" },
-  bar:       { color: "#6c3483", label: "Bar",      icon: "fa-glass-martini" },
-  window:    { color: "#5dade2", label: "Window",   icon: "fa-border-none" },
-  pillar:    { color: "#717d7e", label: "Pillar",   icon: "fa-circle" },
-  divider:   { color: "#99a3a4", label: "Divider",  icon: "fa-grip-lines" },
-  text:      { color: "#2c3e50", label: "Text",     icon: "fa-font" },
-  entrance:  { color: "#1e8449", label: "Entrance", icon: "fa-door-open" },
-  exit:      { color: "#922b21", label: "Exit",     icon: "fa-sign-out-alt" },
+  wall:      { color: "#5d6d7e", label: "Wall H",    icon: "fa-minus",          vertical: false },
+  wall_v:    { color: "#5d6d7e", label: "Wall V",    icon: "fa-grip-lines-vertical", vertical: true },
+  stage:     { color: "#7d6608", label: "Stage",     icon: "fa-music",          vertical: false },
+  bar:       { color: "#6c3483", label: "Bar",       icon: "fa-glass-martini",  vertical: false },
+  window:    { color: "#5dade2", label: "Window",    icon: "fa-border-none",    vertical: false },
+  pillar:    { color: "#717d7e", label: "Pillar",    icon: "fa-circle",         vertical: false },
+  divider:   { color: "#99a3a4", label: "Divider H", icon: "fa-grip-lines",     vertical: false },
+  divider_v: { color: "#99a3a4", label: "Divider V", icon: "fa-grip-lines-vertical", vertical: true },
+  door:      { color: "#b7950b", label: "Door",      icon: "fa-door-open",      vertical: false },
+  text:      { color: "#2c3e50", label: "Text",      icon: "fa-font",           vertical: false },
+  entrance:  { color: "#1e8449", label: "Entrance",  icon: "fa-door-open",      vertical: false },
+  exit:      { color: "#922b21", label: "Exit",      icon: "fa-sign-out-alt",   vertical: false },
 };
 
 function RoomElementItem({ element, onDelete, onUpdate, editMode }) {
@@ -271,6 +275,7 @@ function RoomElementItem({ element, onDelete, onUpdate, editMode }) {
   const isText = element.element_type === "text"
     || element.element_type === "entrance"
     || element.element_type === "exit";
+  const isDoor = element.element_type === "door";
 
   const baseStyle = {
     position: "absolute",
@@ -317,6 +322,48 @@ function RoomElementItem({ element, onDelete, onUpdate, editMode }) {
           <button
             className="btn-icon-sm btn-icon-dark room-element-del"
             style={{ opacity: 0, transition: "opacity 0.15s" }}
+            onClick={(e) => { e.stopPropagation(); onDelete(element.id); }}
+            title="Delete"
+          >
+            <i className="fas fa-times" style={{ fontSize: "0.55rem" }} />
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  if (isDoor) {
+    const s = Math.min(element.width, element.height);
+    return (
+      <div
+        ref={setNodeRef}
+        {...(editMode ? { ...attributes, ...listeners } : {})}
+        style={{ ...baseStyle, overflow: "visible" }}
+        className="room-element-wrapper"
+        title="Door"
+      >
+        {/* Door SVG: wall segment + swing arc */}
+        <svg width={element.width} height={element.height} style={{ overflow: "visible", pointerEvents: "none" }}>
+          {/* Wall stub left */}
+          <rect x={0} y={element.height / 2 - 4} width={element.width * 0.12} height={8} fill={color} rx={2} />
+          {/* Wall stub right */}
+          <rect x={element.width * 0.88} y={element.height / 2 - 4} width={element.width * 0.12} height={8} fill={color} rx={2} />
+          {/* Door leaf */}
+          <rect x={element.width * 0.12} y={element.height / 2 - 3} width={element.width * 0.76} height={6} fill={color} rx={2} />
+          {/* Swing arc */}
+          <path
+            d={`M ${element.width * 0.12} ${element.height / 2} A ${element.width * 0.76} ${element.width * 0.76} 0 0 1 ${element.width * 0.12 + element.width * 0.76 * Math.cos(Math.PI / 2)} ${element.height / 2 - element.width * 0.76 * Math.sin(Math.PI / 2)}`}
+            fill="none"
+            stroke={color}
+            strokeWidth={1.5}
+            strokeDasharray="4 3"
+            opacity={0.55}
+          />
+        </svg>
+        {editMode && (
+          <button
+            className="btn-icon-sm btn-icon-dark room-element-del"
+            style={{ position: "absolute", top: "-8px", right: "-8px", opacity: 0, transition: "opacity 0.15s" }}
             onClick={(e) => { e.stopPropagation(); onDelete(element.id); }}
             title="Delete"
           >
@@ -439,11 +486,134 @@ function ReservationCard({ reservation, onUpdateStatus }) {
   );
 }
 
-// ─── Hourly accordion group ───────────────────────────────────────────────────
-function HourGroup({ hour, reservations, onUpdateStatus, defaultOpen }) {
-  const [open, setOpen] = useState(defaultOpen || false);
+// ─── Reservations mini-chart ─────────────────────────────────────────────────
+const CHART_MODES = ["hour", "day", "month"];
+const CHART_LABELS = { hour: "By hour", day: "By day", month: "By month" };
+
+function ReservationsChart({ reservations, onBarClick }) {
+  const [mode, setMode] = useState("hour");
+  const [activeBar, setActiveBar] = useState(null);
+
+  const buildData = () => {
+    if (mode === "hour") {
+      const counts = {};
+      for (let h = 0; h < 24; h++) counts[h] = 0;
+      reservations.forEach((r) => {
+        const h = parseInt(r.reservation_time?.substring(0, 2) || "0", 10);
+        counts[h] = (counts[h] || 0) + 1;
+      });
+      return Object.entries(counts)
+        .filter(([, v]) => v > 0)
+        .map(([h, count]) => ({ label: `${h}h`, key: parseInt(h), count }));
+    }
+    if (mode === "day") {
+      const counts = {};
+      reservations.forEach((r) => {
+        const d = r.reservation_date || "?";
+        counts[d] = (counts[d] || 0) + 1;
+      });
+      return Object.entries(counts)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([d, count]) => ({ label: d.slice(5), key: d, count }));
+    }
+    if (mode === "month") {
+      const counts = {};
+      reservations.forEach((r) => {
+        const m = r.reservation_date?.substring(0, 7) || "?";
+        counts[m] = (counts[m] || 0) + 1;
+      });
+      return Object.entries(counts)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([m, count]) => {
+          const [y, mo] = m.split("-");
+          const name = new Date(+y, +mo - 1).toLocaleString("default", { month: "short" });
+          return { label: `${name} ${y}`, key: m, count };
+        });
+    }
+    return [];
+  };
+
+  const data = buildData();
+  if (data.length === 0) return null;
+
   return (
-    <div style={{ marginBottom: "6px" }}>
+    <div style={{ padding: "0 10px 10px" }}>
+      {/* Mode tabs */}
+      <div style={{ display: "flex", gap: "4px", marginBottom: "8px" }}>
+        {CHART_MODES.map((m) => (
+          <button
+            key={m}
+            onClick={() => { setMode(m); setActiveBar(null); onBarClick(null); }}
+            style={{
+              flex: 1, border: "none", borderRadius: "8px", padding: "4px 2px",
+              fontSize: "0.62rem", fontWeight: mode === m ? 700 : 500, cursor: "pointer",
+              background: mode === m ? "#4338ca" : "#f1f5f9",
+              color: mode === m ? "white" : "#64748b",
+              transition: "all 0.15s",
+            }}
+          >
+            {CHART_LABELS[m]}
+          </button>
+        ))}
+      </div>
+
+      {/* Chart */}
+      <div style={{ background: "#f8fafc", borderRadius: "12px", padding: "8px 4px 4px" }}>
+        <ResponsiveContainer width="100%" height={80}>
+          <BarChart data={data} barCategoryGap="20%" onClick={(d) => {
+            if (!d?.activePayload) return;
+            const bar = d.activePayload[0]?.payload;
+            if (!bar) return;
+            const next = activeBar === bar.key ? null : bar.key;
+            setActiveBar(next);
+            onBarClick(next === null ? null : { mode, key: next });
+          }}>
+            <XAxis
+              dataKey="label"
+              tick={{ fontSize: 8, fill: "#94a3b8" }}
+              axisLine={false}
+              tickLine={false}
+            />
+            <YAxis hide />
+            <Tooltip
+              contentStyle={{ borderRadius: "8px", border: "none", boxShadow: "0 4px 12px rgba(0,0,0,0.15)", fontSize: "0.7rem" }}
+              cursor={{ fill: "rgba(99,102,241,0.08)" }}
+              formatter={(v) => [v, "Reservations"]}
+            />
+            <Bar dataKey="count" radius={[4, 4, 0, 0]}>
+              {data.map((entry) => (
+                <Cell
+                  key={entry.key}
+                  fill={entry.key === activeBar ? "#4338ca" : "#a5b4fc"}
+                  cursor="pointer"
+                />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+        {activeBar !== null && (
+          <div style={{ textAlign: "center", fontSize: "0.65rem", color: "#4338ca", fontWeight: 600, marginTop: "2px" }}>
+            <i className="fas fa-filter me-1" />
+            Filtered · click again to clear
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Hourly accordion group ───────────────────────────────────────────────────
+function HourGroup({ hour, reservations, onUpdateStatus, defaultOpen, scrollRef }) {
+  const [open, setOpen] = useState(defaultOpen || false);
+  // Scroll into view when made active via chart click
+  const divRef = useRef(null);
+  useEffect(() => {
+    if (scrollRef) {
+      scrollRef.current = { scrollIntoView: () => divRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }) };
+    }
+  }, [scrollRef]);
+  return (
+    <div ref={divRef} style={{ marginBottom: "6px" }}>
       <button
         onClick={() => setOpen((o) => !o)}
         style={{
@@ -744,11 +914,14 @@ function AddElementPanel({ onAdd }) {
 
   const defaults = {
     wall:      { width: 180, height: 16 },
+    wall_v:    { width: 16,  height: 180 },
     stage:     { width: 220, height: 60 },
     bar:       { width: 160, height: 40 },
     window:    { width: 100, height: 14 },
-    pillar:    { width: 28, height: 28 },
+    pillar:    { width: 28,  height: 28 },
     divider:   { width: 140, height: 12 },
+    divider_v: { width: 12,  height: 140 },
+    door:      { width: 80,  height: 40 },
     text:      { width: 160, height: 36 },
     entrance:  { width: 120, height: 36 },
     exit:      { width: 100, height: 36 },
@@ -1082,9 +1255,22 @@ function PlaceReservationBoard({ placeId }) {
     }
   };
 
-  // ── Sidebar data ───────────────────────────────────────────────────────────
-  const unseatedReservations = reservations.filter((r) => !r.table_id && r.status !== "cancelled");
-  const seatedReservations = reservations.filter((r) => r.table_id && r.status !== "cancelled");
+  // ── Sidebar data & chart filter ────────────────────────────────────────────
+  const [chartFilter, setChartFilter] = useState(null); // { mode, key } | null
+
+  const allActive = reservations.filter((r) => r.status !== "cancelled");
+  const unseatedReservations = allActive.filter((r) => !r.table_id);
+  const seatedReservations   = allActive.filter((r) => r.table_id);
+
+  const applyChartFilter = (list) => {
+    if (!chartFilter) return list;
+    return list.filter((r) => {
+      if (chartFilter.mode === "hour")  return parseInt(r.reservation_time?.substring(0, 2) || "0", 10) === chartFilter.key;
+      if (chartFilter.mode === "day")   return r.reservation_date === chartFilter.key;
+      if (chartFilter.mode === "month") return r.reservation_date?.startsWith(chartFilter.key);
+      return true;
+    });
+  };
 
   const groupByHour = (list) => {
     const groups = {};
@@ -1096,8 +1282,10 @@ function PlaceReservationBoard({ placeId }) {
     return groups;
   };
 
-  const unseatedGroups = groupByHour(unseatedReservations);
-  const seatedGroups = groupByHour(seatedReservations);
+  const filteredUnseated = applyChartFilter(unseatedReservations);
+  const filteredSeated   = applyChartFilter(seatedReservations);
+  const unseatedGroups = groupByHour(filteredUnseated);
+  const seatedGroups   = groupByHour(filteredSeated);
   const currentHour = new Date().getHours();
 
   const activeLayout = layouts.find((l) => l.id === activeLayoutId);
@@ -1126,11 +1314,22 @@ function PlaceReservationBoard({ placeId }) {
               />
             </div>
 
+            {/* Mini chart */}
+            {allActive.length > 0 && (
+              <ReservationsChart
+                reservations={allActive}
+                onBarClick={(filter) => {
+                  setChartFilter(filter);
+                  // auto-expand matching groups is handled by defaultOpen
+                }}
+              />
+            )}
+
             {/* Section tabs */}
-            <div style={{ display: "flex", gap: "6px", padding: "0 16px 10px" }}>
+            <div style={{ display: "flex", gap: "6px", padding: "0 12px 10px" }}>
               {[
-                { key: "upcoming", label: "Upcoming", count: unseatedReservations.length },
-                { key: "seated",   label: "Seated",   count: seatedReservations.length },
+                { key: "upcoming", label: "Upcoming", count: filteredUnseated.length },
+                { key: "seated",   label: "Seated",   count: filteredSeated.length },
               ].map(({ key, label, count }) => (
                 <button
                   key={key}
@@ -1145,7 +1344,8 @@ function PlaceReservationBoard({ placeId }) {
                 >
                   {label}
                   <span style={{
-                    marginLeft: "5px", background: sidebarSection === key ? "rgba(255,255,255,0.25)" : "#e2e8f0",
+                    marginLeft: "5px",
+                    background: sidebarSection === key ? "rgba(255,255,255,0.25)" : "#e2e8f0",
                     borderRadius: "20px", padding: "0 5px", fontSize: "0.65rem",
                   }}>
                     {count}
@@ -1154,6 +1354,18 @@ function PlaceReservationBoard({ placeId }) {
               ))}
             </div>
 
+            {/* Active filter badge */}
+            {chartFilter && (
+              <div style={{ margin: "0 12px 8px", background: "#eef2ff", borderRadius: "8px", padding: "5px 10px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ fontSize: "0.65rem", color: "#4338ca", fontWeight: 600 }}>
+                  <i className="fas fa-filter me-1" />Filtered by chart
+                </span>
+                <button onClick={() => setChartFilter(null)} style={{ border: "none", background: "none", color: "#4338ca", cursor: "pointer", fontSize: "0.7rem", fontWeight: 700 }}>
+                  ✕ Clear
+                </button>
+              </div>
+            )}
+
             {/* Reservation list */}
             <div className="prb-sidebar-list">
               {sidebarSection === "upcoming" && (
@@ -1161,8 +1373,8 @@ function PlaceReservationBoard({ placeId }) {
                   {Object.keys(unseatedGroups).length === 0 ? (
                     <div className="prb-empty-state">
                       <i className="fas fa-calendar-day fa-2x mb-2 opacity-25" />
-                      <p>No upcoming reservations</p>
-                      <p style={{ fontSize: "0.72rem" }}>Drag to a table to seat</p>
+                      <p>{chartFilter ? "No matches for filter" : "No upcoming reservations"}</p>
+                      {!chartFilter && <p style={{ fontSize: "0.72rem" }}>Drag to a table to seat</p>}
                     </div>
                   ) : (
                     Object.entries(unseatedGroups)
@@ -1173,7 +1385,7 @@ function PlaceReservationBoard({ placeId }) {
                           hour={parseInt(hour)}
                           reservations={list}
                           onUpdateStatus={handleUpdateStatus}
-                          defaultOpen={parseInt(hour) === currentHour}
+                          defaultOpen={chartFilter ? true : parseInt(hour) === currentHour}
                         />
                       ))
                   )}
@@ -1184,7 +1396,7 @@ function PlaceReservationBoard({ placeId }) {
                   {Object.keys(seatedGroups).length === 0 ? (
                     <div className="prb-empty-state">
                       <i className="fas fa-chair fa-2x mb-2 opacity-25" />
-                      <p>No seated guests yet</p>
+                      <p>{chartFilter ? "No matches for filter" : "No seated guests yet"}</p>
                     </div>
                   ) : (
                     Object.entries(seatedGroups)
