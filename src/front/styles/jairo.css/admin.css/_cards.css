@@ -1,0 +1,109 @@
+.admin-card {
+  background-color: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius);
+  box-shadow: var(--admin-shadow-sm);
+  padding: 20px;
+}
+
+.admin-card--hover {
+  transition: box-shadow 200ms ease, transform 200ms ease;
+}
+
+.admin-card--hover:hover {
+  box-shadow: var(--admin-shadow);
+  transform: translateY(-1px);
+}
+
+.admin-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--admin-border);
+}
+
+.admin-card__title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--admin-text);
+}
+
+.admin-card__body {
+  font-size: 0.875rem;
+  color: var(--admin-text);
+}
+
+/* Stat card */
+.admin-stat-card {
+  background-color: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius);
+  box-shadow: var(--admin-shadow-sm);
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  transition: box-shadow 200ms ease, transform 200ms ease;
+}
+
+.admin-stat-card:hover {
+  box-shadow: var(--admin-shadow);
+  transform: translateY(-1px);
+}
+
+.admin-stat-card__icon-wrap {
+  width: 52px;
+  height: 52px;
+  border-radius: var(--admin-radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  flex-shrink: 0;
+  background-color: var(--admin-primary-soft);
+  color: var(--admin-primary);
+}
+
+.admin-stat-card__icon-wrap--success {
+  background-color: rgba(123, 160, 91, 0.15);
+  color: var(--admin-success);
+}
+
+.admin-stat-card__icon-wrap--warning {
+  background-color: rgba(212, 165, 116, 0.18);
+  color: var(--admin-warning);
+}
+
+.admin-stat-card__icon-wrap--danger {
+  background-color: rgba(184, 84, 80, 0.12);
+  color: var(--admin-danger);
+}
+
+.admin-stat-card__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.admin-stat-card__label {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--admin-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+}
+
+.admin-stat-card__value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--admin-text);
+  line-height: 1;
+}
+
+.admin-stat-card__trend {
+  font-size: 0.75rem;
+  color: var(--admin-text-muted);
+  margin-top: 4px;
+}

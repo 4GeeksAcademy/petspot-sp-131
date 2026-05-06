@@ -1,13 +1,25 @@
+@import "./styles/home.css";
+@import "./styles/userPlaces.css";
+
 :root {
-  --ps-bg-soft: #fde9e5;
-  --ps-bg-strong: #ffc3b8;
+  --pink-light: #ffede9;
+  --pink-medium: #fddad3;
+  --pink-dark: #fe8f90;
+  --red: #e44e70;
+  --black: #000000;
+  --white: #ffffff;
+  --primary-hover: #fec2c2;
+  --font-family-base: "Elms Sans", Arial, Helvetica, sans-serif;
+
+  --ps-bg-soft: var(--pink-light);
+  --ps-bg-strong: var(--pink-medium);
   --ps-panel: #f2d7d2;
   --ps-card: #f6e1dc;
-  --ps-text: #111111;
+  --ps-text: var(--black);
   --ps-muted: #5f6472;
-  --ps-border: #111111;
-  --ps-white: #ffffff;
-  --ps-font-main: "Poppins", system-ui, sans-serif;
+  --ps-border: var(--black);
+  --ps-white: var(--white);
+  --ps-font-main: var(--font-family-base);
 
   --admin-bg: #eef2fb;
   --admin-card: #ffffff;
@@ -20,8 +32,47 @@
 
 body {
   margin: 0;
-  font-family: var(--ps-font-main);
-  color: var(--ps-text);
+  padding: 0;
+  font-family: var(--font-family-base);
+  color: var(--black);
+  background-color: var(--pink-light);
+  text-align: left;
+  font-size: 16px;
+}
+
+ul,
+ol {
+  padding-left: 0;
+  list-style: none;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+h1 {
+  letter-spacing: -1px;
+}
+
+footer {
+  background-color: var(--pink-medium);
+}
+
+.btn-filled {
+  background-color: var(--black);
+  color: var(--white);
+  font-weight: bold;
+  padding: 12px 20px;
+  border-radius: 10px;
+}
+
+.btn-outline {
+  color: var(--black);
+  font-weight: bold;
+  padding: 12px 20px;
+  border-radius: 10px;
+  border: 2px solid var(--black);
 }
 
 /* ===== USER / PLACE AUTH ===== */
@@ -78,7 +129,7 @@ body {
   align-items: center;
   justify-content: center;
   padding: 160px 80px 80px;
-  background: var(--ps-panel);
+  background: var(--pink-light);
 }
 
 .auth-card {
@@ -88,7 +139,7 @@ body {
   border: 1.5px solid var(--ps-border);
   border-radius: 28px;
   padding: 80px 70px;
-  background: var(--ps-card);
+  background: var(--pink-light);
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.05);
 }
 
@@ -287,6 +338,27 @@ body {
   text-decoration: none;
 }
 
+.auth-location-btn {
+  min-width: 120px;
+  height: 46px;
+  padding: 0 16px;
+  border: 1.5px solid var(--ps-border);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--ps-text);
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.auth-location-btn:hover,
+.auth-location-btn:focus-visible {
+  background-color: rgba(0, 0, 0, 0.04);
+  transform: translateY(-1px);
+}
+
 /* ===== ADMIN AUTH ===== */
 
 .admin-auth-page {
@@ -319,19 +391,6 @@ body {
   height: 52px;
   object-fit: contain;
   filter: invert(32%) sepia(25%) saturate(1400%) hue-rotate(220deg);
-}
-
-.admin-auth-mark {
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  background: var(--admin-primary-soft);
-  color: var(--admin-primary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  font-weight: 800;
 }
 
 .admin-auth-card h4 {

@@ -590,6 +590,18 @@ def add_place():
         if len(pet_rules) > 250:
             return jsonify(response="pet_rules cannot exceed 250 characters"), 400
 
+    if latitude is not None:
+        try:
+            latitude = float(latitude)
+        except (TypeError, ValueError):
+            return jsonify(response="latitude must be a valid number"), 400
+
+    if longitude is not None:
+        try:
+            longitude = float(longitude)
+        except (TypeError, ValueError):
+            return jsonify(response="longitude must be a valid number"), 400
+
     if not all([x for x in [email, password, name]]):
         return jsonify(response="Email, password, city, and name cannot be empty"), 400
 
@@ -638,6 +650,12 @@ def add_place():
         resolved_address = geocoded_city["formatted_address"]
         resolved_latitude = geocoded_city["latitude"]
         resolved_longitude = geocoded_city["longitude"]
+
+    if address_provided:
+        if latitude is not None:
+            resolved_latitude = latitude
+        if longitude is not None:
+            resolved_longitude = longitude
 
     email_exists = db.session.execute(
         select(Place).where(Place.email == email)
@@ -1167,10 +1185,12 @@ def signup_user():
     if user:
         return jsonify({"msg": "Ya se encuentra un usuario con ese email"}), 409
 
+    hashed_password = generate_password_hash(password)
+
     new_user = User(
         name=name,
         email=email,
-        password=password,
+        password=hashed_password,
         is_active=True
     )
 

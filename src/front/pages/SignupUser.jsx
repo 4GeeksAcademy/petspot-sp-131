@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { Navbar } from "../components/Navbar";
 import signupHero from "../assets/img/signup-user.png";
-
 
 export const SignupUser = () => {
     const navigate = useNavigate();
@@ -39,86 +39,83 @@ export const SignupUser = () => {
                 }
             })
             .catch(() => {
-                setError("Error de conexión con el servidor");
+                setError("Error de conexi\u00f3n con el servidor");
             });
     }
 
     return (
-        <div className="auth-page">
+        <>
+            <Navbar />
+            <div className="auth-page">
+                <div className="auth-hero">
+                    <h1 className="auth-hero-title">My Account</h1>
 
-            <div className="auth-hero">
-                <h1 className="auth-hero-title">My Account</h1>
-
-                <div className="auth-breadcrumb">
-                    <Link to="/">Home</Link>
-                    <span>›</span>
-                    <span>Register</span>
+                    <div className="auth-breadcrumb">
+                        <Link to="/">Home</Link>
+                        <span>&gt;</span>
+                        <span>Register</span>
+                    </div>
+                    <div className="auth-hero-image">
+                        <img src={signupHero} alt="User with dogs" />
+                    </div>
                 </div>
-                <div className="auth-hero-image">
-                    <img src={signupHero} alt="User with dogs" />
+
+                <div className="auth-panel">
+                    <form className="auth-card" onSubmit={sendData} noValidate>
+                        <h2 className="auth-title">Create Account</h2>
+                        <p className="auth-subtitle">Register to access your account</p>
+
+                        <div className="auth-field">
+                            <label htmlFor="signupName">Name</label>
+                            <input
+                                id="signupName"
+                                type="text"
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                                placeholder="Your name"
+                            />
+                        </div>
+
+                        <div className="auth-field">
+                            <label htmlFor="signupEmail">Email Address</label>
+                            <input
+                                id="signupEmail"
+                                type="email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                placeholder="Email Address"
+                            />
+                        </div>
+
+                        <div className="auth-field">
+                            <label htmlFor="signupPassword">Password</label>
+                            <input
+                                id="signupPassword"
+                                type="password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                placeholder="Password"
+                            />
+                        </div>
+
+                        {error && (
+                            <p style={{ color: "red", marginBottom: "20px" }}>
+                                {error}
+                            </p>
+                        )}
+
+                        <div className="auth-actions">
+                            <button type="submit" className="auth-btn">
+                                Register
+                            </button>
+
+                            <Link to="/user/login" className="auth-secondary-btn">
+                                Sign In
+                            </Link>
+                        </div>
+                    </form>
                 </div>
             </div>
-
-            <div className="auth-panel">
-
-                <form className="auth-card" onSubmit={sendData} noValidate>
-
-                    <h2 className="auth-title">Create Account</h2>
-                    <p className="auth-subtitle">Register to access your account</p>
-
-                    <div className="auth-field">
-                        <label htmlFor="signupName">Name</label>
-                        <input
-                            id="signupName"
-                            type="text"
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                            placeholder="Your name"
-                        />
-                    </div>
-
-                    <div className="auth-field">
-                        <label htmlFor="signupEmail">Email Address</label>
-                        <input
-                            id="signupEmail"
-                            type="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            placeholder="Email Address"
-                        />
-                    </div>
-
-                    <div className="auth-field">
-                        <label htmlFor="signupPassword">Password</label>
-                        <input
-                            id="signupPassword"
-                            type="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            placeholder="Password"
-                        />
-                    </div>
-
-                    {error && (
-                        <p style={{ color: "red", marginBottom: "20px" }}>
-                            {error}
-                        </p>
-                    )}
-
-                    <div className="auth-actions">
-                        <button type="submit" className="auth-btn">
-                            Register
-                        </button>
-
-                        <Link to="/user/login" className="auth-secondary-btn">
-                            Sign In
-                        </Link>
-                    </div>
-
-                </form>
-
-            </div>
-
-        </div>
+        </>
     );
 };

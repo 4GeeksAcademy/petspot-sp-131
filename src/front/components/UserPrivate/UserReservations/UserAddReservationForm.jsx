@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import useGlobalReducer from "../../../hooks/useGlobalReducer";
 import { getPlaces, getPrivateUser } from "../../../services/userPrivateService";
@@ -6,10 +6,26 @@ import PayPalPayment from "./PayPalPayment";
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
+function getLocalTodayString() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const day = String(now.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+}
+
+function getCurrentLocalTimeString() {
+    const now = new Date();
+    const hours = String(now.getHours()).padStart(2, "0");
+    const minutes = String(now.getMinutes()).padStart(2, "0");
+    return `${hours}:${minutes}`;
+}
+
 function UserAddReservationForm() {
     const { store, dispatch } = useGlobalReducer();
     const { id } = useParams();
     const navigate = useNavigate();
+    const today = useMemo(() => getLocalTodayString(), []);
 
     const [reservationDate, setReservationDate] = useState("");
     const [reservationTime, setReservationTime] = useState("");
@@ -20,6 +36,25 @@ function UserAddReservationForm() {
     const [availableSlots, setAvailableSlots] = useState([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [pendingPayment, setPendingPayment] = useState(null);
+
+    const visibleSlots = useMemo(() => {
+        if (!reservationDate) {
+            return [];
+        }
+
+        if (reservationDate !== today) {
+            return availableSlots;
+        }
+
+        const currentLocalTime = getCurrentLocalTimeString();
+        return availableSlots.filter((slot) => slot > currentLocalTime);
+    }, [availableSlots, reservationDate, today]);
+
+    const noSlotsLeftToday = reservationDate === today && availableSlots.length > 0 && visibleSlots.length === 0;
+
+    useEffect(() => {
+        setReservationDate(today);
+    }, [today]);
 
     useEffect(() => {
         async function loadPlaces() {
@@ -82,9 +117,26 @@ function UserAddReservationForm() {
             }
         }
         loadSlots();
-        // Reset time when date changes
-        setReservationTime("");
     }, [reservationDate, id]);
+
+    useEffect(() => {
+        if (!reservationDate) {
+            return;
+        }
+
+        if (visibleSlots.length === 0) {
+            setReservationTime("");
+            return;
+        }
+
+        setReservationTime((currentTime) => {
+            if (currentTime && visibleSlots.includes(currentTime)) {
+                return currentTime;
+            }
+
+            return visibleSlots[0];
+        });
+    }, [reservationDate, visibleSlots]);
 
     async function handleSubmit(event) {
         event.preventDefault();
@@ -198,7 +250,7 @@ function UserAddReservationForm() {
                                         type="date"
                                         className="form-control border-start-0 rounded-end-4 bg-white"
                                         id="reservationDate"
-                                        min={new Date().toISOString().split('T')[0]}
+                                        min={today}
                                         required
                                     />
                                 </div>
@@ -223,9 +275,9 @@ function UserAddReservationForm() {
 
                             <div className="col-12">
                                 <label className="form-label fw-bold text-secondary small text-uppercase mb-3">Available Time Slots *</label>
-                                {availableSlots.length > 0 ? (
+                                {visibleSlots.length > 0 ? (
                                     <div className="d-flex flex-wrap gap-2 justify-content-center p-3 rounded-4 bg-white border border-light shadow-sm">
-                                        {availableSlots.map(slot => (
+                                        {visibleSlots.map(slot => (
                                             <button
                                                 key={slot}
                                                 type="button"
@@ -242,8 +294,14 @@ function UserAddReservationForm() {
                                         {reservationDate ? (
                                             <>
                                                 <i className="fas fa-calendar-times mb-2 fs-3"></i>
-                                                <p className="mb-0">No availability found for this date.</p>
-                                                <small>The establishment might be closed or fully booked.</small>
+                                                <p className="mb-0">
+                                                    {noSlotsLeftToday ? "No time slots remain for today." : "No availability found for this date."}
+                                                </p>
+                                                <small>
+                                                    {noSlotsLeftToday
+                                                        ? "Please choose another date to continue with your reservation."
+                                                        : "The establishment might be closed or fully booked."}
+                                                </small>
                                             </>
                                         ) : (
                                             <p className="mb-0 italic text-secondary">Select a date to view available times</p>

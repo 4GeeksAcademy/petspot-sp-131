@@ -1,0 +1,182 @@
+.admin-sidebar {
+  width: var(--admin-sidebar-width);
+  height: 100%;
+  background-color: var(--admin-surface);
+  border-right: 1px solid var(--admin-border);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: var(--admin-border) transparent;
+}
+
+.admin-sidebar::-webkit-scrollbar {
+  width: 4px;
+}
+.admin-sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.admin-sidebar::-webkit-scrollbar-thumb {
+  background-color: var(--admin-border);
+  border-radius: 4px;
+}
+
+/* Logo */
+.admin-sidebar__logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 20px 20px 16px;
+  text-decoration: none;
+  border-bottom: 1px solid var(--admin-border);
+}
+
+.admin-sidebar__logo-icon {
+  font-size: 1.4rem;
+  color: var(--admin-primary);
+}
+
+.admin-sidebar__logo-text {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--admin-accent);
+  letter-spacing: -0.3px;
+}
+
+/* Secciones */
+.admin-sidebar__section {
+  padding: 8px 0 4px;
+}
+
+.admin-sidebar__section-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--admin-text-muted);
+  padding: 6px 20px 4px;
+}
+
+/* Items de navegación */
+.admin-sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 20px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--admin-text);
+  text-decoration: none;
+  border-radius: 0;
+  transition: background-color 150ms ease, color 150ms ease;
+  position: relative;
+  cursor: pointer;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+}
+
+.admin-sidebar-item:hover {
+  background-color: var(--admin-surface-alt);
+  color: var(--admin-accent);
+  text-decoration: none;
+}
+
+.admin-sidebar-item--active {
+  background-color: var(--admin-primary-soft);
+  color: var(--admin-accent);
+  font-weight: 600;
+}
+
+.admin-sidebar-item--active::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background-color: var(--admin-primary);
+  border-radius: 0 2px 2px 0;
+}
+
+.admin-sidebar-item__icon {
+  font-size: 1rem;
+  width: 18px;
+  text-align: center;
+  flex-shrink: 0;
+  color: var(--admin-text-muted);
+  transition: color 150ms ease;
+}
+
+.admin-sidebar-item:hover .admin-sidebar-item__icon,
+.admin-sidebar-item--active .admin-sidebar-item__icon {
+  color: var(--admin-primary);
+}
+
+/* Atajos rápidos */
+.admin-sidebar-shortcut {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--admin-text-muted);
+  text-decoration: none;
+  transition: color 150ms ease;
+}
+
+.admin-sidebar-shortcut:hover {
+  color: var(--admin-primary);
+  text-decoration: none;
+}
+
+/* Perfil al fondo */
+.admin-sidebar__footer {
+  margin-top: auto;
+  border-top: 1px solid var(--admin-border);
+  padding: 12px 20px;
+}
+
+.admin-sidebar__profile {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.admin-sidebar__profile-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--admin-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-sidebar__profile-role {
+  font-size: 0.72rem;
+  color: var(--admin-text-muted);
+}
+
+.admin-sidebar__logout-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--admin-text-muted);
+  font-size: 0.85rem;
+  padding: 4px 6px;
+  border-radius: var(--admin-radius-sm);
+  transition: color 150ms ease, background-color 150ms ease;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+.admin-sidebar__logout-btn:hover {
+  color: var(--admin-danger);
+  background-color: rgba(184, 84, 80, 0.08);
+}

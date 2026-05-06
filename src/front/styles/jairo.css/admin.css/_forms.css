@@ -1,0 +1,91 @@
+.admin-form-group {
+  margin-bottom: 16px;
+}
+
+.admin-label {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--admin-text);
+  margin-bottom: 6px;
+}
+
+.admin-label--required::after {
+  content: " *";
+  color: var(--admin-danger);
+}
+
+.admin-input,
+.admin-select,
+.admin-textarea {
+  width: 100%;
+  padding: 9px 12px;
+  font-size: 0.875rem;
+  color: var(--admin-text);
+  background-color: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-sm);
+  outline: none;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+  font-family: inherit;
+}
+
+.admin-input::placeholder,
+.admin-textarea::placeholder {
+  color: var(--admin-text-muted);
+}
+
+.admin-input:focus,
+.admin-select:focus,
+.admin-textarea:focus {
+  border-color: var(--admin-primary);
+  box-shadow: 0 0 0 3px rgba(201, 123, 99, 0.15);
+}
+
+.admin-textarea {
+  resize: vertical;
+  min-height: 90px;
+}
+
+.admin-input--error,
+.admin-select--error,
+.admin-textarea--error {
+  border-color: var(--admin-danger);
+}
+
+.admin-input--error:focus,
+.admin-select--error:focus,
+.admin-textarea--error:focus {
+  box-shadow: 0 0 0 3px rgba(184, 84, 80, 0.15);
+}
+
+.admin-form-hint {
+  font-size: 0.75rem;
+  color: var(--admin-text-muted);
+  margin-top: 4px;
+}
+
+.admin-form-error {
+  font-size: 0.75rem;
+  color: var(--admin-danger);
+  margin-top: 4px;
+}
+
+.admin-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.admin-check__input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--admin-primary);
+  cursor: pointer;
+}
+
+.admin-check__label {
+  font-size: 0.875rem;
+  color: var(--admin-text);
+}

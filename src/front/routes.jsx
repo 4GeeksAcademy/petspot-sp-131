@@ -6,7 +6,7 @@ import {
 } from "react-router-dom";
 
 import { Layout } from "./pages/Layout";
-import { Home } from "./pages/Home";
+import Home from "./pages/Home.jsx";
 import { Demo } from "./pages/Demo";
 import { Single } from "./pages/Single";
 import { User } from "./pages/User";
@@ -30,8 +30,10 @@ import RequirePlace from "./components/RequirePlace";
 import { Admin } from "./pages/Admin";
 import { AdminList, AdminCreate, AdminEdit, AdminDelete, AdminDetail } from "./pages/Admin";
 import AdminLogin from "./pages/AdminLogin";
+import AdminDashboardPage from "./pages/AdminDashboardPage";
 
 import RequireAdmin from "./components/RequireAdmin";
+import AdminLayout from "./components/Admin/AdminLayout";
 
 import { Reviews } from "./pages/Reviews/Reviews.jsx";
 import { ReviewDetail } from "./pages/Reviews/ReviewDetail.jsx";
@@ -127,28 +129,7 @@ export const router = createBrowserRouter(
         </Route>
       </Route>
 
-      <Route path="user" element={<RequireAdmin><User /></RequireAdmin>} />
-      <Route path="user/create" element={<RequireAdmin><UserCreate /></RequireAdmin>} />
-      <Route path="user/edit/:id" element={<RequireAdmin><UserEdit /></RequireAdmin>} />
-      <Route path="user/detail/:id" element={<RequireAdmin><UserDetail /></RequireAdmin>} />
-
       <Route path="usuario/admin/login" element={<AdminLogin />} />
-
-      <Route path="usuario/admin" element={<RequireAdmin><Admin /></RequireAdmin>}>
-        <Route index element={<AdminList />} />
-        <Route path="crear" element={<AdminCreate />} />
-        <Route path="editar/:id" element={<AdminEdit />} />
-        <Route path="eliminar/:id" element={<AdminDelete />} />
-        <Route path="detalle/:id" element={<AdminDetail />} />
-        <Route path="pets" element={<AdminPets />} />
-        <Route path="community" element={<Chat />} />
-      </Route>
-
-      <Route path="places" element={<RequireAdmin><Places /></RequireAdmin>} />
-      <Route path="places/add" element={<RequireAdmin><AddPlace /></RequireAdmin>} />
-      <Route path="places/edit/:id" element={<RequireAdmin><EditPlace /></RequireAdmin>} />
-      <Route path="places/delete/:id" element={<RequireAdmin><DeletePlace /></RequireAdmin>} />
-      <Route path="places/view/:id" element={<RequireAdmin><PlaceDetail /></RequireAdmin>} />
       <Route path="places/login" element={<LoginPlace />} />
       <Route path="places/signup" element={<SignupPlace />} />
       <Route path="places/private" element={<RequirePlace><PrivatePlace /></RequirePlace>} />
@@ -156,37 +137,59 @@ export const router = createBrowserRouter(
       <Route path="places/private/edit" element={<RequirePlace><EditPrivatePlace /></RequirePlace>} />
       <Route path="places/private/chats" element={<RequirePlace><PlaceChats /></RequirePlace>} />
 
-      <Route path="cities" element={<RequireAdmin><Cities /></RequireAdmin>} />
-      <Route path="cities/add" element={<RequireAdmin><AddCity /></RequireAdmin>} />
-      <Route path="cities/edit/:id" element={<RequireAdmin><EditCity /></RequireAdmin>} />
-      <Route path="cities/delete/:id" element={<RequireAdmin><DeleteCity /></RequireAdmin>} />
-      <Route path="cities/view/:id" element={<RequireAdmin><CityDetail /></RequireAdmin>} />
+      <Route element={<RequireAdmin><AdminLayout /></RequireAdmin>}>
+        <Route path="user" element={<User />} />
+        <Route path="user/create" element={<UserCreate />} />
+        <Route path="user/edit/:id" element={<UserEdit />} />
+        <Route path="user/detail/:id" element={<UserDetail />} />
 
-      <Route path="news" element={<RequireAdmin><News /></RequireAdmin>} />
-      <Route path="news/add" element={<RequireAdmin><AddNews /></RequireAdmin>} />
-      <Route path="news/edit/:id" element={<RequireAdmin><EditNews /></RequireAdmin>} />
-      <Route path="news/delete/:id" element={<RequireAdmin><DeleteNews /></RequireAdmin>} />
-      <Route path="news/view/:id" element={<RequireAdmin><NewsDetail /></RequireAdmin>} />
+        <Route path="usuario/admin" element={<Admin />}>
+          <Route index element={<AdminDashboardPage />} />
+          <Route path="crear" element={<AdminCreate />} />
+          <Route path="editar/:id" element={<AdminEdit />} />
+          <Route path="eliminar/:id" element={<AdminDelete />} />
+          <Route path="detalle/:id" element={<AdminDetail />} />
+          <Route path="pets" element={<AdminPets />} />
+          <Route path="community" element={<Chat />} />
+        </Route>
 
+        <Route path="places" element={<Places />} />
+        <Route path="places/add" element={<AddPlace />} />
+        <Route path="places/edit/:id" element={<EditPlace />} />
+        <Route path="places/delete/:id" element={<DeletePlace />} />
+        <Route path="places/view/:id" element={<PlaceDetail />} />
 
-      <Route path="reservations" element={<RequireAdmin><Reservations /></RequireAdmin>} />
-      <Route path="reservations/form" element={<RequireAdmin><AddReservation /></RequireAdmin>} />
-      <Route path="reservations/edit/:id" element={<RequireAdmin><EditReservation /></RequireAdmin>} />
-      <Route path="reservations/delete/:id" element={<RequireAdmin><DeleteReservation /></RequireAdmin>} />
-      <Route path="reservations/view/:id" element={<RequireAdmin><ReservationDetail /></RequireAdmin>} />
+        <Route path="cities" element={<Cities />} />
+        <Route path="cities/add" element={<AddCity />} />
+        <Route path="cities/edit/:id" element={<EditCity />} />
+        <Route path="cities/delete/:id" element={<DeleteCity />} />
+        <Route path="cities/view/:id" element={<CityDetail />} />
 
-      <Route path="favorites" element={<RequireAdmin><Favorites /></RequireAdmin>} />
-      <Route path="favorites/add" element={<RequireAdmin><AddFavorite /></RequireAdmin>} />
-      <Route path="favorites/edit/:id" element={<RequireAdmin><EditFavorite /></RequireAdmin>} />
-      <Route path="favorites/delete/:id" element={<RequireAdmin><DeleteFavorite /></RequireAdmin>} />
-      <Route path="favorites/view/:id" element={<RequireAdmin><FavoriteDetail /></RequireAdmin>} />
+        <Route path="news" element={<News />} />
+        <Route path="news/add" element={<AddNews />} />
+        <Route path="news/edit/:id" element={<EditNews />} />
+        <Route path="news/delete/:id" element={<DeleteNews />} />
+        <Route path="news/view/:id" element={<NewsDetail />} />
+
+        <Route path="reservations" element={<Reservations />} />
+        <Route path="reservations/form" element={<AddReservation />} />
+        <Route path="reservations/edit/:id" element={<EditReservation />} />
+        <Route path="reservations/delete/:id" element={<DeleteReservation />} />
+        <Route path="reservations/view/:id" element={<ReservationDetail />} />
+
+        <Route path="favorites" element={<Favorites />} />
+        <Route path="favorites/add" element={<AddFavorite />} />
+        <Route path="favorites/edit/:id" element={<EditFavorite />} />
+        <Route path="favorites/delete/:id" element={<DeleteFavorite />} />
+        <Route path="favorites/view/:id" element={<FavoriteDetail />} />
+
+        <Route path="reviews" element={<Reviews />} />
+        <Route path="reviews/detail/:id" element={<ReviewDetail />} />
+        <Route path="reviews/create" element={<ReviewCreate />} />
+        <Route path="reviews/edit/:id" element={<ReviewEdit />} />
+      </Route>
 
       <Route path="*" element={<h1>Not found!</h1>} />
-
-      <Route path="reviews" element={<RequireAdmin><Reviews /></RequireAdmin>} />
-      <Route path="reviews/detail/:id" element={<RequireAdmin><ReviewDetail /></RequireAdmin>} />
-      <Route path="reviews/create" element={<RequireAdmin><ReviewCreate /></RequireAdmin>} />
-      <Route path="reviews/edit/:id" element={<RequireAdmin><ReviewEdit /></RequireAdmin>} />
 
 
     </Route>
