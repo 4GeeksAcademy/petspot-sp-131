@@ -7,7 +7,7 @@ const navLinks = [
     { to: "/#how-it-works", label: "How It Works" },
     { to: "/#for-businesses", label: "For Businesses" },
     { to: "/#reviews", label: "What our community says" },
-    { to: "/#about", label: "About us" }
+    { to: "/about", label: "About us" }
 ];
 
 const authModalContent = {

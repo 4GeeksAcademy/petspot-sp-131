@@ -39,7 +39,7 @@ function HomeFooter() {
                             </ul>
                             <ul>
                                 <li><Link to="/#reviews">What our community says</Link></li>
-                                <li><Link to="/#about">About us</Link></li>
+                                <li><Link to="/about">About us</Link></li>
                             </ul>
                         </nav>
                     </div>

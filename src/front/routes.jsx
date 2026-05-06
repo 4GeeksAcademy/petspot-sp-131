@@ -7,6 +7,7 @@ import {
 
 import { Layout } from "./pages/Layout";
 import Home from "./pages/Home.jsx";
+import About from "./pages/About.jsx";
 import { Demo } from "./pages/Demo";
 import { Single } from "./pages/Single";
 import { User } from "./pages/User";
@@ -99,6 +100,7 @@ export const router = createBrowserRouter(
   createRoutesFromElements(
     <Route path="/" element={<Layout />} errorElement={<h1>Not found!</h1>}>
       <Route index element={<Home />} />
+      <Route path="about" element={<About />} />
       <Route path="tell-me-more" element={<TellMeMore />} />
       <Route path="demo" element={<Demo />} />
       <Route path="single/:theId" element={<Single />} />
