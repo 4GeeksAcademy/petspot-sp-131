@@ -169,8 +169,8 @@ function UserPetForm({ mode = "create", petId = null }) {
 
     if (isLoading) {
         return (
-            <p className="text-center text-body-secondary alert alert-secondary mx-auto" style={{ maxWidth: 600 }}>
-                Loading pet details...
+            <p style={{ textAlign: "center", color: "var(--admin-text-muted)", padding: "20px 0" }}>
+                Cargando…
             </p>
         );
     }
@@ -180,11 +180,21 @@ function UserPetForm({ mode = "create", petId = null }) {
         : formData.url || (formData.animal_type === "other" ? OTHER_PET_FALLBACK_IMAGE : null);
 
     return (
-        <div
-            className="mx-auto p-5 bg-secondary-subtle border-0 rounded text-start"
-            style={{ maxWidth: 700 }}
-        >
-            {message && <div className="alert alert-danger">{message}</div>}
+        <div style={{
+            maxWidth: 700, margin: "0 auto",
+            background: "var(--admin-surface)",
+            border: "1px solid var(--admin-border)",
+            borderRadius: "var(--admin-radius)",
+            boxShadow: "var(--admin-shadow-sm)",
+            padding: "28px 32px",
+        }}>
+            {message && (
+                <div style={{
+                    background: "rgba(184,84,80,0.08)", color: "var(--admin-danger)",
+                    border: "1px solid rgba(184,84,80,0.25)", borderRadius: "var(--admin-radius-sm)",
+                    padding: "10px 14px", marginBottom: 16, fontSize: "0.875rem",
+                }}>{message}</div>
+            )}
 
             <form onSubmit={handleSubmit}>
                 <div className="mb-3">
@@ -289,12 +299,20 @@ function UserPetForm({ mode = "create", petId = null }) {
 
                 <p className="text-body-secondary small mb-4">* Required fields</p>
 
-                <div className="d-grid d-sm-flex gap-2 justify-content-sm-center mt-5">
-                    <button type="submit" className="btn btn-success" disabled={isSubmitting}>
-                        {isSubmitting ? "Saving..." : (isEditing ? "Save Changes" : "Save Pet")}
+                <div className="d-flex flex-wrap gap-2 justify-content-center mt-4">
+                    <button type="submit" disabled={isSubmitting} style={{
+                        background: "var(--admin-success)", color: "#fff", border: "none",
+                        borderRadius: "var(--admin-radius-sm)", padding: "7px 20px",
+                        fontSize: "0.85rem", fontWeight: 600, cursor: "pointer",
+                    }}>
+                        {isSubmitting ? "Guardando..." : (isEditing ? "Guardar cambios" : "Guardar mascota")}
                     </button>
-                    <Link to="/user/private/pets" className="btn btn-outline-secondary">
-                        Cancel
+                    <Link to="/user/private/pets" style={{
+                        background: "transparent", color: "var(--admin-text-muted)",
+                        border: "1px solid var(--admin-border)", borderRadius: "var(--admin-radius-sm)",
+                        padding: "7px 20px", fontSize: "0.85rem", fontWeight: 600, textDecoration: "none",
+                    }}>
+                        Cancelar
                     </Link>
                 </div>
             </form>

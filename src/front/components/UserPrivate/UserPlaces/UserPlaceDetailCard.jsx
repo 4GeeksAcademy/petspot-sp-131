@@ -58,79 +58,85 @@ function UserPlaceDetailCard() {
     }
 
     if (!activePlace) {
-        return <p className="text-center text-body-secondary alert alert-danger mx-auto" style={{ maxWidth: 600 }}>Place not found</p>
+        return (
+            <p style={{ textAlign: "center", color: "var(--admin-danger)", fontSize: "0.9rem", padding: "20px 0" }}>
+                Lugar no encontrado.
+            </p>
+        );
     }
 
     return (
-        <>
-            <div className="text-center my-5">
-                <Link to="/user/private" className="btn btn-secondary">
-                    Go Back to Dashboard
-                </Link>
-            </div>
-            <div className="mx-auto p-5 bg-secondary-subtle border-0 rounded text-start" style={{ maxWidth: 600 }}>
-                {activePlace.image_url && (
-                    <img
-                        src={activePlace.image_url}
-                        alt={activePlace.name}
-                        className="img-fluid rounded mb-4"
-                        style={{ width: "100%", height: "300px", objectFit: "cover" }}
-                    />
-                )}
-                <div className="mb-2">
-                    <span className="fw-bold">Name: </span>{activePlace.name}
-                </div>
-                <div className="mb-2">
-                    <span className="fw-bold">Email: </span>{activePlace.email}
-                </div>
-                <div className="mb-2">
-                    <span className="fw-bold">Establishment type: </span>{activePlace.establishment_type}
-                </div>
-                <div className="mb-2">
-                    <span className="fw-bold">Pet rules: </span>{activePlace.pet_rules ? activePlace.pet_rules : "-"}
-                </div>
-                <div className="mb-3">
-                    <span className="fw-bold">Address: </span>{activePlace.address}
-                </div>
-                <LocationMap
-                    latitude={activePlace.latitude}
-                    longitude={activePlace.longitude}
-                    label="Place location"
+        <div style={{
+            maxWidth: 700, margin: "0 auto",
+            background: "var(--admin-surface)",
+            border: "1px solid var(--admin-border)",
+            borderRadius: "var(--admin-radius)",
+            boxShadow: "var(--admin-shadow-sm)",
+            padding: "28px 32px",
+        }}>
+            {activePlace.image_url && (
+                <img
+                    src={activePlace.image_url}
+                    alt={activePlace.name}
+                    style={{ width: "100%", height: 260, objectFit: "cover", borderRadius: "var(--admin-radius-sm)", marginBottom: 20 }}
                 />
-                <div className="d-grid d-sm-flex gap-2 justify-content-sm-center mt-5 mb-3">
-                    <Link to={`/user/private/reservations/add/${id}`} className="btn btn-outline-success">Make a reservation</Link>
-                    <Link 
-                        to={`/user/private/chats?id=${id}&name=${encodeURIComponent(activePlace.name)}`} 
-                        className="btn btn-outline-primary"
-                    >
-                        Contact
-                    </Link>
-                    <button
-                        type="button"
-                        className={`btn ${isFavorite ? "btn-warning" : "btn-outline-warning"}`}
-                        onClick={isFavorite ? removeFromFavorites : addToFavorites}
-                    >
-                        ❤︎
-                    </button>
-                </div>
-                <div className="mb-3">
-                    <span className="fw-bold">Reviews:</span>
-                    {placeReviews.length > 0 ? (
-                        <div className="mt-3 d-flex flex-column gap-3">
-                            {placeReviews.map((review) => (
-                                <div key={review.id} className="bg-light rounded p-3">
-                                    <div><strong>{review.title}</strong> ({review.rating}/5)</div>
-                                    <div className="text-body-secondary small mb-2">by {review.user_name}</div>
-                                    <div>{review.content}</div>
-                                </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="mt-2 text-body-secondary">No reviews yet.</div>
-                    )}
-                </div>
+            )}
+            <h4 style={{ fontWeight: 700, color: "var(--admin-text)", marginBottom: 16 }}>{activePlace.name}</h4>
+            <div style={{ fontSize: "0.875rem", color: "var(--admin-text)", marginBottom: 8 }}>
+                <strong>Email:</strong> <span style={{ color: "var(--admin-text-muted)" }}>{activePlace.email}</span>
             </div>
-        </>
+            <div style={{ fontSize: "0.875rem", color: "var(--admin-text)", marginBottom: 8 }}>
+                <strong>Tipo:</strong> <span style={{ color: "var(--admin-text-muted)" }}>{activePlace.establishment_type}</span>
+            </div>
+            <div style={{ fontSize: "0.875rem", color: "var(--admin-text)", marginBottom: 8 }}>
+                <strong>Normas de mascotas:</strong> <span style={{ color: "var(--admin-text-muted)" }}>{activePlace.pet_rules || "-"}</span>
+            </div>
+            <div style={{ fontSize: "0.875rem", color: "var(--admin-text)", marginBottom: 16 }}>
+                <strong>Dirección:</strong> <span style={{ color: "var(--admin-text-muted)" }}>{activePlace.address}</span>
+            </div>
+            <LocationMap latitude={activePlace.latitude} longitude={activePlace.longitude} label="Place location" />
+            <div className="d-flex flex-wrap gap-2 justify-content-center mt-4 mb-4">
+                <Link to={`/user/private/reservations/add/${id}`} style={{
+                    background: "rgba(123,160,91,0.12)", color: "var(--admin-success)",
+                    border: "1px solid rgba(123,160,91,0.3)", borderRadius: "var(--admin-radius-sm)",
+                    padding: "6px 16px", fontSize: "0.85rem", fontWeight: 600, textDecoration: "none",
+                }}>Reservar</Link>
+                <Link to={`/user/private/chats?id=${id}&name=${encodeURIComponent(activePlace.name)}`} style={{
+                    background: "var(--admin-primary-soft)", color: "var(--admin-primary)",
+                    border: "1px solid var(--admin-border)", borderRadius: "var(--admin-radius-sm)",
+                    padding: "6px 16px", fontSize: "0.85rem", fontWeight: 600, textDecoration: "none",
+                }}>Contactar</Link>
+                <button type="button" onClick={isFavorite ? removeFromFavorites : addToFavorites} style={{
+                    background: isFavorite ? "rgba(212,165,116,0.2)" : "transparent",
+                    color: "var(--admin-warning)", border: "1px solid rgba(212,165,116,0.4)",
+                    borderRadius: "var(--admin-radius-sm)", padding: "6px 16px",
+                    fontSize: "0.85rem", fontWeight: 600, cursor: "pointer",
+                }}>
+                    {isFavorite ? "♥ Favorito" : "♡ Favorito"}
+                </button>
+            </div>
+            <div style={{ borderTop: "1px solid var(--admin-border)", paddingTop: 16 }}>
+                <strong style={{ fontSize: "0.875rem", color: "var(--admin-text)" }}>Reseñas</strong>
+                {placeReviews.length > 0 ? (
+                    <div className="d-flex flex-column gap-2 mt-3">
+                        {placeReviews.map((review) => (
+                            <div key={review.id} style={{
+                                background: "var(--admin-bg)", border: "1px solid var(--admin-border)",
+                                borderRadius: "var(--admin-radius-sm)", padding: "10px 14px",
+                            }}>
+                                <div style={{ fontWeight: 600, fontSize: "0.875rem", color: "var(--admin-text)" }}>
+                                    {review.title} <span style={{ color: "var(--admin-warning)" }}>({review.rating}/5)</span>
+                                </div>
+                                <div style={{ fontSize: "0.78rem", color: "var(--admin-text-muted)", marginBottom: 4 }}>por {review.user_name}</div>
+                                <div style={{ fontSize: "0.875rem", color: "var(--admin-text)" }}>{review.content}</div>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div style={{ marginTop: 8, fontSize: "0.875rem", color: "var(--admin-text-muted)" }}>Todavía no hay reseñas.</div>
+                )}
+            </div>
+        </div>
     )
 }
 

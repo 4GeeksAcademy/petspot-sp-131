@@ -5,8 +5,11 @@ function UserEditPet() {
     const { id } = useParams();
 
     return (
-        <div className="text-center mx-auto">
-            <h1 className="text-center my-5 display-3">Edit Pet</h1>
+        <div>
+            <h5 style={{ fontWeight: 700, color: "var(--admin-text)", marginBottom: 20 }}>
+                <i className="fa-solid fa-pen me-2" style={{ color: "var(--admin-primary)" }} />
+                Editar mascota
+            </h5>
             <UserPetForm mode="edit" petId={id} />
         </div>
     );
