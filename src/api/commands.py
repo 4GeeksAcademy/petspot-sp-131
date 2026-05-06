@@ -120,9 +120,21 @@ def setup_commands(app):
             try:
                 resolved_place_address = resolve_place_address_geocode(seed_address)
             except (ValueError, RuntimeError) as error:
-                print(f"Unable to create place {email} from address '{seed_address}': {error}")
-                next_index += 1
-                continue
+                print(f"Geocoding unavailable ('{error}'). Using static city data as fallback.")
+                city_name = random.choice(list(cities.keys()))
+                city_tuple = cities[city_name]
+                fallback_city = db.session.execute(
+                    select(City).where(City.city == city_name)
+                ).scalar_one_or_none()
+                if fallback_city is None:
+                    print(f"City '{city_name}' not in DB. Run 'flask insert-cities' first, then retry.")
+                    break
+                resolved_place_address = {
+                    "formatted_address": city_tuple[0],
+                    "latitude": city_tuple[1],
+                    "longitude": city_tuple[2],
+                    "city_id": fallback_city.id,
+                }
 
             place = Place()
             place.email = email

@@ -1,0 +1,101 @@
+.admin-topbar {
+  height: var(--admin-topbar-height);
+  background-color: var(--admin-surface);
+  border-bottom: 1px solid var(--admin-border);
+  box-shadow: var(--admin-shadow-sm);
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  gap: 16px;
+}
+
+.admin-topbar__hamburger {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--admin-text-muted);
+  font-size: 1.1rem;
+  padding: 6px 8px;
+  border-radius: var(--admin-radius-sm);
+  transition: color 150ms ease, background-color 150ms ease;
+  flex-shrink: 0;
+}
+
+.admin-topbar__hamburger:hover {
+  color: var(--admin-accent);
+  background-color: var(--admin-surface-alt);
+}
+
+.admin-topbar__logo-area {
+  width: var(--admin-sidebar-width);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+}
+
+.admin-topbar__logo-icon {
+  font-size: 1.3rem;
+  color: var(--admin-primary);
+}
+
+.admin-topbar__logo-text {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--admin-accent);
+}
+
+.admin-topbar__title {
+  flex: 1;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--admin-text);
+}
+
+.admin-topbar__right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
+}
+
+.admin-topbar__admin-name {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--admin-text-muted);
+}
+
+.admin-topbar__logout {
+  background: none;
+  border: 1px solid var(--admin-border);
+  cursor: pointer;
+  color: var(--admin-text-muted);
+  font-size: 0.8rem;
+  padding: 5px 12px;
+  border-radius: var(--admin-radius-sm);
+  transition: color 150ms ease, border-color 150ms ease, background-color 150ms ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500;
+}
+
+.admin-topbar__logout:hover {
+  color: var(--admin-danger);
+  border-color: var(--admin-danger);
+  background-color: rgba(184, 84, 80, 0.06);
+}
+
+@media (max-width: 991.98px) {
+  .admin-topbar__hamburger {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .admin-topbar__logo-area {
+    width: auto;
+  }
+}
