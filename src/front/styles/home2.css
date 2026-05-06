@@ -1,0 +1,26 @@
+.home2-page {
+    min-height: 100vh;
+    background-color: var(--pink-light);
+    color: var(--black);
+    font-family: var(--font-family-base);
+}
+
+.home2-page__header,
+.home2-page__footer,
+.home2-page__section {
+    padding: 2rem 1.5rem;
+}
+
+.home2-page__header,
+.home2-page__footer,
+.home2-page__section:nth-child(odd) {
+    background-color: rgba(255, 255, 255, 0.35);
+}
+
+.home2-page__section p,
+.home2-page__header p,
+.home2-page__footer p {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+}
