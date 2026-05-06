@@ -1,19 +1,72 @@
+@import "./styles/home.css";
+
 :root {
-  --ps-bg-soft: #fde9e5;
-  --ps-bg-strong: #ffc3b8;
+  --pink-light: #ffede9;
+  --pink-medium: #fddad3;
+  --pink-dark: #fe8f90;
+  --red: #e44e70;
+  --black: #000000;
+  --white: #ffffff;
+
+  --primary-hover: #fec2c2;
+
+  --font-family-base: "Elms Sans", Arial, Helvetica, sans-serif;
+
+  /* Keep develop auth styles working, but map them to this branch's variables. */
+  --ps-bg-soft: var(--pink-light);
+  --ps-bg-strong: var(--pink-medium);
   --ps-panel: #f2d7d2;
   --ps-card: #f6e1dc;
-  --ps-text: #111111;
+  --ps-text: var(--black);
   --ps-muted: #5f6472;
-  --ps-border: #111111;
-  --ps-white: #ffffff;
-  --ps-font-main: "Poppins", system-ui, sans-serif;
+  --ps-border: var(--black);
+  --ps-white: var(--white);
+  --ps-font-main: var(--font-family-base);
 }
 
 body {
   margin: 0;
-  font-family: var(--ps-font-main);
-  color: var(--ps-text);
+  padding: 0;
+  font-family: var(--font-family-base);
+  color: var(--black);
+  background-color: var(--pink-light);
+  text-align: left;
+  font-size: 16px;
+}
+
+ul,
+ol {
+  padding-left: 0;
+  list-style: none;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+h1 {
+  letter-spacing: -1px;
+}
+
+footer {
+  background-color: var(--pink-medium);
+}
+
+.btn-filled {
+  background-color: var(--black);
+  color: var(--white);
+  font-weight: bold;
+  padding: 12px 20px;
+  border-radius: 10px;
+}
+
+.btn-outline {
+  color: var(--black);
+  font-weight: bold;
+  padding: 12px 20px;
+  border-radius: 10px;
+  border: 2px solid var(--black);
 }
 
 /* AUTH LAYOUT */
@@ -72,7 +125,7 @@ body {
   align-items: center;
   justify-content: center;
   padding: 160px 80px 80px;
-  background: var(--ps-panel);
+  background: var(--pink-light);
 }
 
 /* AUTH CARD */
@@ -84,7 +137,7 @@ body {
   border: 1.5px solid var(--ps-border);
   border-radius: 28px;
   padding: 80px 70px;
-  background: var(--ps-card);
+  background: var(--pink-light);
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.05);
 }
 
