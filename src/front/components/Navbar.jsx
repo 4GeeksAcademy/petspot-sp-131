@@ -1,41 +1,73 @@
-import React from "react";
-import { Link } from "react-router-dom";
-import LogoPetSpot from "../assets/img/logo/Logo_PetSpot.svg"
+import React, { useEffect, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
+import LogoPetSpot from "../assets/img/logo/Logo_PetSpot.svg";
+
+const navLinks = [
+    { to: "/#how-it-works", label: "How It Works" },
+    { to: "/#for-businesses", label: "For Businesses" },
+    { to: "/#reviews", label: "What our community says" },
+    { to: "/#about", label: "About us" }
+];
 
 export const Navbar = () => {
-	return (
-		<nav className="navbar sticky-top navbar-expand-md">
-			<div className="container-fluid h-100 py-3">
-				<Link to="/" className="navbar-brand">
-					<img src={LogoPetSpot} alt="PetSpot logo" style={{ height: "48px", width: "auto", display: "block" }} />
-				</Link>
-				<button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarTogglerDemo01" aria-controls="navbarTogglerDemo01" aria-expanded="false" aria-label="Toggle navigation">
-					<span className="navbar-toggler-icon"></span>
-				</button>
-				<div className="collapse navbar-collapse" id="navbarTogglerDemo01">
-					<ul className="navbar-nav me-auto mb-2 mb-lg-0">
-						<li className="nav-item">
-							<Link className="nav-link active" aria-current="page" to="#">About us</Link>
-						</li>
-						<li className="nav-item">
-							<Link to="/user/login" className="nav-link fw-bold">
-								Login User
-							</ Link>
-						</li>
-						<li className="nav-item">
-							<Link to="/signup/user" className="nav-link fw-bold">
-								Join Today User
-							</Link>
-						</li>
-						<li className="nav-item">
-							<Link to="/places/login" className="nav-link fw-bold ">
-								Login Place
-							</Link>
-						</li>
-					</ul>
-				</div>
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const location = useLocation();
 
-			</div>
-		</nav>
-	)
+    const closeMenu = () => setIsMenuOpen(false);
+
+    useEffect(() => {
+        if (!location.hash) return;
+
+        const sectionId = location.hash.replace("#", "");
+        const targetSection = document.getElementById(sectionId);
+
+        if (targetSection) {
+            requestAnimationFrame(() => {
+                targetSection.scrollIntoView({ behavior: "smooth", block: "start" });
+            });
+        }
+    }, [location]);
+
+    return (
+        <header className="home-navbar">
+            <div className="container">
+                <div className="home-navbar__inner">
+                    <Link to="/#top" className="home-navbar__logo" aria-label="PetSpot home" onClick={closeMenu}>
+                        <img src={LogoPetSpot} alt="PetSpot logo" />
+                    </Link>
+
+                    <button
+                        type="button"
+                        className={`home-navbar__toggle${isMenuOpen ? " is-open" : ""}`}
+                        aria-label="Toggle navigation"
+                        aria-expanded={isMenuOpen}
+                        onClick={() => setIsMenuOpen(open => !open)}
+                    >
+                        <span />
+                        <span />
+                        <span />
+                    </button>
+
+                    <div className={`home-navbar__menu${isMenuOpen ? " is-open" : ""}`}>
+                        <nav className="home-navbar__links" aria-label="Homepage navigation">
+                            {navLinks.map(link => (
+                                <Link key={link.label} to={link.to} onClick={closeMenu}>
+                                    {link.label}
+                                </Link>
+                            ))}
+                        </nav>
+
+                        <div className="home-navbar__actions">
+                            <Link to="/user/login" className="home-navbar__login" onClick={closeMenu}>
+                                Log in
+                            </Link>
+                            <Link to="/signup/user" className="home-navbar__signup" onClick={closeMenu}>
+                                Sign Up
+                            </Link>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+    );
 };

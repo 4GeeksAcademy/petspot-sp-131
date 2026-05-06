@@ -1,3 +1,137 @@
+html {
+    scroll-behavior: smooth;
+}
+
+/* =========================
+   HOME NAVBAR
+========================= */
+.home-navbar {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    height: 90px;
+    background-color: var(--white);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    font-family: var(--font-family-base);
+}
+
+.home-navbar__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+    min-height: 90px;
+}
+
+.home-navbar__logo {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.home-navbar__logo img {
+    display: block;
+    height: 30px;
+    width: auto;
+}
+
+.home-navbar__menu {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+    flex: 1;
+}
+
+.home-navbar__links {
+    display: flex;
+    align-items: center;
+    gap: 2.25rem;
+    margin: 0 auto;
+}
+
+.home-navbar__links a,
+.home-navbar__login,
+.home-navbar__signup {
+    color: var(--black);
+    font-size: 1rem;
+    line-height: 1;
+    transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.home-navbar__links a:hover,
+.home-navbar__links a:focus-visible,
+.home-navbar__login:hover,
+.home-navbar__login:focus-visible {
+    color: rgba(0, 0, 0, 0.65);
+}
+
+.home-navbar__actions {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex-shrink: 0;
+}
+
+.home-navbar__login {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.home-navbar__signup {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 46px;
+    padding: 0.75rem 1.6rem;
+    border: 1px solid var(--black);
+    border-radius: 18px;
+    background-color: var(--white);
+}
+
+.home-navbar__signup:hover,
+.home-navbar__signup:focus-visible {
+    background-color: rgba(0, 0, 0, 0.04);
+    transform: translateY(-1px);
+}
+
+.home-navbar__toggle {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.32rem;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.home-navbar__toggle span {
+    display: block;
+    width: 24px;
+    height: 2px;
+    margin: 0 auto;
+    background-color: var(--black);
+    border-radius: 999px;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.home-navbar__toggle.is-open span:nth-child(1) {
+    transform: translateY(6px) rotate(45deg);
+}
+
+.home-navbar__toggle.is-open span:nth-child(2) {
+    opacity: 0;
+}
+
+.home-navbar__toggle.is-open span:nth-child(3) {
+    transform: translateY(-6px) rotate(-45deg);
+}
+
 /* =========================
    HERO
 ========================= */
@@ -140,6 +274,51 @@
 }
 
 @media (max-width: 991.98px) {
+    .home-navbar {
+        height: auto;
+        min-height: 90px;
+    }
+
+    .home-navbar__inner {
+        position: relative;
+        min-height: 90px;
+        gap: 1rem;
+    }
+
+    .home-navbar__toggle {
+        display: inline-flex;
+    }
+
+    .home-navbar__menu {
+        position: absolute;
+        top: calc(100% + 0.75rem);
+        left: 0;
+        right: 0;
+        display: none;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1.5rem;
+        padding: 1.5rem;
+        background-color: var(--white);
+        border-radius: 20px;
+        box-shadow: 0 16px 36px rgba(0, 0, 0, 0.1);
+    }
+
+    .home-navbar__menu.is-open {
+        display: flex;
+    }
+
+    .home-navbar__links {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1.15rem;
+        margin: 0;
+    }
+
+    .home-navbar__actions {
+        justify-content: space-between;
+    }
+
     .home-footer {
         padding-top: 4rem;
     }
@@ -163,6 +342,25 @@
 }
 
 @media (max-width: 767.98px) {
+    .home-navbar__logo img {
+        height: 26px;
+    }
+
+    .home-navbar__menu {
+        padding: 1.25rem;
+    }
+
+    .home-navbar__actions {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.9rem;
+    }
+
+    .home-navbar__login,
+    .home-navbar__signup {
+        justify-content: center;
+    }
+
     .home-footer {
         padding: 3.25rem 0 1.75rem;
     }
