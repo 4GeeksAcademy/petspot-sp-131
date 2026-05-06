@@ -802,12 +802,105 @@ html {
 }
 
 /* =========================
+   ABOUT SECTION
+========================= */
+.about-section {
+    padding: 5rem 0;
+    background-color: var(--pink-light);
+    font-family: var(--font-family-base);
+}
+
+.about-section__title {
+    margin: 0 0 1rem;
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+}
+
+.about-section__text {
+    margin: 0;
+    font-size: 14pt;
+    line-height: 1.45;
+}
+
+.about-section__team {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 2.5rem;
+    max-width: 980px;
+    margin: 3.5rem auto 0;
+}
+
+.about-section__member {
+    text-align: center;
+}
+
+.about-section__image-wrapper {
+    position: relative;
+    width: min(100%, 280px);
+    aspect-ratio: 0.92 / 1;
+    margin: 0 auto;
+    overflow: hidden;
+    border-radius: 9rem 9rem 0 0;
+}
+
+.about-section__image {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.about-section__overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    background-color: rgba(0, 0, 0, 0.28);
+    opacity: 0;
+    transition: opacity 0.25s ease;
+}
+
+.about-section__image-wrapper:hover .about-section__overlay,
+.about-section__image-wrapper:focus-within .about-section__overlay {
+    opacity: 1;
+}
+
+.about-section__social-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.92);
+    color: var(--black);
+    font-size: 1.2rem;
+    transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.about-section__social-link:hover,
+.about-section__social-link:focus-visible {
+    background-color: var(--white);
+    transform: translateY(-1px);
+}
+
+.about-section__name {
+    margin: 1rem 0 0;
+    font-size: 14pt;
+    line-height: 1.2;
+}
+
+/* =========================
    HOME FOOTER
 ========================= */
 .home-footer {
     background-color: var(--pink-medium);
     padding: 4.75rem 0 2rem;
     font-family: var(--font-family-base);
+    border-top: 1px solid var(--black);
 }
 
 .home-footer__top {
@@ -1057,6 +1150,15 @@ html {
         display: none;
     }
 
+    .about-section {
+        padding: 4rem 0;
+    }
+
+    .about-section__team {
+        gap: 1.75rem;
+        max-width: none;
+    }
+
     .home-footer {
         padding-top: 4rem;
     }
@@ -1286,6 +1388,29 @@ html {
 
     .reviews-section__stars {
         font-size: 1.45rem;
+    }
+
+    .about-section {
+        padding: 3.25rem 0;
+    }
+
+    .about-section__title,
+    .about-section__text {
+        text-align: center;
+    }
+
+    .about-section__text {
+        margin: 0 auto;
+    }
+
+    .about-section__team {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+        margin-top: 2.5rem;
+    }
+
+    .about-section__image-wrapper {
+        width: min(100%, 260px);
     }
 
     .home-footer {
