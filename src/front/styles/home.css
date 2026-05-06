@@ -901,10 +901,12 @@ html {
     padding: 4.75rem 0 2rem;
     font-family: var(--font-family-base);
     border-top: 1px solid var(--black);
+    font-size: 10pt;
 }
 
 .home-footer__top {
     align-items: start;
+    row-gap: 2.25rem;
 }
 
 .home-footer__brand {
@@ -918,16 +920,16 @@ html {
 
 .home-footer__logo-image {
     display: block;
-    width: min(100%, 320px);
-    min-width: 220px;
+    width: min(100%, 300px);
+    min-width: 200px;
     height: auto;
 }
 
 .home-footer__description {
     max-width: 24ch;
     margin-bottom: 1.5rem;
-    font-size: 1.1rem;
-    line-height: 1.05;
+    font-size: 12pt;
+    line-height: 1.2;
 }
 
 .home-footer__socials {
@@ -940,7 +942,7 @@ html {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-size: 2rem;
+    font-size: 1.75rem;
     transition: transform 0.2s ease, opacity 0.2s ease;
 }
 
@@ -972,7 +974,7 @@ html {
 .home-footer__contact div,
 .home-footer__bottom a,
 .home-footer__bottom p {
-    font-size: 1.2rem;
+    font-size: 12pt;
     line-height: 1.2;
 }
 
@@ -991,11 +993,13 @@ html {
 }
 
 .home-footer__contact i {
-    font-size: 1.2rem;
+    font-size: 1rem;
+    flex-shrink: 0;
 }
 
 .home-footer__divider {
     margin: 2rem 0 1.25rem;
+    width: 100%;
     border: 0;
     border-top: 1px solid rgba(0, 0, 0, 0.65);
     opacity: 1;
@@ -1168,16 +1172,25 @@ html {
         max-width: none;
     }
 
+    .home-footer__top {
+        row-gap: 2rem;
+    }
+
+    .home-footer__logo-image {
+        width: min(100%, 280px);
+        min-width: 0;
+    }
+
     .home-footer__links a,
     .home-footer__contact a,
     .home-footer__contact div,
     .home-footer__bottom a,
     .home-footer__bottom p {
-        font-size: 1.2rem;
+        font-size: 12pt;
     }
 
     .home-footer__description {
-        font-size: 1.45rem;
+        font-size: 12pt;
     }
 }
 
@@ -1230,18 +1243,18 @@ html {
         padding-bottom: 4rem;
     }
 
-    .explore-places__header,
+    .explore-places__header {
+        flex-direction: column;
+    }
+
     .explore-places__footer {
         align-items: flex-start;
         flex-direction: column;
     }
 
-    .explore-places__controls {
-        align-self: flex-end;
-    }
-
     .explore-places__title {
         font-size: 1.8rem;
+        text-align: center;
     }
 
     .explore-places__card {
@@ -1276,6 +1289,7 @@ html {
 
     .how-it-works__title {
         margin-bottom: 2rem;
+        text-align: center;
     }
 
     .how-it-works__steps {
@@ -1312,6 +1326,7 @@ html {
 
     .businesses-section__title {
         font-size: 1.85rem;
+        text-align: center;
     }
 
     .businesses-section__subtitle {
@@ -1435,12 +1450,12 @@ html {
     .home-footer__description {
         margin-left: auto;
         margin-right: auto;
-        font-size: 1.2rem;
+        font-size: 12pt;
     }
 
     .home-footer__logo-image {
-        min-width: 0;
         width: min(100%, 240px);
+        min-width: 180px;
     }
 
     .home-footer__links {
@@ -1449,12 +1464,19 @@ html {
         gap: 1rem;
     }
 
+    .home-footer__contact {
+        align-items: center;
+        padding-top: 0;
+    }
+
     .home-footer__bottom {
         flex-direction: column;
+        align-items: center;
     }
 
     .home-footer__bottom nav ul {
         flex-wrap: wrap;
         gap: 1rem 1rem;
+        justify-content: center;
     }
 }
