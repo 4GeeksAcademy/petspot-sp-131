@@ -555,12 +555,12 @@ body {
 
   .auth-hero-image {
     right: -12px;
-    bottom: 10;
-    height: 86%;
+    bottom: 0;
+    height: 96%;
   }
 
   .auth-hero-image img {
-    height: 120%;
+    height: 100%;
     max-width: none;
   }
 
