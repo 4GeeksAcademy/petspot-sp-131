@@ -10,7 +10,7 @@ COMMANDS = [
     ["pipenv", "run", "flask", "insert-external-races"],
     ["pipenv", "run", "flask", "insert-test-pets", "10"],
     ["pipenv", "run", "flask", "insert-test-favorites", "10"],
-    ["pipenv", "run", "flask", "insert-test-reservations", "10"],
+    ["pipenv", "run", "flask", "insert-test-reservations", "30"],
     ["pipenv", "run", "flask", "insert-test-reviews", "15"],
     ["pipenv", "run", "flask", "insert-test-chat", "10"],
     ["pipenv", "run", "flask", "insert-test-news"],
