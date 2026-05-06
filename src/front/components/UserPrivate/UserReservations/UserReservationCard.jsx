@@ -1,9 +1,9 @@
 import { Link } from "react-router-dom";
 
 const statusStyle = {
-    confirmed: { bg: "rgba(123,160,91,0.15)", color: "var(--admin-success)", border: "rgba(123,160,91,0.3)" },
-    pending: { bg: "rgba(212,165,116,0.15)", color: "var(--admin-warning)", border: "rgba(212,165,116,0.4)" },
-    cancelled: { bg: "rgba(184,84,80,0.08)", color: "var(--admin-danger)", border: "rgba(184,84,80,0.25)" },
+    confirmed: { bg: "rgba(255,255,255,0.9)", color: "#5a8a3a", border: "rgba(255,255,255,0.6)" },
+    pending: { bg: "rgba(255,255,255,0.9)", color: "#b07a3a", border: "rgba(255,255,255,0.6)" },
+    cancelled: { bg: "rgba(255,255,255,0.9)", color: "#b85450", border: "rgba(255,255,255,0.6)" },
 };
 
 function UserReservationCard({ reservationObj, onCancelReservation }) {
