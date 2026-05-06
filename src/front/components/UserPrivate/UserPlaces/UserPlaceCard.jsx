@@ -7,14 +7,9 @@ import {
 
 function UserPlaceCard({ placeObj, isSelected = false, onSelect }) {
     const { store, dispatch } = useGlobalReducer();
-    const { name, pet_rules, city, establishment_type, id, image_url, address } = placeObj
+    const { name, pet_rules, city, establishment_type, id, image_url, address } = placeObj;
     const isFavorite = (store.privateUser?.favorite_places || []).includes(id);
 
-    const establishmentTypeEmoji = {
-        bar: "\u{1F37A}",
-        restaurant: "\u{1F35D}",
-        cafe: "\u{2615}"
-    }
 
     async function addToFavorites() {
         try {
@@ -46,7 +41,7 @@ function UserPlaceCard({ placeObj, isSelected = false, onSelect }) {
 
     return (
         <div
-            className="card bg-secondary-subtle border-0"
+            className={`user-places__card ${isSelected ? "is-selected" : ""}`}
             onClick={onSelect}
             role="button"
             tabIndex={0}
@@ -56,67 +51,60 @@ function UserPlaceCard({ placeObj, isSelected = false, onSelect }) {
                     onSelect?.();
                 }
             }}
-            style={{
-                flex: "1 1 320px",
-                maxWidth: "400px",
-                minWidth: "280px",
-                cursor: "pointer",
-                borderRadius: "0.5rem",
-                border: isSelected ? "2px solid var(--bs-primary)" : "2px solid transparent",
-                boxShadow: isSelected ? "0 0 0 0.2rem rgba(13, 110, 253, 0.15)" : "none"
-            }}
         >
-            {image_url && (
-                <img
-                    src={image_url}
-                    className="card-img-top"
-                    alt={name}
-                    style={{ height: "200px", objectFit: "cover" }}
-                />
-            )}
-            <div className="card-body" style={{ borderRadius: "0.5rem" }}>
-                <h5 className="card-title card-header bg-secondary-subtle mb-3 ps-0 h2">{name}</h5>
-                <h6 className="card-subtitle mb-2 text-body-secondary">
-                    {establishmentTypeEmoji[establishment_type]}
-                    <span className="fst-italic">{establishment_type.toUpperCase()}</span>
-                </h6>
-                <div className="mb-3 d-flex flex-wrap gap-2 fw-bold">
-                    {"\u{1F4CC}"}
-                    {address} ({city.city})
-                </div>
-                <div className="d-flex flex-column gap-3" onClick={stopCardSelection}>
-                    <p className="card-text m-0">{pet_rules}</p>
-                    <div className="d-grid d-sm-flex gap-2 justify-content-sm-end">
-                        <Link
-                            to={`/user/private/places/view/${id}`}
-                            className="btn btn-outline-primary"
-                            onClick={stopCardSelection}
-                        >
-                            View
-                        </Link>
-                        <Link
-                            to={`/user/private/reservations/add/${id}`}
-                            className="btn btn-outline-success"
-                            onClick={stopCardSelection}
-                        >
-                            Make a reservation
-                        </Link>
-                        <button
-                            type="button"
-                            className={`btn ${isFavorite ? "btn-warning" : "btn-outline-warning"} `}
-                            onClick={(event) => {
-                                stopCardSelection(event);
-                                if (isFavorite) {
-                                    removeFromFavorites();
-                                    return;
-                                }
-
-                                addToFavorites();
-                            }}
-                        >
-                            {"\u2665"}
-                        </button>
+            <div className="user-places__image-wrapper">
+                {image_url ? (
+                    <img
+                        src={image_url}
+                        className="user-places__image"
+                        alt={name}
+                    />
+                ) : (
+                    <div className="user-places__image user-places__image--placeholder">
+                        No image available
                     </div>
+                )}
+                <button
+                    type="button"
+                    className={`user-places__favorite ${isFavorite ? "is-active" : ""}`}
+                    aria-label={isFavorite ? `Remove ${name} from favorites` : `Save ${name} to favorites`}
+                    onClick={(event) => {
+                        stopCardSelection(event);
+                        if (isFavorite) {
+                            removeFromFavorites();
+                            return;
+                        }
+
+                        addToFavorites();
+                    }}
+                >
+                    {"\u2665"}
+                </button>
+            </div>
+            <div className="user-places__content">
+                <p className="user-places__eyebrow">
+                    {establishment_type?.toUpperCase() || "ESTABLISHMENT"}
+                </p>
+                <h5 className="user-places__title">{name}</h5>
+                <p className="user-places__address">
+                    {address} ({city.city})
+                </p>
+                <div className="user-places__summary">{pet_rules}</div>
+                <div className="user-places__actions" onClick={stopCardSelection}>
+                    <Link
+                        to={`/user/private/places/view/${id}`}
+                        className="home-hero__button home-hero__button--primary"
+                        onClick={stopCardSelection}
+                    >
+                        View details
+                    </Link>
+                    <Link
+                        to={`/user/private/reservations/add/${id}`}
+                        className="user-places__button user-places__button--primary"
+                        onClick={stopCardSelection}
+                    >
+                        Make a reservation
+                    </Link>
                 </div>
             </div>
         </div>

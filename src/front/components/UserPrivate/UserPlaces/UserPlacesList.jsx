@@ -2,16 +2,9 @@ import UserPlaceCard from "./UserPlaceCard";
 
 function UserPlacesList({ places, selectedPlace, setSelectedPlace }) {
     return (
-        <div
-            style={{
-                maxHeight: "600px",
-                overflowY: "auto",
-                overflowX: "hidden",
-                paddingRight: "0.5rem"
-            }}
-        >
+        <div className="user-places__list">
             {places.length > 0 ? (
-                <div className="d-flex flex-wrap gap-3 align-items-start justify-content-center" >
+                <div className="user-places__list-grid">
                     {places.map((place) => (
                         <UserPlaceCard
                             placeObj={place}
@@ -22,7 +15,7 @@ function UserPlacesList({ places, selectedPlace, setSelectedPlace }) {
                     ))}
                 </div>
             ) : (
-                <p className="text-center text-muted">No places available for the current filter.</p>
+                <p className="user-places__empty">No places available for the current filter.</p>
             )}
         </div>
     );

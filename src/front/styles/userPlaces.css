@@ -1,0 +1,479 @@
+.user-places {
+    width: min(100%, 1440px);
+    margin: 0 auto;
+    padding: 2rem 1rem 2.5rem;
+    font-family: var(--font-family-base);
+}
+
+.user-places--dashboard {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.user-places__hero {
+    max-width: 760px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.user-places__heading {
+    margin: 0;
+    font-size: clamp(2rem, 3vw, 3rem);
+    font-weight: 800;
+    letter-spacing: -0.04em;
+}
+
+.user-places__intro {
+    max-width: 60ch;
+    margin: 1rem auto 0;
+    color: rgba(0, 0, 0, 0.72);
+    font-size: 1rem;
+    line-height: 1.5;
+}
+
+.user-places__news-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 3.2rem;
+    margin-top: 1.25rem;
+    padding: 0.85rem 1.5rem;
+    border-radius: 999px;
+    background: var(--pink-dark);
+    color: var(--white);
+    font-weight: 700;
+    transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.user-places__news-link:hover,
+.user-places__news-link:focus-visible {
+    background: var(--red);
+    transform: translateY(-1px);
+}
+
+.user-places__filters {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.85rem;
+}
+
+.user-places__filter-button {
+    min-width: 200px;
+    min-height: 3.2rem;
+    padding: 0.85rem 1.3rem;
+    border: 1px solid rgba(0, 0, 0, 0.14);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.9);
+    color: var(--black);
+    font-family: var(--font-family-base);
+    font-size: 0.98rem;
+    font-weight: 700;
+    transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.user-places__filter-button:hover,
+.user-places__filter-button:focus-visible {
+    border-color: rgba(0, 0, 0, 0.32);
+    background: var(--white);
+    transform: translateY(-1px);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.05);
+}
+
+.user-places__filter-button.is-active {
+    border-color: transparent;
+    background: var(--black);
+    color: var(--white);
+    box-shadow: 0 16px 30px rgba(0, 0, 0, 0.1);
+}
+
+.user-places__filter-button:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.user-places__filter-panel {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    padding: 1rem 1.15rem;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 1.5rem;
+    background: rgba(255, 255, 255, 0.72);
+}
+
+.user-places__filter-copy {
+    margin: 0;
+    color: rgba(0, 0, 0, 0.8);
+    font-size: 1rem;
+    line-height: 1.4;
+    text-align: center;
+}
+
+.user-places__radius-control {
+    display: inline-grid;
+    grid-template-columns: minmax(0, 92px) auto;
+    overflow: hidden;
+    border: 1px solid rgba(0, 0, 0, 0.16);
+    border-radius: 999px;
+    background: var(--white);
+}
+
+.user-places__input,
+.user-places__select {
+    border: 1px solid rgba(0, 0, 0, 0.16);
+    border-radius: 999px;
+    background: var(--white);
+    color: var(--black);
+    font-family: var(--font-family-base);
+    font-size: 0.98rem;
+    min-height: 3rem;
+}
+
+.user-places__input {
+    padding: 0 0.9rem;
+    border: 0;
+    text-align: center;
+}
+
+.user-places__input:focus,
+.user-places__select:focus {
+    outline: none;
+    border-color: rgba(0, 0, 0, 0.3);
+    box-shadow: 0 0 0 0.2rem rgba(254, 143, 144, 0.2);
+}
+
+.user-places__input-addon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 56px;
+    padding: 0 0.8rem;
+    background: rgba(0, 0, 0, 0.04);
+    color: rgba(0, 0, 0, 0.72);
+    font-weight: 700;
+}
+
+.user-places__select {
+    min-width: min(100%, 260px);
+    padding: 0 3rem 0 1rem;
+    appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg fill='%23111' height='18' viewBox='0 0 20 20' width='18' xmlns='http://www.w3.org/2000/svg'><path d='M5 7l5 5 5-5z'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+}
+
+.user-places__layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.08fr) minmax(320px, 0.92fr);
+    gap: 1.5rem;
+    align-items: start;
+}
+
+.user-places__list-column {
+    min-width: 0;
+}
+
+.user-places__map-column {
+    position: sticky;
+    top: 108px;
+}
+
+.user-places__list {
+    max-height: calc(100vh - 170px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 0.35rem;
+}
+
+.user-places__list-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+}
+
+.user-places__empty {
+    margin: 0;
+    padding: 2rem 1rem;
+    border: 1px dashed rgba(0, 0, 0, 0.16);
+    border-radius: 1.5rem;
+    background: rgba(255, 255, 255, 0.62);
+    color: rgba(0, 0, 0, 0.62);
+    text-align: center;
+}
+
+.user-places__card {
+    display: grid;
+    grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+    gap: 1rem;
+    align-items: stretch;
+    padding: 1rem;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 1.75rem;
+    background: var(--white);
+    cursor: pointer;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.04);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.user-places__card:hover,
+.user-places__card:focus-visible {
+    transform: translateY(-2px);
+    box-shadow: 0 18px 34px rgba(0, 0, 0, 0.08);
+}
+
+.user-places__card.is-selected {
+    border-color: rgba(254, 143, 144, 0.7);
+    box-shadow: 0 0 0 0.2rem rgba(254, 143, 144, 0.16), 0 18px 34px rgba(0, 0, 0, 0.08);
+}
+
+.user-places__image-wrapper {
+    position: relative;
+    overflow: hidden;
+    border-radius: 1.35rem;
+    min-height: 220px;
+    background: var(--pink-medium);
+}
+
+.user-places__image {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.user-places__image--placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(0, 0, 0, 0.55);
+    font-weight: 700;
+}
+
+.user-places__favorite {
+    position: absolute;
+    top: 0.9rem;
+    right: 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border: 0;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.96);
+    color: rgba(0, 0, 0, 0.78);
+    font-size: 1.15rem;
+    line-height: 1;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.12);
+    transition: transform 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+}
+
+.user-places__favorite:hover,
+.user-places__favorite:focus-visible {
+    transform: scale(1.04);
+    background: var(--white);
+}
+
+.user-places__favorite.is-active {
+    color: var(--pink-dark);
+}
+
+.user-places__content {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.user-places__eyebrow {
+    margin: 0 0 0.55rem;
+    color: rgba(0, 0, 0, 0.55);
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+}
+
+.user-places__title {
+    margin: 0;
+    font-size: 15pt;
+    font-family: var(--font-family-base);
+    font-weight: 800;
+    line-height: 1.2;
+}
+
+.user-places__address {
+    margin: 0.65rem 0 0;
+    color: rgba(0, 0, 0, 0.6);
+    font-size: 12pt;
+    font-family: var(--font-family-base);
+    line-height: 1.4;
+}
+
+.user-places__summary {
+    margin-top: 0.9rem;
+    color: rgba(0, 0, 0, 0.78);
+    font-size: 0.98rem;
+    line-height: 1.45;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.user-places__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: auto;
+    padding-top: 1rem;
+}
+
+.user-places__button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 3rem;
+    padding: 0.78rem 1.15rem;
+    border-radius: 999px;
+    border: 1px solid var(--black);
+    font-family: var(--font-family-base);
+    font-size: 0.98rem;
+    font-weight: 700;
+    line-height: 1;
+    transition: transform 0.2s ease, background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.user-places__button:hover,
+.user-places__button:focus-visible {
+    transform: translateY(-1px);
+}
+
+.user-places__button--outline {
+    background: transparent;
+    color: var(--black);
+}
+
+.user-places__button--outline:hover,
+.user-places__button--outline:focus-visible {
+    background: rgba(0, 0, 0, 0.04);
+}
+
+.user-places__button--primary {
+    border-color: transparent;
+    background: var(--pink-dark);
+    color: var(--white);
+}
+
+.user-places__button--primary:hover,
+.user-places__button--primary:focus-visible {
+    background: var(--red);
+}
+
+.user-places__map {
+    overflow: hidden;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 1.75rem;
+    background: var(--white);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.05);
+}
+
+.user-places__map-canvas {
+    width: 100%;
+    height: min(72vh, 680px);
+    min-height: 420px;
+}
+
+.user-places__map-info {
+    min-width: 190px;
+    padding: 0.15rem 0.1rem;
+    font-family: var(--font-family-base);
+}
+
+.user-places__map-info-title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 800;
+}
+
+.user-places__map-info-type,
+.user-places__map-info-address {
+    margin: 0.4rem 0 0;
+    color: rgba(0, 0, 0, 0.64);
+    font-size: 0.92rem;
+    line-height: 1.35;
+}
+
+.user-places__map-info-link {
+    display: inline-flex;
+    margin-top: 0.75rem;
+    color: var(--red);
+    font-weight: 700;
+}
+
+@media (max-width: 1199.98px) {
+    .user-places__layout {
+        grid-template-columns: 1fr;
+    }
+
+    .user-places__map-column {
+        position: static;
+        order: -1;
+    }
+
+    .user-places__list {
+        max-height: none;
+        padding-right: 0;
+        overflow: visible;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .user-places {
+        padding: 1.5rem 0.85rem 2rem;
+    }
+
+    .user-places__filters {
+        justify-content: stretch;
+    }
+
+    .user-places__filter-button,
+    .user-places__select {
+        width: 100%;
+    }
+
+    .user-places__filter-panel {
+        padding: 1rem;
+    }
+
+    .user-places__radius-control {
+        width: 100%;
+        grid-template-columns: minmax(0, 1fr) auto;
+    }
+
+    .user-places__card {
+        grid-template-columns: 1fr;
+        padding: 0.9rem;
+    }
+
+    .user-places__image-wrapper {
+        min-height: 240px;
+    }
+
+    .user-places__actions {
+        flex-direction: column;
+    }
+
+    .user-places__button {
+        width: 100%;
+    }
+
+    .user-places__map-canvas {
+        height: 360px;
+        min-height: 360px;
+    }
+}
