@@ -442,6 +442,7 @@
     }
 
     .user-places__list {
+        height: auto;
         max-height: none;
         padding-right: 0;
         overflow: visible;
