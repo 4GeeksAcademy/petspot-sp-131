@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import signupHero from "../assets/img/signup-user.png";
+
 
 export const SignupUser = () => {
     const navigate = useNavigate();
@@ -43,69 +45,80 @@ export const SignupUser = () => {
 
     return (
         <div className="auth-page">
-            <div className="auth-card">
-                <h1 className="auth-title">Create account</h1>
-                <p className="auth-subtitle">Register to access your private area</p>
 
-                <form className="auth-form" onSubmit={sendData} noValidate>
+            <div className="auth-hero">
+                <h1 className="auth-hero-title">My Account</h1>
 
-                    <div className="mb-3">
-                        <label className="form-label">Name</label>
+                <div className="auth-breadcrumb">
+                    <Link to="/">Home</Link>
+                    <span>›</span>
+                    <span>Register</span>
+                </div>
+                <div className="auth-hero-image">
+                    <img src={signupHero} alt="User with dogs" />
+                </div>
+            </div>
+
+            <div className="auth-panel">
+
+                <form className="auth-card" onSubmit={sendData} noValidate>
+
+                    <h2 className="auth-title">Create Account</h2>
+                    <p className="auth-subtitle">Register to access your account</p>
+
+                    <div className="auth-field">
+                        <label htmlFor="signupName">Name</label>
                         <input
-                            value={name}
-                            onChange={(e) => {
-                                setName(e.target.value);
-                                if (error) setError("");
-                            }}
+                            id="signupName"
                             type="text"
-                            className={`form-control ${error ? "is-invalid" : ""}`}
-                            placeholder="Enter your name"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            placeholder="Your name"
                         />
                     </div>
 
-                    <div className="mb-3">
-                        <label className="form-label">Email address</label>
+                    <div className="auth-field">
+                        <label htmlFor="signupEmail">Email Address</label>
                         <input
-                            value={email}
-                            onChange={(e) => {
-                                setEmail(e.target.value);
-                                if (error) setError("");
-                            }}
+                            id="signupEmail"
                             type="email"
-                            className={`form-control ${error ? "is-invalid" : ""}`}
-                            placeholder="Enter your email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            placeholder="Email Address"
                         />
                     </div>
 
-                    <div className="mb-3">
-                        <label className="form-label">Password</label>
+                    <div className="auth-field">
+                        <label htmlFor="signupPassword">Password</label>
                         <input
-                            value={password}
-                            onChange={(e) => {
-                                setPassword(e.target.value);
-                                if (error) setError("");
-                            }}
+                            id="signupPassword"
                             type="password"
-                            className={`form-control ${error ? "is-invalid" : ""}`}
-                            placeholder="Create a password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder="Password"
                         />
                     </div>
 
                     {error && (
-                        <div className="invalid-feedback d-block text-start mb-3">
+                        <p style={{ color: "red", marginBottom: "20px" }}>
                             {error}
-                        </div>
+                        </p>
                     )}
 
-                    <button type="submit" className="btn btn-primary auth-btn">
-                        Register
-                    </button>
+                    <div className="auth-actions">
+                        <button type="submit" className="auth-btn">
+                            Register
+                        </button>
+
+                        <Link to="/user/login" className="auth-secondary-btn">
+                            Sign In
+                        </Link>
+                    </div>
+
                 </form>
 
-                <p className="auth-link">
-                    ¿Ya tienes cuenta? <Link to="/user/login">Inicia sesión</Link>
-                </p>
             </div>
+
         </div>
     );
 };

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import useGlobalReducer from "../../hooks/useGlobalReducer";
 
+
 const backendUrl = import.meta.env.VITE_BACKEND_URL
 
 function SignupPlace() {
@@ -92,59 +93,68 @@ function SignupPlace() {
     }, [])
 
     return (
-        <div className="container mt-5">
-            <h2 className="text-center mb-4">Register your Place</h2>
-            <form onSubmit={handleSubmit} className="mx-auto p-5 bg-secondary-subtle border-0 rounded text-start" style={{ maxWidth: 600 }}>
-                <div className="mb-3">
-                    <label htmlFor="placeEmail" className="form-label">Email *</label>
-                    <input onChange={(e) => setEmail(e.target.value)} value={email} type="email" className="form-control" id="placeEmail" required />
+        <div className="auth-page">
+            <div className="auth-hero">
+                <h1 className="auth-hero-title">Place Account</h1>
+                <div className="auth-breadcrumb">
+                    <Link to="/">Home</Link>
+                    <span>›</span>
+                    <span>Register Place</span>
                 </div>
-                <div className="mb-3">
-                    <label htmlFor="placePassword" className="form-label">Password *</label>
-                    <input onChange={(e) => setPassword(e.target.value)} value={password} type="password" className="form-control" id="placePassword" required />
-                </div>
-                <hr className="my-4" />
-                <p className="text-body-secondary mb-4 text-center ">
-                    Fill in the place information below to complete the profile
-                </p>
-                <div className="mb-3">
-                    <label htmlFor="placeName" className="form-label">Name *</label>
-                    <input onChange={(event) => setPlaceName(event.target.value)} value={placeName} type="text" className="form-control" id="placeName" required />
-                </div>
-                <div className="mb-3">
-                    <label className="form-label">Establishment Type *</label>
-                    <div className="form-check">
-                        <input onChange={(event) => setEstablishmentType(event.target.value)} className="form-check-input" type="radio" name="establishmentType" id="establishmentTypeBar" value="bar" required />
-                        <label className="form-check-label" htmlFor="establishmentTypeBar">Bar</label>
+            </div>
+
+            <div className="auth-panel">
+                <form onSubmit={handleSubmit} className="auth-card auth-card-large">
+                    <h2 className="auth-title">Register your Place</h2>
+                    <p className="auth-subtitle">Create an account for your business</p>
+
+                    <div className="auth-field">
+                        <label htmlFor="placeEmail">Email Address *</label>
+                        <input onChange={(e) => setEmail(e.target.value)} value={email} type="email" id="placeEmail" required placeholder="Email Address" />
                     </div>
-                    <div className="form-check">
-                        <input onChange={(event) => setEstablishmentType(event.target.value)} className="form-check-input" type="radio" name="establishmentType" id="establishmentTypeCafe" value="cafe" required />
-                        <label className="form-check-label" htmlFor="establishmentTypeCafe">Cafe</label>
+
+                    <div className="auth-field">
+                        <label htmlFor="placePassword">Password *</label>
+                        <input onChange={(e) => setPassword(e.target.value)} value={password} type="password" id="placePassword" required placeholder="Password" />
                     </div>
-                    <div className="form-check">
-                        <input onChange={(event) => setEstablishmentType(event.target.value)} className="form-check-input" type="radio" name="establishmentType" id="establishmentTypeRestaurant" value="restaurant" required />
-                        <label className="form-check-label" htmlFor="establishmentTypeRestaurant">Restaurant</label>
+
+                    <p className="auth-section-text">Fill in the place information below to complete the profile</p>
+
+                    <div className="auth-field">
+                        <label htmlFor="placeName">Place Name *</label>
+                        <input onChange={(event) => setPlaceName(event.target.value)} value={placeName} type="text" id="placeName" required placeholder="Place name" />
                     </div>
-                </div>
-                <div className="mb-3">
-                    <label htmlFor="placeCity" className="form-label">City *</label>
-                    <select className="form-select" id="placeCity" onChange={(event) => setCity(event.target.value)} value={city} required>
-                        <option value="">Select a city</option>
-                        {store.cities.map((city, i) => (
-                            <option value={city.id} key={`${city.city}-${i}`}>{city.city}</option>
-                        ))}
-                    </select>
-                </div>
-                <div className="mb-3">
-                    <label htmlFor="petRules" className="form-label">Pet rules</label>
-                    <textarea onChange={(event) => setPetRules(event.target.value)} value={petRules} className="form-control" id="petRules" style={{ maxHeight: 250 }} maxLength="250"></textarea>
-                </div>
-                <p className="text-body-secondary small mb-4">* Required fields</p>
-                <div className="mt-4 text-center">
-                    <button type="submit" className="btn btn-success">Sign Up</button>
-                    <Link to="/places/login" className="btn btn-outline-secondary ms-3">Already have an account?</Link>
-                </div>
-            </form>
+
+                    <div className="auth-field">
+                        <label>Establishment Type *</label>
+                        <div className="auth-radio-group">
+                            <label className="auth-radio"><input onChange={(event) => setEstablishmentType(event.target.value)} type="radio" name="establishmentType" value="bar" required /> Bar</label>
+                            <label className="auth-radio"><input onChange={(event) => setEstablishmentType(event.target.value)} type="radio" name="establishmentType" value="cafe" required /> Cafe</label>
+                            <label className="auth-radio"><input onChange={(event) => setEstablishmentType(event.target.value)} type="radio" name="establishmentType" value="restaurant" required /> Restaurant</label>
+                        </div>
+                    </div>
+
+                    <div className="auth-field">
+                        <label htmlFor="placeCity">City *</label>
+                        <select id="placeCity" onChange={(event) => setCity(event.target.value)} value={city} required>
+                            <option value="">Select a city</option>
+                            {store.cities.map((city, i) => (
+                                <option value={city.id} key={`${city.city}-${i}`}>{city.city}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="auth-field">
+                        <label htmlFor="petRules">Pet Rules</label>
+                        <textarea onChange={(event) => setPetRules(event.target.value)} value={petRules} id="petRules" maxLength="250" placeholder="Optional rules"></textarea>
+                    </div>
+
+                    <div className="auth-actions">
+                        <button type="submit" className="auth-btn">Register</button>
+                        <Link to="/places/login" className="auth-secondary-btn">Sign In</Link>
+                    </div>
+                </form>
+            </div>
         </div>
     )
 }
