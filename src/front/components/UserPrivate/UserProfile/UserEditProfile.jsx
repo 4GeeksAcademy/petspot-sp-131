@@ -189,17 +189,21 @@ function UserEditProfile() {
 
     return (
         <>
-            <div className="text-center mx-auto">
-                <h1 className="text-center my-5 display-3">Edit Profile</h1>
-                <div className="text-center my-5">
-                    <Link to="/user/private/profile" className="btn btn-secondary">
-                        Go Back to My Profile
-                    </Link>
-                </div>
+            <div>
+                <h5 style={{ fontWeight: 700, color: "var(--admin-text)", marginBottom: 20 }}>
+                    <i className="fa-solid fa-pen me-2" style={{ color: "var(--admin-primary)" }} />
+                    Editar perfil
+                </h5>
                 <form
                     onSubmit={handleSubmit}
-                    className="mx-auto p-5 bg-secondary-subtle border-0 rounded text-start"
-                    style={{ maxWidth: 700 }}
+                    style={{
+                        maxWidth: 700,
+                        background: "var(--admin-surface)",
+                        border: "1px solid var(--admin-border)",
+                        borderRadius: "var(--admin-radius)",
+                        boxShadow: "var(--admin-shadow-sm)",
+                        padding: "28px 32px",
+                    }}
                 >
                     <div className="mb-3">
                         <label htmlFor="userEditName" className="form-label">Name *</label>
@@ -285,10 +289,18 @@ function UserEditProfile() {
                         />
                     )}
 
-                    <div className="d-grid d-sm-flex gap-2 justify-content-sm-center mt-5">
-                        <button type="submit" className="btn btn-success">Save Changes</button>
-                        <Link to="/user/private/profile" className="btn btn-outline-secondary">
-                            Cancel
+                    <div className="d-flex flex-wrap gap-2 justify-content-center mt-4">
+                        <button type="submit" style={{
+                            background: "var(--admin-success)", color: "#fff", border: "none",
+                            borderRadius: "var(--admin-radius-sm)", padding: "7px 20px",
+                            fontSize: "0.85rem", fontWeight: 600, cursor: "pointer",
+                        }}>Guardar cambios</button>
+                        <Link to="/user/private/profile" style={{
+                            background: "transparent", color: "var(--admin-text-muted)",
+                            border: "1px solid var(--admin-border)", borderRadius: "var(--admin-radius-sm)",
+                            padding: "7px 20px", fontSize: "0.85rem", fontWeight: 600, textDecoration: "none",
+                        }}>
+                            Cancelar
                         </Link>
                     </div>
                 </form>

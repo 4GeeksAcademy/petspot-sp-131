@@ -1,0 +1,23 @@
+## Summary
+
+- Full admin CSS design system with a warm salmon-matte palette and CSS custom properties
+- AdminLayout component: fixed sidebar + topbar overlay on top of the public layout
+- AdminSidebar with navigation sections, 3 collapsible widgets (pending reservations, unread chats, alerts)
+- AdminTopbar with hamburger toggle for mobile
+- Shared admin components: AdminStatCard, AdminBadge, AdminPageHeader, AdminDataTable, AdminConfirmModal, AdminEmptyState
+- AdminDashboardPage: welcome banner, 8 stat cards with live data, recent reservations table, unread chats list, quick-action buttons
+- AdminCharts: toggle between bar chart and donut charts (global overview + reservation status breakdown) using recharts
+- routes.jsx: all admin routes wrapped under RequireAdmin + AdminLayout; public place routes moved outside the admin wrapper
+- commands.py: fix infinite loop in insert-test-places when Google Maps API key is absent
+- Removed two redundant Alembic migration files that duplicated tables already created by dc0cdb223824
+
+## Test plan
+
+- [ ] Log in at /usuario/admin/login and verify the dashboard loads with stat cards and charts
+- [ ] Toggle between bar and donut chart views
+- [ ] Verify sidebar navigation links work for all admin sections
+- [ ] Verify mobile responsive: sidebar collapses, hamburger opens/closes it
+- [ ] Run python seed_test_data.py without a Google Maps API key and confirm it completes
+- [ ] Verify public routes (/places/login, /places/signup, /places/private) still work without admin auth
+
+Generated with Claude Code

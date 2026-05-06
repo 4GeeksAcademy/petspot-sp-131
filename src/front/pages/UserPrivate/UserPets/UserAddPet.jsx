@@ -2,8 +2,11 @@ import UserPetForm from "../../../components/UserPrivate/UserPets/UserPetForm";
 
 function UserAddPet() {
     return (
-        <div className="text-center mx-auto">
-            <h1 className="text-center my-5 display-3">Add Pet</h1>
+        <div>
+            <h5 style={{ fontWeight: 700, color: "var(--admin-text)", marginBottom: 20 }}>
+                <i className="fa-solid fa-plus me-2" style={{ color: "var(--admin-primary)" }} />
+                Añadir mascota
+            </h5>
             <UserPetForm mode="create" />
         </div>
     );

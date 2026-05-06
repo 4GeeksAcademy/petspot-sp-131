@@ -2,8 +2,11 @@ import UserDeletePetCard from "../../../components/UserPrivate/UserPets/UserDele
 
 function UserDeletePet() {
     return (
-        <div className="text-center mx-auto">
-            <h1 className="text-center my-5 display-3">Delete Pet</h1>
+        <div>
+            <h5 style={{ fontWeight: 700, color: "var(--admin-text)", marginBottom: 20 }}>
+                <i className="fa-solid fa-trash me-2" style={{ color: "var(--admin-danger)" }} />
+                Eliminar mascota
+            </h5>
             <UserDeletePetCard />
         </div>
     );

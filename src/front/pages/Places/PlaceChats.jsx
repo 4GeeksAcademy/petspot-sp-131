@@ -1,15 +1,15 @@
 import React from "react";
 import ChatPanelMDB from "../../components/Chat/ChatPanelMDB";
-import { Link } from "react-router-dom";
 
 const PlaceChats = () => {
     return (
-        <div className="text-center mx-auto">
-            <ChatPanelMDB type="place" />
-            <div className="text-center my-4">
-                <Link to="/places/private" className="btn btn-secondary">
-                    Back to Dashboard
-                </Link>
+        <div>
+            <h5 style={{ fontWeight: 700, color: "var(--admin-text)", marginBottom: 16 }}>
+                <i className="fa-solid fa-comments me-2" style={{ color: "var(--admin-primary)" }} />
+                Chats
+            </h5>
+            <div className="pvt-chat-container">
+                <ChatPanelMDB type="place" />
             </div>
         </div>
     );
