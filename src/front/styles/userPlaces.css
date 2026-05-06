@@ -1,4 +1,5 @@
 .user-places {
+    --user-places-desktop-panel-height: min(72vh, 680px);
     width: min(100%, 1440px);
     margin: 0 auto;
     padding: 2rem 1rem 2.5rem;
@@ -62,30 +63,33 @@
 .user-places__filter-button {
     min-width: 200px;
     min-height: 3.2rem;
-    padding: 0.85rem 1.3rem;
-    border: 1px solid rgba(0, 0, 0, 0.14);
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.9);
+    padding: 0.8rem 1.35rem;
+    border: 1px solid var(--black);
+    border-radius: 1.1rem;
+    background-color: transparent;
     color: var(--black);
     font-family: var(--font-family-base);
     font-size: 0.98rem;
     font-weight: 700;
-    transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    line-height: 1;
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .user-places__filter-button:hover,
 .user-places__filter-button:focus-visible {
-    border-color: rgba(0, 0, 0, 0.32);
-    background: var(--white);
+    background-color: rgba(255, 255, 255, 0.38);
     transform: translateY(-1px);
-    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.05);
 }
 
 .user-places__filter-button.is-active {
     border-color: transparent;
-    background: var(--black);
+    background-color: var(--black);
     color: var(--white);
-    box-shadow: 0 16px 30px rgba(0, 0, 0, 0.1);
+}
+
+.user-places__filter-button.is-active:hover,
+.user-places__filter-button.is-active:focus-visible {
+    background-color: rgba(0, 0, 0, 0.88);
 }
 
 .user-places__filter-button:disabled {
@@ -185,7 +189,8 @@
 }
 
 .user-places__list {
-    max-height: calc(100vh - 170px);
+    height: var(--user-places-desktop-panel-height);
+    max-height: var(--user-places-desktop-panel-height);
     overflow-y: auto;
     overflow-x: hidden;
     padding-right: 0.35rem;
@@ -301,7 +306,7 @@
     background-color: var(--pink-dark);
     color: var(--white);
     font-size: 10pt;
-    font-weight: 700;
+    font-weight: 500;
     line-height: 1;
     letter-spacing: 0.04em;
     white-space: nowrap;
@@ -395,7 +400,7 @@
 
 .user-places__map-canvas {
     width: 100%;
-    height: min(72vh, 680px);
+    height: var(--user-places-desktop-panel-height);
     min-height: 420px;
 }
 

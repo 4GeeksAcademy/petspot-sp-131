@@ -466,6 +466,7 @@ header {
     color: var(--white);
     font-size: 10pt;
     line-height: 1;
+    text-transform: uppercase;
 }
 
 .explore-places__name {

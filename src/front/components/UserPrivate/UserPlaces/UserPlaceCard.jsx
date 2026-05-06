@@ -1,3 +1,4 @@
+import { forwardRef } from "react";
 import { Link } from "react-router-dom";
 import useGlobalReducer from "../../../hooks/useGlobalReducer";
 import {
@@ -5,7 +6,7 @@ import {
     handleRemoveFromFavorites
 } from "../../../services/userPrivateService";
 
-function UserPlaceCard({ placeObj, isSelected = false, onSelect }) {
+const UserPlaceCard = forwardRef(function UserPlaceCard({ placeObj, isSelected = false, onSelect }, ref) {
     const { store, dispatch } = useGlobalReducer();
     const { name, pet_rules, city, establishment_type, id, image_url, address } = placeObj;
     const isFavorite = (store.privateUser?.favorite_places || []).includes(id);
@@ -41,6 +42,7 @@ function UserPlaceCard({ placeObj, isSelected = false, onSelect }) {
 
     return (
         <div
+            ref={ref}
             className={`user-places__card ${isSelected ? "is-selected" : ""}`}
             onClick={onSelect}
             role="button"
@@ -109,6 +111,6 @@ function UserPlaceCard({ placeObj, isSelected = false, onSelect }) {
             </div>
         </div>
     );
-}
+});
 
 export default UserPlaceCard;
