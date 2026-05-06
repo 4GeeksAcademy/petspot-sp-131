@@ -532,7 +532,7 @@ function ReservationCard({ reservation, onUpdateStatus }) {
 const CHART_MODES = ["hour", "day", "month"];
 const CHART_LABELS = { hour: "By hour", day: "By day", month: "By month" };
 
-function ReservationsChart({ reservations, onBarClick }) {
+function ReservationsChart({ reservations, onBarClick, selectedDate }) {
   const [mode, setMode] = useState("hour");
   const [activeBar, setActiveBar] = useState(null);
 
@@ -628,13 +628,18 @@ function ReservationsChart({ reservations, onBarClick }) {
               formatter={(v) => [v, "Reservations"]}
             />
             <Bar dataKey="count" radius={[4, 4, 0, 0]} barSize={5}>
-              {data.map((entry) => (
-                <Cell
-                  key={entry.key}
-                  fill={entry.key === activeBar ? "#4338ca" : "#a5b4fc"}
-                  cursor="pointer"
-                />
-              ))}
+              {data.map((entry) => {
+                const isActive = entry.key === activeBar;
+                // In day mode also highlight the bar matching the current selected date
+                const isSelected = mode === "day" && entry.key === selectedDate;
+                return (
+                  <Cell
+                    key={entry.key}
+                    fill={isActive || isSelected ? "#4338ca" : "#a5b4fc"}
+                    cursor="pointer"
+                  />
+                );
+              })}
             </Bar>
           </BarChart>
         </ResponsiveContainer>
@@ -1369,10 +1374,13 @@ function PlaceReservationBoard({ placeId }) {
             {/* Mini chart – uses ALL reservations (no date filter) */}
             <ReservationsChart
               reservations={allReservations.filter((r) => r.status !== "cancelled")}
+              selectedDate={selectedDate}
               onBarClick={(filter) => {
                 setChartFilter(filter);
-                // Clicking a day bar also jumps the date picker to that day
-                if (filter?.mode === "day") setSelectedDate(filter.key);
+                // If the key looks like YYYY-MM-DD it's a day bar → jump the date picker
+                if (filter?.key && /^\d{4}-\d{2}-\d{2}$/.test(String(filter.key))) {
+                  setSelectedDate(filter.key);
+                }
               }}
             />
 
