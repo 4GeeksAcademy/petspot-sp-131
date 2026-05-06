@@ -832,3 +832,133 @@
         padding: 0.55rem 0.8rem;
     }
 }
+
+.home2-establishments {
+    padding: 4.75rem 0;
+    background-color: var(--white);
+    overflow: hidden;
+}
+
+.home2-establishments__title {
+    margin: 0 0 2rem;
+    text-align: center;
+    font-size: clamp(2rem, 4vw, 3rem);
+    line-height: 1.05;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+}
+
+.home2-establishments__carousel {
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+}
+
+.home2-establishments__carousel::before,
+.home2-establishments__carousel::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    z-index: 1;
+    width: 8rem;
+    pointer-events: none;
+}
+
+.home2-establishments__carousel::before {
+    left: 0;
+    background: linear-gradient(90deg, var(--white) 0%, rgba(255, 255, 255, 0) 100%);
+}
+
+.home2-establishments__carousel::after {
+    right: 0;
+    background: linear-gradient(270deg, var(--white) 0%, rgba(255, 255, 255, 0) 100%);
+}
+
+.home2-establishments__track {
+    display: flex;
+    align-items: center;
+    width: max-content;
+    animation: home2-establishments-scroll 28s linear infinite;
+    will-change: transform;
+}
+
+.home2-establishments__carousel:hover .home2-establishments__track {
+    animation-play-state: paused;
+}
+
+.home2-establishments__card {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 5rem;
+    margin-right: 1rem;
+    padding: 1rem 2rem;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    border-radius: 999px;
+    background-color: var(--white);
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.04);
+}
+
+.home2-establishments__name {
+    color: var(--pink-dark);
+    font-size: 1.35rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    white-space: nowrap;
+}
+
+@keyframes home2-establishments-scroll {
+    from {
+        transform: translateX(0);
+    }
+
+    to {
+        transform: translateX(-50%);
+    }
+}
+
+@media (max-width: 991.98px) {
+    .home2-establishments {
+        padding: 4rem 0;
+    }
+
+    .home2-establishments__card {
+        min-height: 4.5rem;
+        padding: 0.9rem 1.6rem;
+    }
+
+    .home2-establishments__name {
+        font-size: 1.15rem;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .home2-establishments {
+        padding: 3.25rem 0;
+    }
+
+    .home2-establishments__title {
+        margin-bottom: 1.5rem;
+    }
+
+    .home2-establishments__carousel::before,
+    .home2-establishments__carousel::after {
+        width: 3.5rem;
+    }
+
+    .home2-establishments__track {
+        animation-duration: 22s;
+    }
+
+    .home2-establishments__card {
+        min-height: 4rem;
+        margin-right: 0.8rem;
+        padding: 0.8rem 1.2rem;
+    }
+
+    .home2-establishments__name {
+        font-size: 1rem;
+    }
+}
