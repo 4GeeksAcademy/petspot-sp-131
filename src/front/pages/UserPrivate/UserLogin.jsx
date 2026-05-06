@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import useGlobalReducer from "../../hooks/useGlobalReducer";
+import userHero from "../../assets/img/user.png"
+
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
@@ -19,8 +21,9 @@ function UserLogin() {
                 dispatch({ type: "SET_USER_TOKEN", payload: userToken });
             }
             navigate("/user/private", { replace: true });
-        } else {
-            dispatch({ type: "USER_LOGOUT" });
+        }
+        else {
+            dispatch({ type: "USER_LOGOUT" })
         }
     }, [dispatch, navigate, store.userToken]);
 
@@ -58,59 +61,71 @@ function UserLogin() {
     }
 
     return (
-        <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--admin-bg)" }}>
-            <div style={{
-                width: "100%", maxWidth: 480,
-                background: "var(--admin-surface)",
-                border: "1px solid var(--admin-border)",
-                borderRadius: "var(--admin-radius)",
-                boxShadow: "var(--admin-shadow-sm)",
-                padding: "36px 40px",
-            }}>
-                <h4 style={{ fontWeight: 700, color: "var(--admin-text)", marginBottom: 4, textAlign: "center" }}>
-                    <i className="fa-solid fa-paw me-2" style={{ color: "var(--admin-primary)" }} />
-                    Iniciar sesión
-                </h4>
-                <p style={{ textAlign: "center", fontSize: "0.85rem", color: "var(--admin-text-muted)", marginBottom: 28 }}>
-                    Área privada de usuario
-                </p>
+        <div className="auth-page">
 
-                <form onSubmit={handleSubmit}>
-                    <div className="mb-3">
-                        <label htmlFor="loginEmail" className="form-label" style={{ fontSize: "0.875rem", fontWeight: 600, color: "var(--admin-text)" }}>Email *</label>
+            <div className="auth-hero">
+                <h1 className="auth-hero-title">My Account</h1>
+
+                <div className="auth-breadcrumb">
+                    <Link to="/">Home</Link>
+                    <span>›</span>
+                    <span>Login</span>
+                </div>
+                <div className="auth-hero-image">
+                    <img src={userHero} alt="User with dogs" />
+                </div>
+            </div>
+
+            <div className="auth-panel">
+
+                <form onSubmit={handleSubmit} className="auth-card">
+
+                    <h2 className="auth-title">Welcome Back</h2>
+                    <p className="auth-subtitle">Please login to your account</p>
+
+                    <div className="auth-field">
+                        <label htmlFor="userLoginEmail">Email Address</label>
                         <input
-                            onChange={(e) => setEmail(e.target.value)}
-                            value={email}
+                            id="userLoginEmail"
                             type="email"
-                            className="form-control"
-                            id="loginEmail"
-                            name="email"
-                            required
-                            placeholder="tucorreo@email.com"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            placeholder="Email Address"
                         />
                     </div>
-                    <div className="mb-3">
-                        <label htmlFor="loginPassword" className="form-label" style={{ fontSize: "0.875rem", fontWeight: 600, color: "var(--admin-text)" }}>Contraseña *</label>
+
+                    <div className="auth-field">
+                        <label htmlFor="userLoginPassword">Password</label>
                         <input
-                            onChange={(e) => setPassword(e.target.value)}
-                            value={password}
+                            id="userLoginPassword"
                             type="password"
-                            className="form-control"
-                            id="loginPassword"
-                            name="password"
-                            required
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder="Password"
                         />
                     </div>
-                    <p style={{ fontSize: "0.78rem", color: "var(--admin-text-muted)", marginBottom: 20 }}>* Campos obligatorios</p>
-                    <button type="submit" style={{
-                        width: "100%", background: "var(--admin-primary)", color: "#fff", border: "none",
-                        borderRadius: "var(--admin-radius-sm)", padding: "9px 0",
-                        fontSize: "0.9rem", fontWeight: 700, cursor: "pointer",
-                    }}>Entrar</button>
-                    <p style={{ textAlign: "center", marginTop: 16, marginBottom: 0, fontSize: "0.85rem", color: "var(--admin-text-muted)" }}>
-                        ¿No tienes cuenta? <Link to="/signup/user" style={{ color: "var(--admin-primary)", fontWeight: 600 }}>Regístrate aquí</Link>
-                    </p>
+
+                    <div className="auth-options">
+                        <label className="auth-check">
+                            <input type="checkbox" />
+                            <span>Remember Me</span>
+                        </label>
+
+                        <span className="auth-forgot">Forgot Password</span>
+                    </div>
+
+                    <div className="auth-actions">
+                        <button type="submit" className="auth-btn">
+                            Sign in
+                        </button>
+
+                        <Link to="/signup/user" className="auth-secondary-btn">
+                            Register
+                        </Link>
+                    </div>
+
                 </form>
+
             </div>
         </div>
     );
