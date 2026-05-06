@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import LogoPetSpot from "../assets/img/logo/Logo_PetSpot.svg";
 
 const navLinks = [
+    { to: "/#explore-places", label: "Explore Places" },
     { to: "/#how-it-works", label: "How It Works" },
     { to: "/#for-businesses", label: "For Businesses" },
     { to: "/#reviews", label: "What our community says" },

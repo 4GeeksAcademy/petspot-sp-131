@@ -538,6 +538,134 @@ html {
 }
 
 /* =========================
+   BUSINESSES SECTION
+========================= */
+.businesses-section {
+    padding: 5rem 0;
+    background-color: var(--white);
+    font-family: var(--font-family-base);
+}
+
+.businesses-section__header {
+    margin-bottom: 2.75rem;
+}
+
+.businesses-section__title {
+    margin: 0 0 0.85rem;
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+}
+
+.businesses-section__subtitle {
+    margin: 0;
+    font-size: 15pt;
+    line-height: 1.35;
+    color: var(--black);
+}
+
+.businesses-section__highlight {
+    color: var(--pink-dark);
+    font-weight: 800;
+}
+
+.businesses-section__content {
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+    align-items: center;
+    gap: 3.5rem;
+}
+
+.businesses-section__image-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.businesses-section__image {
+    display: block;
+    width: 100%;
+    max-width: 620px;
+    height: auto;
+}
+
+.businesses-section__details {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.businesses-section__item-title {
+    margin: 0 0 0.35rem;
+    font-size: 15pt;
+    font-weight: 800;
+    line-height: 1.2;
+}
+
+.businesses-section__item-text {
+    margin: 0;
+    font-size: 12pt;
+    line-height: 1.4;
+}
+
+.businesses-section__button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    align-self: flex-start;
+    min-height: 3.8rem;
+    padding: 0.9rem 1.7rem;
+    border: 1px solid var(--black);
+    border-radius: 1.25rem;
+    background-color: transparent;
+    font-size: 1.1rem;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.businesses-section__button:hover,
+.businesses-section__button:focus-visible {
+    background-color: rgba(0, 0, 0, 0.03);
+    transform: translateY(-1px);
+}
+
+.businesses-section__contact-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    margin-top: 3.25rem;
+    padding: 1.25rem 2rem;
+    border-radius: 1.6rem;
+    background-color: var(--black);
+}
+
+.businesses-section__contact-text {
+    margin: 0;
+    color: var(--white);
+    font-size: 1.15rem;
+    line-height: 1.35;
+}
+
+.businesses-section__contact-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 3.2rem;
+    padding: 0.75rem 1.6rem;
+    border-radius: 1rem;
+    background-color: var(--white);
+    color: var(--black);
+    font-size: 1.1rem;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.businesses-section__contact-button:hover,
+.businesses-section__contact-button:focus-visible {
+    opacity: 0.92;
+    transform: translateY(-1px);
+}
+
+/* =========================
    HOME FOOTER
 ========================= */
 .home-footer {
@@ -750,6 +878,24 @@ html {
         max-width: none;
     }
 
+    .businesses-section {
+        padding: 4rem 0;
+    }
+
+    .businesses-section__content {
+        grid-template-columns: 1fr;
+        gap: 2.5rem;
+    }
+
+    .businesses-section__details {
+        gap: 1.35rem;
+    }
+
+    .businesses-section__contact-banner {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
     .home-footer {
         padding-top: 4rem;
     }
@@ -890,6 +1036,38 @@ html {
 
     .how-it-works__step-description {
         font-size: 11.5pt;
+    }
+
+    .businesses-section {
+        padding: 3.25rem 0;
+    }
+
+    .businesses-section__header,
+    .businesses-section__details {
+        text-align: center;
+    }
+
+    .businesses-section__title {
+        font-size: 1.85rem;
+    }
+
+    .businesses-section__subtitle {
+        font-size: 13pt;
+    }
+
+    .businesses-section__button {
+        align-self: center;
+        width: 100%;
+    }
+
+    .businesses-section__contact-banner {
+        align-items: stretch;
+        padding: 1.25rem;
+        text-align: center;
+    }
+
+    .businesses-section__contact-button {
+        width: 100%;
     }
 
     .home-footer {
