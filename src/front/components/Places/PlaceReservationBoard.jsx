@@ -40,18 +40,22 @@ function TableFurniture({ table, reservations, onDelete, onEdit, onMove, childre
   const hasReservations = reservations.length > 0;
   const isOccupiedManual = table.is_occupied;
 
-  let bgColor = "rgba(25, 135, 84, 0.95)"; // Green (Available)
-  let borderColor = "rgba(25, 135, 84, 0.2)";
-  let glowColor = "rgba(25, 135, 84, 0.3)";
+  /* Salmon tones: light=available  medium=reserved  dark=occupied */
+  let bgColor = "#f3d9cc";                       // available
+  let borderColor = "rgba(201,123,99,0.35)";
+  let glowColor = "rgba(201,123,99,0.15)";
+  let textColor = "#3d2b25";
 
   if (isOccupiedManual) {
-    bgColor = "rgba(220, 53, 69, 0.95)"; // Red (Occupied Manual)
-    borderColor = "rgba(220, 53, 69, 0.5)";
-    glowColor = "rgba(220, 53, 69, 0.4)";
+    bgColor = "#8b4a3a";                         // dark salmon — occupied
+    borderColor = "rgba(139,74,58,0.55)";
+    glowColor = "rgba(139,74,58,0.35)";
+    textColor = "#fff";
   } else if (hasReservations) {
-    bgColor = "rgba(13, 110, 253, 0.95)"; // Blue (Has Reservation)
-    borderColor = "rgba(13, 110, 253, 0.5)";
-    glowColor = "rgba(13, 110, 253, 0.4)";
+    bgColor = "#c97b63";                         // medium salmon — reserved
+    borderColor = "rgba(201,123,99,0.55)";
+    glowColor = "rgba(201,123,99,0.35)";
+    textColor = "#fff";
   }
 
   return (
@@ -69,12 +73,12 @@ function TableFurniture({ table, reservations, onDelete, onEdit, onMove, childre
           width: "100%",
           height: "100%",
           ...shapeStyle,
-          background: isOver ? "rgba(13, 110, 253, 0.8)" : bgColor,
+          background: isOver ? "#d4a574" : bgColor,
           backdropFilter: "blur(10px)",
-          border: isOver ? "2px dashed white" : `2px solid ${borderColor}`,
+          border: isOver ? "2px dashed #fff" : `2px solid ${borderColor}`,
           boxShadow: `0 0 20px ${glowColor}`,
           cursor: "grab",
-          color: "white"
+          color: textColor
         }}
       >
         {/* Table Label */}

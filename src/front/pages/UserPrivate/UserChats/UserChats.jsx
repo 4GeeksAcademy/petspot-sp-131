@@ -1,15 +1,15 @@
 import ChatPanelMDB from "../../../components/Chat/ChatPanelMDB";
-import { Link } from "react-router-dom";
 
 function UserChats() {
     return (
-        <div className="text-center mx-auto" style={{ minHeight: "100vh" }}>
-            <div className="py-4">
-                <Link to="/user/private" className="btn btn-secondary mb-3">
-                    Go Back to Dashboard
-                </Link>
+        <div>
+            <h5 style={{ fontWeight: 700, color: "var(--admin-text)", marginBottom: 16 }}>
+                <i className="fa-solid fa-comments me-2" style={{ color: "var(--admin-primary)" }} />
+                Chats
+            </h5>
+            <div className="pvt-chat-container">
+                <ChatPanelMDB type="user" />
             </div>
-            <ChatPanelMDB type="user" />
         </div>
     );
 }

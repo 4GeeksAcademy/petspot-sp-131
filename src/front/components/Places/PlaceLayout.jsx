@@ -1,11 +1,11 @@
 import React, { useState, useCallback } from "react";
 import { Outlet } from "react-router-dom";
-import UserSidebar from "../../components/UserPrivate/UserSidebar";
-import UserTopbar from "../../components/UserPrivate/UserTopbar";
+import PlaceSidebar from "./PlaceSidebar";
+import PlaceTopbar from "./PlaceTopbar";
 import "../../styles/jairo.css/admin.css/index.css";
 import "../../styles/jairo.css/private-layout.css";
 
-function UserLayout() {
+export default function PlaceLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const openSidebar = useCallback(() => setSidebarOpen(true), []);
@@ -14,12 +14,12 @@ function UserLayout() {
   return (
     <div className="pvt-root">
       <div className="pvt-topbar-wrapper">
-        <UserTopbar onToggleSidebar={openSidebar} />
+        <PlaceTopbar onToggleSidebar={openSidebar} />
       </div>
 
       <div className="pvt-body">
         <div className={`pvt-sidebar-wrapper${sidebarOpen ? " pvt-sidebar-wrapper--open" : ""}`}>
-          <UserSidebar onClose={closeSidebar} />
+          <PlaceSidebar onClose={closeSidebar} />
         </div>
 
         {sidebarOpen && (
@@ -37,5 +37,3 @@ function UserLayout() {
     </div>
   );
 }
-
-export default UserLayout;
