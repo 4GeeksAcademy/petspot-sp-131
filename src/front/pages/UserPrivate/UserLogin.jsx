@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { Navbar } from "../../components/Navbar";
 import useGlobalReducer from "../../hooks/useGlobalReducer";
-import userHero from "../../assets/img/user.png";
+import userHero from "../../assets/img/user.png"
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
@@ -27,7 +26,7 @@ function UserLogin() {
             navigate("/user/private", { replace: true });
         }
         else {
-            dispatch({ type: "USER_LOGOUT" });
+            dispatch({ type: "USER_LOGOUT" })
         }
 
     }, [dispatch, navigate, store.userToken]);
@@ -73,71 +72,73 @@ function UserLogin() {
     }
 
     return (
-        <>
-            <Navbar />
-            <div className="auth-page">
-                <div className="auth-hero">
-                    <h1 className="auth-hero-title">My Account</h1>
+        <div className="auth-page">
 
-                    <div className="auth-breadcrumb">
-                        <Link to="/">Home</Link>
-                        <span>&gt;</span>
-                        <span>Login</span>
-                    </div>
-                    <div className="auth-hero-image">
-                        <img src={userHero} alt="User with dogs" />
-                    </div>
+            <div className="auth-hero">
+                <h1 className="auth-hero-title">My Account</h1>
+
+                <div className="auth-breadcrumb">
+                    <Link to="/">Home</Link>
+                    <span>›</span>
+                    <span>Login</span>
                 </div>
-
-                <div className="auth-panel">
-                    <form onSubmit={handleSubmit} className="auth-card">
-                        <h2 className="auth-title">Welcome Back</h2>
-                        <p className="auth-subtitle">Please login to your account</p>
-
-                        <div className="auth-field">
-                            <label htmlFor="userLoginEmail">Email Address</label>
-                            <input
-                                id="userLoginEmail"
-                                type="email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                placeholder="Email Address"
-                            />
-                        </div>
-
-                        <div className="auth-field">
-                            <label htmlFor="userLoginPassword">Password</label>
-                            <input
-                                id="userLoginPassword"
-                                type="password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                placeholder="Password"
-                            />
-                        </div>
-
-                        <div className="auth-options">
-                            <label className="auth-check">
-                                <input type="checkbox" />
-                                <span>Remember Me</span>
-                            </label>
-
-                            <span className="auth-forgot">Forgot Password</span>
-                        </div>
-
-                        <div className="auth-actions">
-                            <button type="submit" className="auth-btn">
-                                Sign in
-                            </button>
-
-                            <Link to="/signup/user" className="auth-secondary-btn">
-                                Register
-                            </Link>
-                        </div>
-                    </form>
+                <div className="auth-hero-image">
+                    <img src={userHero} alt="User with dogs" />
                 </div>
             </div>
-        </>
+
+            <div className="auth-panel">
+
+                <form onSubmit={handleSubmit} className="auth-card">
+
+                    <h2 className="auth-title">Welcome Back</h2>
+                    <p className="auth-subtitle">Please login to your account</p>
+
+                    <div className="auth-field">
+                        <label htmlFor="userLoginEmail">Email Address</label>
+                        <input
+                            id="userLoginEmail"
+                            type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            placeholder="Email Address"
+                        />
+                    </div>
+
+                    <div className="auth-field">
+                        <label htmlFor="userLoginPassword">Password</label>
+                        <input
+                            id="userLoginPassword"
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder="Password"
+                        />
+                    </div>
+
+                    <div className="auth-options">
+                        <label className="auth-check">
+                            <input type="checkbox" />
+                            <span>Remember Me</span>
+                        </label>
+
+                        <span className="auth-forgot">Forgot Password</span>
+                    </div>
+
+                    <div className="auth-actions">
+                        <button type="submit" className="auth-btn">
+                            Sign in
+                        </button>
+
+                        <Link to="/signup/user" className="auth-secondary-btn">
+                            Register
+                        </Link>
+                    </div>
+
+                </form>
+
+            </div>
+        </div>
     );
 }
 
