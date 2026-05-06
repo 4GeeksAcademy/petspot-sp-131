@@ -35,7 +35,7 @@ body {
   padding: 0;
   font-family: var(--font-family-base);
   color: var(--black);
-  background-color: var(--pink-light);
+  /* background-color: var(--pink-light); */
   text-align: left;
   font-size: 16px;
 }
@@ -79,7 +79,7 @@ footer {
 
 .auth-page {
   min-height: calc(100vh - 80px);
-  display: grid;
+  /* display: grid; */
   grid-template-columns: 51% 49%;
   background: var(--ps-bg-soft);
 }
