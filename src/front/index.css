@@ -125,7 +125,7 @@ footer {
   align-items: center;
   justify-content: center;
   padding: 160px 80px 80px;
-  background: var(--ps-panel);
+  background: var(--pink-light);
 }
 
 /* AUTH CARD */
@@ -137,7 +137,7 @@ footer {
   border: 1.5px solid var(--ps-border);
   border-radius: 28px;
   padding: 80px 70px;
-  background: var(--ps-card);
+  background: var(--pink-light);
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.05);
 }
 
