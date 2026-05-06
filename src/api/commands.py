@@ -313,13 +313,17 @@ def setup_commands(app):
         today = datetime.now().date()
         date_range = [today + timedelta(days=d) for d in range(-days_back, days_ahead + 1)]
 
+        # Half of the reservations guaranteed to fall on today so the board
+        # always has something visible when the seed runs.
+        half = max(1, int(count) // 2)
+
         for x in range(1, int(count) + 1):
             user  = random.choice(users)
             place = random.choice(places)
             user_pets = db.session.execute(select(Pet).where(Pet.user_id == user.id)).scalars().all()
             chosen_pet_id = random.choice(user_pets).id if user_pets and random.random() > 0.4 else None
 
-            res_date = random.choice(date_range)
+            res_date = today if x <= half else random.choice(date_range)
             res_time = datetime(
                 res_date.year, res_date.month, res_date.day,
                 random.choice(hours), random.choice(minutes)
