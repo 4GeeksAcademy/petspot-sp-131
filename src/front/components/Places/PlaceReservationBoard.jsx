@@ -257,6 +257,7 @@ const ELEMENT_PRESETS = {
   divider:   { color: "#99a3a4", label: "Divider H", icon: "fa-grip-lines",     vertical: false },
   divider_v: { color: "#99a3a4", label: "Divider V", icon: "fa-grip-lines-vertical", vertical: true },
   door:      { color: "#b7950b", label: "Door",      icon: "fa-door-open",      vertical: false },
+  door_v:    { color: "#b7950b", label: "Door V",    icon: "fa-door-open",      vertical: true  },
   text:      { color: "#2c3e50", label: "Text",      icon: "fa-font",           vertical: false },
   entrance:  { color: "#1e8449", label: "Entrance",  icon: "fa-door-open",      vertical: false },
   exit:      { color: "#922b21", label: "Exit",      icon: "fa-sign-out-alt",   vertical: false },
@@ -275,7 +276,8 @@ function RoomElementItem({ element, onDelete, onUpdate, editMode }) {
   const isText = element.element_type === "text"
     || element.element_type === "entrance"
     || element.element_type === "exit";
-  const isDoor = element.element_type === "door";
+  const isDoor  = element.element_type === "door";
+  const isDoorV = element.element_type === "door_v";
 
   const baseStyle = {
     position: "absolute",
@@ -353,6 +355,46 @@ function RoomElementItem({ element, onDelete, onUpdate, editMode }) {
           {/* Swing arc */}
           <path
             d={`M ${element.width * 0.12} ${element.height / 2} A ${element.width * 0.76} ${element.width * 0.76} 0 0 1 ${element.width * 0.12 + element.width * 0.76 * Math.cos(Math.PI / 2)} ${element.height / 2 - element.width * 0.76 * Math.sin(Math.PI / 2)}`}
+            fill="none"
+            stroke={color}
+            strokeWidth={1.5}
+            strokeDasharray="4 3"
+            opacity={0.55}
+          />
+        </svg>
+        {editMode && (
+          <button
+            className="btn-icon-sm btn-icon-dark room-element-del"
+            style={{ position: "absolute", top: "-8px", right: "-8px", opacity: 0, transition: "opacity 0.15s" }}
+            onClick={(e) => { e.stopPropagation(); onDelete(element.id); }}
+            title="Delete"
+          >
+            <i className="fas fa-times" style={{ fontSize: "0.55rem" }} />
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  if (isDoorV) {
+    return (
+      <div
+        ref={setNodeRef}
+        {...(editMode ? { ...attributes, ...listeners } : {})}
+        style={{ ...baseStyle, overflow: "visible" }}
+        className="room-element-wrapper"
+        title="Door V"
+      >
+        <svg width={element.width} height={element.height} style={{ overflow: "visible", pointerEvents: "none" }}>
+          {/* Wall stub top */}
+          <rect x={element.width / 2 - 4} y={0} width={8} height={element.height * 0.12} fill={color} rx={2} />
+          {/* Wall stub bottom */}
+          <rect x={element.width / 2 - 4} y={element.height * 0.88} width={8} height={element.height * 0.12} fill={color} rx={2} />
+          {/* Door leaf */}
+          <rect x={element.width / 2 - 3} y={element.height * 0.12} width={6} height={element.height * 0.76} fill={color} rx={2} />
+          {/* Swing arc – free end sweeps 90° clockwise to the right */}
+          <path
+            d={`M ${element.width / 2} ${element.height * 0.88} A ${element.height * 0.76} ${element.height * 0.76} 0 0 1 ${element.width / 2 + element.height * 0.76} ${element.height * 0.12}`}
             fill="none"
             stroke={color}
             strokeWidth={1.5}
@@ -534,7 +576,6 @@ function ReservationsChart({ reservations, onBarClick }) {
   };
 
   const data = buildData();
-  if (data.length === 0) return null;
 
   return (
     <div style={{ padding: "0 10px 10px" }}>
@@ -559,8 +600,14 @@ function ReservationsChart({ reservations, onBarClick }) {
 
       {/* Chart */}
       <div style={{ background: "#f8fafc", borderRadius: "12px", padding: "8px 4px 4px" }}>
+        {data.length === 0 ? (
+          <div style={{ height: 80, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", color: "#cbd5e1" }}>
+            <i className="fas fa-chart-bar" style={{ fontSize: "1.4rem" }} />
+            <span style={{ fontSize: "0.65rem", marginTop: "6px" }}>No reservations</span>
+          </div>
+        ) : (
         <ResponsiveContainer width="100%" height={80}>
-          <BarChart data={data} barCategoryGap="20%" onClick={(d) => {
+          <BarChart data={data} barCategoryGap="35%" onClick={(d) => {
             if (!d?.activePayload) return;
             const bar = d.activePayload[0]?.payload;
             if (!bar) return;
@@ -580,7 +627,7 @@ function ReservationsChart({ reservations, onBarClick }) {
               cursor={{ fill: "rgba(99,102,241,0.08)" }}
               formatter={(v) => [v, "Reservations"]}
             />
-            <Bar dataKey="count" radius={[4, 4, 0, 0]}>
+            <Bar dataKey="count" radius={[4, 4, 0, 0]} barSize={5}>
               {data.map((entry) => (
                 <Cell
                   key={entry.key}
@@ -591,6 +638,7 @@ function ReservationsChart({ reservations, onBarClick }) {
             </Bar>
           </BarChart>
         </ResponsiveContainer>
+        )}
         {activeBar !== null && (
           <div style={{ textAlign: "center", fontSize: "0.65rem", color: "#4338ca", fontWeight: 600, marginTop: "2px" }}>
             <i className="fas fa-filter me-1" />
@@ -922,6 +970,7 @@ function AddElementPanel({ onAdd }) {
     divider:   { width: 140, height: 12 },
     divider_v: { width: 12,  height: 140 },
     door:      { width: 80,  height: 40 },
+    door_v:    { width: 40,  height: 80 },
     text:      { width: 160, height: 36 },
     entrance:  { width: 120, height: 36 },
     exit:      { width: 100, height: 36 },
@@ -1303,27 +1352,25 @@ function PlaceReservationBoard({ placeId }) {
 
           {/* ── SIDEBAR ── */}
           <aside className="prb-sidebar">
-            {/* Date picker */}
-            <div className="prb-sidebar-section">
-              <label className="prb-label">Planning for</label>
+            {/* Mini chart – always visible */}
+            <ReservationsChart
+              reservations={allActive}
+              onBarClick={(filter) => { setChartFilter(filter); }}
+            />
+
+            {/* Compact date picker */}
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "0 12px 10px" }}>
+              <label className="prb-label" style={{ margin: 0, whiteSpace: "nowrap" }}>
+                <i className="fas fa-calendar-alt me-1" />Date
+              </label>
               <input
                 type="date"
                 className="prb-date-input"
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
+                style={{ flex: 1 }}
               />
             </div>
-
-            {/* Mini chart */}
-            {allActive.length > 0 && (
-              <ReservationsChart
-                reservations={allActive}
-                onBarClick={(filter) => {
-                  setChartFilter(filter);
-                  // auto-expand matching groups is handled by defaultOpen
-                }}
-              />
-            )}
 
             {/* Section tabs */}
             <div style={{ display: "flex", gap: "6px", padding: "0 12px 10px" }}>
