@@ -291,11 +291,20 @@
 }
 
 .user-places__eyebrow {
-    margin: 0 0 0.55rem;
-    color: rgba(0, 0, 0, 0.55);
-    font-size: 0.8rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    align-self: flex-start;
+    margin: 0 0 0.9rem;
+    padding: 0.42rem 0.82rem;
+    border-radius: 999px;
+    background-color: var(--pink-dark);
+    color: var(--white);
+    font-size: 10pt;
     font-weight: 700;
-    letter-spacing: 0.08em;
+    line-height: 1;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
 }
 
 .user-places__title {
@@ -337,13 +346,13 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-height: 3rem;
-    padding: 0.78rem 1.15rem;
-    border-radius: 999px;
+    min-height: 3.2rem;
+    padding: 0.8rem 1.35rem;
+    border-radius: 1.1rem;
     border: 1px solid var(--black);
     font-family: var(--font-family-base);
     font-size: 0.98rem;
-    font-weight: 700;
+    font-weight: 500;
     line-height: 1;
     transition: transform 0.2s ease, background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
@@ -354,24 +363,26 @@
 }
 
 .user-places__button--outline {
-    background: transparent;
+    background-color: transparent;
     color: var(--black);
 }
 
 .user-places__button--outline:hover,
 .user-places__button--outline:focus-visible {
-    background: rgba(0, 0, 0, 0.04);
+    background-color: rgba(255, 255, 255, 0.38);
 }
 
 .user-places__button--primary {
-    border-color: transparent;
-    background: var(--pink-dark);
-    color: var(--white);
+    /* background-color: var(--black); */
+    color: var(--black);
+    border: 1px solid var(--black);
 }
 
 .user-places__button--primary:hover,
 .user-places__button--primary:focus-visible {
-    background: var(--red);
+    color: var(--black);
+    border: 1px solid var(--black);
+    
 }
 
 .user-places__map {
