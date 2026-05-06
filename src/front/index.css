@@ -345,3 +345,24 @@ footer {
   justify-content: center;
   text-decoration: none;
 }
+
+.auth-location-btn {
+  min-width: 120px;
+  height: 46px;
+  padding: 0 16px;
+  border: 1.5px solid var(--ps-border);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--ps-text);
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.auth-location-btn:hover,
+.auth-location-btn:focus-visible {
+  background-color: rgba(0, 0, 0, 0.04);
+  transform: translateY(-1px);
+}
