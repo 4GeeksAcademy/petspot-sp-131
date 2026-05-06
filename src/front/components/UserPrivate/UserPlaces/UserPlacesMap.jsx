@@ -119,60 +119,65 @@ function UserPlacesMap({
         placesWithCoordinates[0]?.position ||
         FALLBACK_CENTER;
 
-    if (!isLoaded) return <p>Loading map...</p>;
+    if (!isLoaded) return <p className="user-places__empty">Loading map...</p>;
 
     return (
-        <GoogleMap
-            mapContainerStyle={{ height: "600px", width: "100%", borderRadius: "8px", margin: "auto" }}
-            center={initialCenter}
-            zoom={6}
-            onLoad={(map) => {
-                mapRef.current = map;
-            }}
-        >
-            {includeUserLocation && userPosition && (
-                <MarkerF
-                    position={userPosition}
-                    title={user.name ? `${user.name}'s location` : "Your location"}
-                />
-            )}
+        <div className="user-places__map">
+            <GoogleMap
+                mapContainerClassName="user-places__map-canvas"
+                center={initialCenter}
+                zoom={6}
+                onLoad={(map) => {
+                    mapRef.current = map;
+                }}
+            >
+                {includeUserLocation && userPosition && (
+                    <MarkerF
+                        position={userPosition}
+                        title={user.name ? `${user.name}'s location` : "Your location"}
+                    />
+                )}
 
-            {placesWithCoordinates.map((place) => (
-                <MarkerF
-                    key={place.id}
-                    position={place.position}
-                    title={place.name}
-                    onClick={() => {
-                        setSelectedPlace(place);
-                        mapRef.current?.panTo(place.position);
-                    }}
-                />
-            ))}
+                {placesWithCoordinates.map((place) => (
+                    <MarkerF
+                        key={place.id}
+                        position={place.position}
+                        title={place.name}
+                        onClick={() => {
+                            setSelectedPlace(place);
+                            mapRef.current?.panTo(place.position);
+                        }}
+                    />
+                ))}
 
-            {selectedPlaceWithCoordinates && (
-                <InfoWindowF
-                    position={selectedPlaceWithCoordinates.position}
-                    onCloseClick={() => setSelectedPlace(null)}
-                >
-                    <div style={{ minWidth: "180px" }}>
-                        <h6 className="mb-1">{selectedPlaceWithCoordinates.name}</h6>
-                        <p className="mb-1 text-muted">
-                            {selectedPlaceWithCoordinates.establishment_type
-                                ? selectedPlaceWithCoordinates.establishment_type.toUpperCase()
-                                : "Establishment"}
-                        </p>
-                        {(selectedPlaceWithCoordinates.city?.city || selectedPlaceWithCoordinates.address) && (
-                            <p className="mb-2 small">
-                                {selectedPlaceWithCoordinates.city?.city || selectedPlaceWithCoordinates.address}
+                {selectedPlaceWithCoordinates && (
+                    <InfoWindowF
+                        position={selectedPlaceWithCoordinates.position}
+                        onCloseClick={() => setSelectedPlace(null)}
+                    >
+                        <div className="user-places__map-info">
+                            <h6 className="user-places__map-info-title">{selectedPlaceWithCoordinates.name}</h6>
+                            <p className="user-places__map-info-type">
+                                {selectedPlaceWithCoordinates.establishment_type
+                                    ? selectedPlaceWithCoordinates.establishment_type.toUpperCase()
+                                    : "Establishment"}
                             </p>
-                        )}
-                        <Link to={`/user/private/places/view/${selectedPlaceWithCoordinates.id}`}>
-                            View details
-                        </Link>
-                    </div>
-                </InfoWindowF>
-            )}
-        </GoogleMap>
+                            {(selectedPlaceWithCoordinates.city?.city || selectedPlaceWithCoordinates.address) && (
+                                <p className="user-places__map-info-address">
+                                    {selectedPlaceWithCoordinates.city?.city || selectedPlaceWithCoordinates.address}
+                                </p>
+                            )}
+                            <Link
+                                to={`/user/private/places/view/${selectedPlaceWithCoordinates.id}`}
+                                className="user-places__map-info-link"
+                            >
+                                View details
+                            </Link>
+                        </div>
+                    </InfoWindowF>
+                )}
+            </GoogleMap>
+        </div>
     );
 }
 

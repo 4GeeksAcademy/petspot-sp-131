@@ -37,7 +37,6 @@ function UserDashboard() {
         }
     }, [currentPlaces, selectedPlace]);
 
-    // Get logged in user data
     useEffect(() => {
         async function loadPrivateUser() {
             if (store.privateUser?.id) {
@@ -58,7 +57,6 @@ function UserDashboard() {
         loadPrivateUser();
     }, []);
 
-    // Get all places
     useEffect(() => {
         async function loadPlaces() {
             try {
@@ -75,7 +73,6 @@ function UserDashboard() {
         loadPlaces();
     }, []);
 
-    // Get user's location nearby places
     useEffect(() => {
         async function getNearbyPlaces() {
             if (!userHasLocation) {
@@ -112,7 +109,6 @@ function UserDashboard() {
         getNearbyPlaces();
     }, [radius, userHasLocation]);
 
-    // Get cities with places
     useEffect(() => {
         async function getCitiesWithPlaces() {
             try {
@@ -135,71 +131,67 @@ function UserDashboard() {
     }, []);
 
     return (
-        <>
-            <div style={{ maxWidth: 800 }} className="mx-auto text-center mt-5">
-                <h1 className="display-5 text-center mb-5">
-                    Welcome back <span className="fw-bold">{store.privateUser.name}</span> 👤
+        <div className="user-places user-places--dashboard">
+            <div className="user-places__hero">
+                <h1 className="user-places__heading">
+                    Welcome back <span className="fw-bold">{store.privateUser.name}</span> {"\u{1F464}"}
                 </h1>
-                <p className="text-center mb-5">
+                <p className="user-places__intro">
                     Discover pet-friendly cafes, restaurants, and bars around you, all in one place.
                     Browse new spots, check what other pet owners are saying, save your favorites,
                     and plan your next outing with your pet. Whether it is a relaxed coffee, a nice
                     dinner, or drinks with friends, you and your pet are always welcome here.
                 </p>
-                <Link to="/user/private/news" className="btn btn-success btn-lg mb-4">
+                <Link to="/user/private/news" className="user-places__news-link">
                     View latest news
                 </Link>
             </div>
 
-            <div className="d-flex justify-content-center gap-3 my-3 align-items-center flex-wrap">
+            <div className="user-places__filters">
                 <button
-                    className={`btn shadow-0 ${dataMode === "nearby" ? "btn-warning" : "btn-outline-warning"}`}
+                    className={`user-places__filter-button ${dataMode === "nearby" ? "is-active" : ""}`}
                     onClick={() => setDataMode("nearby")}
                     disabled={!userHasLocation}
-                    style={{ width: 200 }}
                 >
                     View Nearby Places
                 </button>
                 <button
-                    className={`btn shadow-0 ${dataMode === "all" ? "btn-warning" : "btn-outline-warning"}`}
+                    className={`user-places__filter-button ${dataMode === "all" ? "is-active" : ""}`}
                     onClick={() => setDataMode("all")}
-                    style={{ width: 200 }}
                 >
                     View All Places
                 </button>
                 <button
-                    className={`btn shadow-0 ${dataMode === "city" ? "btn-warning" : "btn-outline-warning"}`}
+                    className={`user-places__filter-button ${dataMode === "city" ? "is-active" : ""}`}
                     onClick={() => setDataMode("city")}
-                    style={{ width: 200 }}
                 >
                     Filter by City
                 </button>
             </div>
 
             {dataMode === "nearby" && (
-                <div className="mx-auto mb-4" style={{ maxWidth: 800 }}>
-                    <p className="text-center mb-2 form-control">
+                <div className="user-places__filter-panel">
+                    <p className="user-places__filter-copy">
                         {"\u{1F4CC}"} Places near <span className="fw-bold">{store.privateUser.address || "your location"}</span> within <span className="fw-bold">{radius} km</span>
                     </p>
-                    <div className="input-group mx-auto" style={{ maxWidth: 200 }}>
+                    <div className="user-places__radius-control">
                         <input
                             type="number"
-                            className="form-control text-center"
+                            className="user-places__input"
                             value={radius}
                             min="1"
                             aria-label="radius"
-                            aria-describedby="radius-addon"
                             onChange={(e) => setRadius(Number(e.target.value) || 1)}
                         />
-                        <span className="input-group-text" id="radius-addon">km</span>
+                        <span className="user-places__input-addon">km</span>
                     </div>
                 </div>
             )}
 
             {dataMode === "city" && (
-                <div className="input-group mx-auto mb-4" style={{ maxWidth: 240 }}>
+                <div className="user-places__filter-panel">
                     <select
-                        className="form-select text-center"
+                        className="user-places__select"
                         aria-label="Filter places by city"
                         value={city}
                         onChange={(e) => setCity(e.target.value)}
@@ -214,27 +206,25 @@ function UserDashboard() {
                 </div>
             )}
 
-            <div className="container-fluid px-3 px-lg-4 mb-4" style={{height: 600}}>
-                <div className="row g-4 align-items-start">
-                    <div className="col-12 col-xl-5">
-                        <UserPlacesList
-                            places={currentPlaces}
-                            selectedPlace={selectedPlace}
-                            setSelectedPlace={setSelectedPlace}
-                        />
-                    </div>
-                    <div className="col-12 col-xl-7">
-                        <UserPlacesMap
-                            places={currentPlaces}
-                            user={store.privateUser}
-                            includeUserLocation={dataMode === "nearby" && userHasLocation}
-                            selectedPlace={selectedPlace}
-                            setSelectedPlace={setSelectedPlace}
-                        />
-                    </div>
+            <div className="user-places__layout">
+                <div className="user-places__list-column">
+                    <UserPlacesList
+                        places={currentPlaces}
+                        selectedPlace={selectedPlace}
+                        setSelectedPlace={setSelectedPlace}
+                    />
+                </div>
+                <div className="user-places__map-column">
+                    <UserPlacesMap
+                        places={currentPlaces}
+                        user={store.privateUser}
+                        includeUserLocation={dataMode === "nearby" && userHasLocation}
+                        selectedPlace={selectedPlace}
+                        setSelectedPlace={setSelectedPlace}
+                    />
                 </div>
             </div>
-        </>
+        </div>
     );
 }
 
