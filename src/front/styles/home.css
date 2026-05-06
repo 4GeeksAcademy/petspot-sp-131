@@ -135,10 +135,95 @@ html {
 /* =========================
    HERO
 ========================= */
+.home-hero {
+    background-color: var(--pink-light);
+    padding: 3rem 0 4.5rem;
+}
 
+.home-hero__inner {
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    align-items: center;
+    gap: 3rem;
+    min-height: calc(100vh - 90px);
+}
 
-.hero-img {
-    width: 100px;
+.home-hero__content {
+    max-width: 560px;
+}
+
+.home-hero__title {
+    margin: 0 0 1.5rem;
+    font-size: 28pt;
+    font-weight: 800;
+    line-height: 1.08;
+    letter-spacing: -0.04em;
+}
+
+.home-hero__text {
+    margin: 0;
+    font-size: 14pt;
+    line-height: 1.45;
+    max-width: 28ch;
+}
+
+.home-hero__actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 2.5rem;
+    flex-wrap: wrap;
+}
+
+.home-hero__button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 3.9rem;
+    padding: 0.95rem 1.75rem;
+    border-radius: 1.3rem;
+    border: 1px solid var(--black);
+    font-size: 1.1rem;
+    line-height: 1;
+    transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.home-hero__button:hover,
+.home-hero__button:focus-visible {
+    transform: translateY(-1px);
+}
+
+.home-hero__button--primary {
+    background-color: var(--black);
+    color: var(--white);
+}
+
+.home-hero__button--primary:hover,
+.home-hero__button--primary:focus-visible {
+    background-color: rgba(0, 0, 0, 0.88);
+}
+
+.home-hero__button--secondary {
+    background-color: transparent;
+    color: var(--black);
+}
+
+.home-hero__button--secondary:hover,
+.home-hero__button--secondary:focus-visible {
+    background-color: rgba(255, 255, 255, 0.38);
+}
+
+.home-hero__image-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.home-hero__image {
+    display: block;
+    width: 100%;
+    max-width: 58rem;
+    height: auto;
 }
 
 /* =========================
@@ -274,6 +359,24 @@ html {
 }
 
 @media (max-width: 991.98px) {
+    .home-hero {
+        padding: 2.5rem 0 3.5rem;
+    }
+
+    .home-hero__inner {
+        grid-template-columns: 1fr;
+        gap: 2.5rem;
+        min-height: auto;
+    }
+
+    .home-hero__content {
+        max-width: none;
+    }
+
+    .home-hero__text {
+        max-width: 36ch;
+    }
+
     .home-navbar {
         height: auto;
         min-height: 90px;
@@ -342,6 +445,31 @@ html {
 }
 
 @media (max-width: 767.98px) {
+    .home-hero {
+        padding: 2rem 0 3rem;
+    }
+
+    .home-hero__content {
+        text-align: center;
+    }
+
+    .home-hero__title {
+        font-size: 22pt;
+    }
+
+    .home-hero__text {
+        max-width: none;
+        font-size: 12.5pt;
+    }
+
+    .home-hero__actions {
+        justify-content: center;
+    }
+
+    .home-hero__button {
+        width: 100%;
+    }
+
     .home-navbar__logo img {
         height: 26px;
     }
