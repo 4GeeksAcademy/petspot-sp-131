@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-
+import logo from "../assets/img/Logo_PetSpot.svg";
 
 export const AdminLogin = () => {
   const [formData, setFormData] = useState({
@@ -55,68 +55,63 @@ export const AdminLogin = () => {
   };
 
   return (
-    <div className="admin-login-container d-flex justify-content-center align-items-center min-vh-100 bg-light">
-      <div className="card shadow-lg border-0 rounded-4" style={{ maxWidth: '450px', width: '100%', overflow: 'hidden' }}>
-        <div className="card-header border-0 text-center py-4 text-white" style={{ background: 'linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)' }}>
-          <h2 className="mb-0 fw-bold">Admin Portal</h2>
-          <p className="mb-0 text-white-50 small mt-1">PetSpot Management</p>
-        </div>
-        
-        <div className="card-body p-5">
-          {message && (
-            <div className="alert alert-danger d-flex align-items-center rounded-3 mb-4" role="alert">
-              <i className="fa-solid fa-circle-exclamation me-2"></i>
-              <div>{message}</div>
-            </div>
-          )}
+    <div className="admin-auth-page">
+      <div className="admin-auth-card">
 
-          <form onSubmit={handleSubmit}>
-            <div className="form-floating mb-4">
-              <input
-                type="email"
-                className="form-control"
-                id="floatingEmail"
-                name="email"
-                placeholder="name@example.com"
-                value={formData.email}
-                onChange={handleChange}
-                required
-              />
-              <label htmlFor="floatingEmail"><i className="fa-solid fa-envelope me-2 text-muted"></i>Email Address</label>
-            </div>
-
-            <div className="form-floating mb-4">
-              <input
-                type="password"
-                className="form-control"
-                id="floatingPassword"
-                name="password"
-                placeholder="Password"
-                value={formData.password}
-                onChange={handleChange}
-                required
-              />
-              <label htmlFor="floatingPassword"><i className="fa-solid fa-lock me-2 text-muted"></i>Password</label>
-            </div>
-
-            <button
-              type="submit"
-              className="btn btn-primary w-100 py-3 rounded-3 fw-bold text-uppercase"
-              style={{ transition: 'all 0.3s', background: 'linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)', border: 'none' }}
-              disabled={submitting}
-            >
-              {submitting ? (
-                <span><span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Logging in...</span>
-              ) : (
-                <span>Login</span>
-              )}
-            </button>
-          </form>
+        <div className="admin-auth-logo">
+          <img src={logo} alt="PetSpot logo" />
+          <span>Admin</span>
         </div>
-        
-        <div className="card-footer text-center py-3 bg-white border-0">
-          <small className="text-muted">Secure Access Only</small>
+
+        <h4>Hello! let's get started</h4>
+        <p className="admin-auth-subtitle">Sign in to continue.</p>
+
+        {message && (
+          <div className="alert alert-danger rounded-3 mb-4" role="alert">
+            {message}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit}>
+          <div className="mb-4">
+            <input
+              type="email"
+              className="form-control admin-auth-input"
+              name="email"
+              placeholder="Email Address"
+              value={formData.email}
+              onChange={handleChange}
+              required
+            />
+          </div>
+
+          <div className="mb-4">
+            <input
+              type="password"
+              className="form-control admin-auth-input"
+              name="password"
+              placeholder="Password"
+              value={formData.password}
+              onChange={handleChange}
+              required
+            />
+          </div>
+
+          <button type="submit" className="admin-auth-btn" disabled={submitting}>
+            {submitting ? "Logging in..." : "Sign In"}
+          </button>
+        </form>
+
+        <div className="admin-auth-options">
+          <label>
+            <input type="checkbox" />
+            <span>Keep me signed in</span>
+          </label>
+
+          <span>Forgot password?</span>
         </div>
+
+        <p className="admin-auth-footer">Secure Access Only</p>
       </div>
     </div>
   );

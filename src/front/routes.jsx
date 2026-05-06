@@ -6,7 +6,7 @@ import {
 } from "react-router-dom";
 
 import { Layout } from "./pages/Layout";
-import { Home } from "./pages/Home";
+import Home from "./pages/Home.jsx";
 import { Demo } from "./pages/Demo";
 import { Single } from "./pages/Single";
 import { User } from "./pages/User";

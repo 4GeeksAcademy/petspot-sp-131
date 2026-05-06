@@ -1,19 +1,34 @@
 import { Link } from "react-router-dom";
+import { Navbar } from "../../components/Navbar";
 import LoginPlaceForm from "../../components/Places/LoginPlaceForm";
+import placeHero from "../../assets/img/places-hero.png";
 
 function LoginPlace() {
 
-    return(
+    return (
         <>
-            <div className="text-center mx-auto">
-                <h1 className="text-center my-5 display-3">Place Log In 🔐</h1>
-                <div className="text-center my-5">
-                    <Link to="/places" className="btn btn-secondary">Go Back to Places</Link>
+            <Navbar />
+            <div className="auth-page">
+                <div className="auth-hero">
+                    <h1 className="auth-hero-title">Place Account</h1>
+
+                    <div className="auth-breadcrumb">
+                        <Link to="/">Home</Link>
+                        <span>&gt;</span>
+                        <span>Place Login</span>
+                    </div>
+
+                    <div className="auth-hero-image">
+                        <img src={placeHero} alt="Waiter with a dog" />
+                    </div>
                 </div>
-                <LoginPlaceForm />
+
+                <div className="auth-panel">
+                    <LoginPlaceForm />
+                </div>
             </div>
         </>
-    )
+    );
 }
 
 export default LoginPlace;

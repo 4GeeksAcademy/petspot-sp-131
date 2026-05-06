@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { Navbar } from "../components/Navbar";
+import signupHero from "../assets/img/signup-user.png";
 
 export const SignupUser = () => {
     const navigate = useNavigate();
@@ -37,75 +39,83 @@ export const SignupUser = () => {
                 }
             })
             .catch(() => {
-                setError("Error de conexión con el servidor");
+                setError("Error de conexi\u00f3n con el servidor");
             });
     }
 
     return (
-        <div className="auth-page">
-            <div className="auth-card">
-                <h1 className="auth-title">Create account</h1>
-                <p className="auth-subtitle">Register to access your private area</p>
+        <>
+            <Navbar />
+            <div className="auth-page">
+                <div className="auth-hero">
+                    <h1 className="auth-hero-title">My Account</h1>
 
-                <form className="auth-form" onSubmit={sendData} noValidate>
-
-                    <div className="mb-3">
-                        <label className="form-label">Name</label>
-                        <input
-                            value={name}
-                            onChange={(e) => {
-                                setName(e.target.value);
-                                if (error) setError("");
-                            }}
-                            type="text"
-                            className={`form-control ${error ? "is-invalid" : ""}`}
-                            placeholder="Enter your name"
-                        />
+                    <div className="auth-breadcrumb">
+                        <Link to="/">Home</Link>
+                        <span>&gt;</span>
+                        <span>Register</span>
                     </div>
-
-                    <div className="mb-3">
-                        <label className="form-label">Email address</label>
-                        <input
-                            value={email}
-                            onChange={(e) => {
-                                setEmail(e.target.value);
-                                if (error) setError("");
-                            }}
-                            type="email"
-                            className={`form-control ${error ? "is-invalid" : ""}`}
-                            placeholder="Enter your email"
-                        />
+                    <div className="auth-hero-image">
+                        <img src={signupHero} alt="User with dogs" />
                     </div>
+                </div>
 
-                    <div className="mb-3">
-                        <label className="form-label">Password</label>
-                        <input
-                            value={password}
-                            onChange={(e) => {
-                                setPassword(e.target.value);
-                                if (error) setError("");
-                            }}
-                            type="password"
-                            className={`form-control ${error ? "is-invalid" : ""}`}
-                            placeholder="Create a password"
-                        />
-                    </div>
+                <div className="auth-panel">
+                    <form className="auth-card" onSubmit={sendData} noValidate>
+                        <h2 className="auth-title">Create Account</h2>
+                        <p className="auth-subtitle">Register to access your account</p>
 
-                    {error && (
-                        <div className="invalid-feedback d-block text-start mb-3">
-                            {error}
+                        <div className="auth-field">
+                            <label htmlFor="signupName">Name</label>
+                            <input
+                                id="signupName"
+                                type="text"
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                                placeholder="Your name"
+                            />
                         </div>
-                    )}
 
-                    <button type="submit" className="btn btn-primary auth-btn">
-                        Register
-                    </button>
-                </form>
+                        <div className="auth-field">
+                            <label htmlFor="signupEmail">Email Address</label>
+                            <input
+                                id="signupEmail"
+                                type="email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                placeholder="Email Address"
+                            />
+                        </div>
 
-                <p className="auth-link">
-                    ¿Ya tienes cuenta? <Link to="/user/login">Inicia sesión</Link>
-                </p>
+                        <div className="auth-field">
+                            <label htmlFor="signupPassword">Password</label>
+                            <input
+                                id="signupPassword"
+                                type="password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                placeholder="Password"
+                            />
+                        </div>
+
+                        {error && (
+                            <p style={{ color: "red", marginBottom: "20px" }}>
+                                {error}
+                            </p>
+                        )}
+
+                        <div className="auth-actions">
+                            <button type="submit" className="auth-btn">
+                                Register
+                            </button>
+
+                            <Link to="/user/login" className="auth-secondary-btn">
+                                Sign In
+                            </Link>
+                        </div>
+                    </form>
+                </div>
             </div>
-        </div>
+        </>
     );
 };

@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { Navbar } from "../../components/Navbar";
 import useGlobalReducer from "../../hooks/useGlobalReducer";
+import userHero from "../../assets/img/user.png";
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
@@ -25,7 +27,7 @@ function UserLogin() {
             navigate("/user/private", { replace: true });
         }
         else {
-            dispatch({type: "USER_LOGOUT"})
+            dispatch({ type: "USER_LOGOUT" });
         }
 
     }, [dispatch, navigate, store.userToken]);
@@ -71,52 +73,71 @@ function UserLogin() {
     }
 
     return (
-        <div className="text-center mx-auto">
-            <h1 className="text-center my-5 display-3">User Log In</h1>
-            <div className="text-center my-5">
-                <Link to="/" className="btn btn-secondary">Go Back Home</Link>
+        <>
+            <Navbar />
+            <div className="auth-page">
+                <div className="auth-hero">
+                    <h1 className="auth-hero-title">My Account</h1>
+
+                    <div className="auth-breadcrumb">
+                        <Link to="/">Home</Link>
+                        <span>&gt;</span>
+                        <span>Login</span>
+                    </div>
+                    <div className="auth-hero-image">
+                        <img src={userHero} alt="User with dogs" />
+                    </div>
+                </div>
+
+                <div className="auth-panel">
+                    <form onSubmit={handleSubmit} className="auth-card">
+                        <h2 className="auth-title">Welcome Back</h2>
+                        <p className="auth-subtitle">Please login to your account</p>
+
+                        <div className="auth-field">
+                            <label htmlFor="userLoginEmail">Email Address</label>
+                            <input
+                                id="userLoginEmail"
+                                type="email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                placeholder="Email Address"
+                            />
+                        </div>
+
+                        <div className="auth-field">
+                            <label htmlFor="userLoginPassword">Password</label>
+                            <input
+                                id="userLoginPassword"
+                                type="password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                placeholder="Password"
+                            />
+                        </div>
+
+                        <div className="auth-options">
+                            <label className="auth-check">
+                                <input type="checkbox" />
+                                <span>Remember Me</span>
+                            </label>
+
+                            <span className="auth-forgot">Forgot Password</span>
+                        </div>
+
+                        <div className="auth-actions">
+                            <button type="submit" className="auth-btn">
+                                Sign in
+                            </button>
+
+                            <Link to="/signup/user" className="auth-secondary-btn">
+                                Register
+                            </Link>
+                        </div>
+                    </form>
+                </div>
             </div>
-
-            <form
-                onSubmit={handleSubmit}
-                className="mx-auto p-5 bg-secondary-subtle border-0 rounded text-start"
-                style={{ maxWidth: 600 }}
-            >
-                <div className="mb-3">
-                    <label htmlFor="loginEmail" className="form-label">Email *</label>
-                    <input
-                        onChange={(event) => setEmail(event.target.value)}
-                        value={email}
-                        type="email"
-                        className="form-control"
-                        id="loginEmail"
-                        name="email"
-                        required
-                        placeholder="youremail@email.com"
-                    />
-                </div>
-                <div className="mb-3">
-                    <label htmlFor="loginPassword" className="form-label">Password *</label>
-                    <input
-                        onChange={(event) => setPassword(event.target.value)}
-                        value={password}
-                        type="password"
-                        className="form-control"
-                        id="loginPassword"
-                        name="password"
-                        required
-                    />
-                </div>
-                <p className="text-body-secondary small mb-4">* Required fields</p>
-                <div className="mt-5">
-                    <button type="submit" className="btn btn-success d-block mx-auto">Submit</button>
-                </div>
-
-                <p className="text-center mt-4 mb-0">
-                    Don't have an account yet? <Link to="/signup/user">Sign up here</Link>
-                </p>
-            </form>
-        </div>
+        </>
     );
 }
 
