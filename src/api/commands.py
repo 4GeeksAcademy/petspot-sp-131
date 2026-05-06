@@ -2,7 +2,7 @@
 import click, random, requests
 from api.cities import cities
 from api.routes import resolve_place_address_geocode
-from datetime import datetime
+from datetime import datetime, timedelta
 from api.models import db, User, Place, EstablishmentType, City, Favorite, AdminUser, Review, Reservation, ReservationStatus, Chat, News, PostType, Race, Pet, PetAnimalType, PetSize, PlaceSchedule, Table
 from werkzeug.security import generate_password_hash
 from sqlalchemy import select
@@ -278,37 +278,72 @@ def setup_commands(app):
         return print("All test favorites added")
     
     @app.cli.command('insert-test-reservations')
-    @click.argument("count") # argument of out command
-    def insert_reservations(count):
-        users = db.session.execute(select(User)).scalars().all() or None
-        places = db.session.execute(select(Place).where(Place.requires_reservation_payment.is_(False))).scalars().all() or None
+    @click.argument("count")
+    @click.option("--days-back",  default=5,  show_default=True, help="How many past days to spread reservations across")
+    @click.option("--days-ahead", default=7,  show_default=True, help="How many future days to spread reservations across")
+    def insert_reservations(count, days_back, days_ahead):
+        users  = db.session.execute(select(User)).scalars().all()
+        places = db.session.execute(select(Place)).scalars().all()
 
-        if users is None or places is None:
+        if not users or not places:
             return print('Unable to insert test reservations. Make sure users and places exist in the database')
 
-        zone_preferences = ["terrace", "indoor", "window", "quiet area"]
+        zone_preferences = ["terrace", "indoor", "window", "quiet area", "garden", "bar area"]
+        # Business hours: 10:00–22:00, slots on the quarter-hour
+        hours   = list(range(10, 22))
+        minutes = [0, 15, 30, 45]
+        # Weighted statuses: mostly confirmed/pending, some cancelled
+        statuses = (
+            [ReservationStatus.CONFIRMED] * 5 +
+            [ReservationStatus.PENDING]   * 3 +
+            [ReservationStatus.CANCELLED] * 1
+        )
+        notes_pool = [
+            "Allergic to cats — please seat away from pet area",
+            "Celebrating a birthday",
+            "First visit, looking forward to it!",
+            "Would prefer a quiet corner",
+            "Coming with a large dog, need extra space",
+            "Need a highchair for a toddler",
+            None,  # no notes
+            None,
+            None,
+        ]
+
+        today = datetime.now().date()
+        date_range = [today + timedelta(days=d) for d in range(-days_back, days_ahead + 1)]
+
+        # Half of the reservations guaranteed to fall on today so the board
+        # always has something visible when the seed runs.
+        half = max(1, int(count) // 2)
 
         for x in range(1, int(count) + 1):
-            user = random.choice(users)
+            user  = random.choice(users)
             place = random.choice(places)
             user_pets = db.session.execute(select(Pet).where(Pet.user_id == user.id)).scalars().all()
-            chosen_pet_id = random.choice(user_pets).id if user_pets and random.random() > 0.3 else None
+            chosen_pet_id = random.choice(user_pets).id if user_pets and random.random() > 0.4 else None
+
+            res_date = today if x <= half else random.choice(date_range)
+            res_time = datetime(
+                res_date.year, res_date.month, res_date.day,
+                random.choice(hours), random.choice(minutes)
+            ).time()
 
             new_reservation = Reservation(
                 user_id=user.id,
                 place_id=place.id,
-                reservation_date=datetime.now().date(),
-                reservation_time=datetime.now().time().replace(second=0, microsecond=0),
-                people_count=random.randint(1, 6),
+                reservation_date=res_date,
+                reservation_time=res_time,
+                people_count=random.randint(1, 8),
                 pet_id=chosen_pet_id,
                 zone_preference=random.choice(zone_preferences),
-                notes="Test reservation created from CLI command",
-                status=ReservationStatus.CONFIRMED
+                notes=random.choice(notes_pool),
+                status=random.choice(statuses),
             )
 
             db.session.add(new_reservation)
             db.session.commit()
-            print(f"Reservation {x} added")
+            print(f"Reservation {x}: {user.email} → {place.name}  {res_date} {res_time.strftime('%H:%M')}  [{new_reservation.status.value}]")
 
         return print("All test reservations added")
     
