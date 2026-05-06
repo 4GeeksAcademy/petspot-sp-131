@@ -1066,6 +1066,7 @@ function PlaceReservationBoard({ placeId }) {
   const [tables, setTables] = useState([]);
   const [elements, setElements] = useState([]);
   const [reservations, setReservations] = useState([]);
+  const [allReservations, setAllReservations] = useState([]); // unfiltered – for chart
   const [loading, setLoading] = useState(true);
   const [editMode, setEditMode] = useState(false);
   const [editingTable, setEditingTable] = useState(null);
@@ -1111,17 +1112,30 @@ function PlaceReservationBoard({ placeId }) {
     if (res.ok) setReservations(await res.json());
   }, [placeId, selectedDate]);
 
+  // Fetch ALL reservations (no date filter) so the chart shows the full picture
+  const fetchAllReservations = useCallback(async () => {
+    const res = await fetch(`${backendUrl}/api/places/${placeId}/reservations`);
+    if (res.ok) setAllReservations(await res.json());
+  }, [placeId]);
+
   const fetchAll = useCallback(async () => {
     setLoading(true);
     try {
       const lid = await fetchLayouts();
-      await Promise.all([fetchTables(lid || activeLayoutId), fetchElements(lid || activeLayoutId), fetchReservations()]);
+      await Promise.all([
+        fetchTables(lid || activeLayoutId),
+        fetchElements(lid || activeLayoutId),
+        fetchReservations(),
+        fetchAllReservations(),
+      ]);
     } finally {
       setLoading(false);
     }
-  }, [fetchLayouts, fetchTables, fetchElements, fetchReservations, activeLayoutId]);
+  }, [fetchLayouts, fetchTables, fetchElements, fetchReservations, fetchAllReservations, activeLayoutId]);
 
   useEffect(() => { if (placeId) fetchAll(); }, [placeId, selectedDate]);
+  // Keep full-range chart data fresh when the place changes
+  useEffect(() => { if (placeId) fetchAllReservations(); }, [placeId]);
 
   const switchLayout = async (id) => {
     setActiveLayoutId(id);
@@ -1352,10 +1366,14 @@ function PlaceReservationBoard({ placeId }) {
 
           {/* ── SIDEBAR ── */}
           <aside className="prb-sidebar">
-            {/* Mini chart – always visible */}
+            {/* Mini chart – uses ALL reservations (no date filter) */}
             <ReservationsChart
-              reservations={allActive}
-              onBarClick={(filter) => { setChartFilter(filter); }}
+              reservations={allReservations.filter((r) => r.status !== "cancelled")}
+              onBarClick={(filter) => {
+                setChartFilter(filter);
+                // Clicking a day bar also jumps the date picker to that day
+                if (filter?.mode === "day") setSelectedDate(filter.key);
+              }}
             />
 
             {/* Compact date picker */}
