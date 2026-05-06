@@ -11,6 +11,7 @@ import {
     uploadPetImage
 } from "../../../services/userPrivateService";
 
+
 const OTHER_PET_FALLBACK_IMAGE = "https://images.unsplash.com/vector-1738926674638-65961800cd33?q=80&w=1160&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D";
 
 const initialFormData = {
@@ -37,7 +38,11 @@ function UserPetForm({ mode = "create", petId = null }) {
     useEffect(() => {
         async function loadInitialData() {
             try {
-                const racesResponse = await getRaces();
+                let racesResponse = await getRaces();
+                if (racesResponse.length === 0) {
+                    await importRaces();
+                    racesResponse = await getRaces();
+                }
                 setRaces(racesResponse);
 
                 if (isEditing && petId) {
@@ -109,17 +114,6 @@ function UserPetForm({ mode = "create", petId = null }) {
     function handleImageChange(event) {
         const nextImageFile = event.target.files?.[0] || null;
         setImageFile(nextImageFile);
-    }
-
-    async function handleImportRaces() {
-        try {
-            const responseJSON = await importRaces();
-            const racesResponse = await getRaces();
-            setRaces(racesResponse);
-            alert(responseJSON.msg || "Races imported successfully.");
-        } catch (error) {
-            alert(error.message || "Unable to import races right now. Please try again.");
-        }
     }
 
     async function handleSubmit(event) {
@@ -260,12 +254,7 @@ function UserPetForm({ mode = "create", petId = null }) {
 
                 {(formData.animal_type === "dog" || formData.animal_type === "cat") && (
                     <div className="mb-3">
-                        <label htmlFor="petRace" className="form-label d-flex justify-content-between align-items-center">
-                            <span>Breed *</span>
-                            <button type="button" className="btn btn-sm btn-outline-primary" onClick={handleImportRaces}>
-                                Import Races
-                            </button>
-                        </label>
+                        <label htmlFor="petRace" className="form-label">Raza *</label>
                         <select
                             id="petRace"
                             name="race_id"
