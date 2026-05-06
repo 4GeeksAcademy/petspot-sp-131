@@ -1,7 +1,7 @@
 """
 This module takes care of starting the API Server, Loading the DB and Adding the endpoints
 """
-from api.models import Table, PlaceSchedule
+from api.models import Table, PlaceSchedule, FloorLayout, RoomElement
 import os
 import io
 import json
@@ -590,18 +590,6 @@ def add_place():
         if len(pet_rules) > 250:
             return jsonify(response="pet_rules cannot exceed 250 characters"), 400
 
-    if latitude is not None:
-        try:
-            latitude = float(latitude)
-        except (TypeError, ValueError):
-            return jsonify(response="latitude must be a valid number"), 400
-
-    if longitude is not None:
-        try:
-            longitude = float(longitude)
-        except (TypeError, ValueError):
-            return jsonify(response="longitude must be a valid number"), 400
-
     if not all([x for x in [email, password, name]]):
         return jsonify(response="Email, password, city, and name cannot be empty"), 400
 
@@ -650,12 +638,6 @@ def add_place():
         resolved_address = geocoded_city["formatted_address"]
         resolved_latitude = geocoded_city["latitude"]
         resolved_longitude = geocoded_city["longitude"]
-
-    if address_provided:
-        if latitude is not None:
-            resolved_latitude = latitude
-        if longitude is not None:
-            resolved_longitude = longitude
 
     email_exists = db.session.execute(
         select(Place).where(Place.email == email)
@@ -1185,12 +1167,10 @@ def signup_user():
     if user:
         return jsonify({"msg": "Ya se encuentra un usuario con ese email"}), 409
 
-    hashed_password = generate_password_hash(password)
-
     new_user = User(
         name=name,
         email=email,
-        password=hashed_password,
+        password=password,
         is_active=True
     )
 
@@ -3129,15 +3109,17 @@ def get_private_user_nearby_places():
 
 @api.route('/places/<int:place_id>/tables', methods=['GET'])
 def get_place_tables(place_id):
-    tables = db.session.execute(select(Table).where(
-        Table.place_id == place_id)).scalars().all()
+    layout_id = request.args.get('layout_id')
+    query = select(Table).where(Table.place_id == place_id)
+    if layout_id:
+        query = query.where(Table.layout_id == int(layout_id))
+    tables = db.session.execute(query).scalars().all()
     return jsonify([t.serialize() for t in tables]), 200
 
 
 @api.route('/places/<int:place_id>/tables', methods=['POST'])
 def add_place_table(place_id):
     data = request.get_json(silent=True) or {}
-    name = data.get('name')
 
     def safe_int(val, default=0):
         try:
@@ -3145,25 +3127,47 @@ def add_place_table(place_id):
         except (ValueError, TypeError):
             return default
 
-    capacity_people = safe_int(data.get('capacity_people'), 0)
-    capacity_pets = safe_int(data.get('capacity_pets'), 0)
-    pos_x = safe_int(data.get('pos_x'), 0)
-    pos_y = safe_int(data.get('pos_y'), 0)
+    # Bulk creation: list of tables
+    if isinstance(data, list):
+        created = []
+        for item in data:
+            name = item.get('name')
+            if not name:
+                continue
+            t = Table(
+                place_id=place_id,
+                layout_id=safe_int(item.get('layout_id'), None) or None,
+                name=name,
+                capacity_people=safe_int(item.get('capacity_people'), 2),
+                capacity_pets=safe_int(item.get('capacity_pets'), 0),
+                pos_x=safe_int(item.get('pos_x'), 20),
+                pos_y=safe_int(item.get('pos_y'), 20),
+                shape=item.get('shape', 'square'),
+                width=safe_int(item.get('width'), 80),
+                height=safe_int(item.get('height'), 80),
+                rotation=safe_int(item.get('rotation'), 0),
+            )
+            db.session.add(t)
+            created.append(t)
+        db.session.commit()
+        return jsonify([t.serialize() for t in created]), 201
 
-    shape = data.get('shape', 'square')
-    is_occupied = data.get('is_occupied', False)
-
+    name = data.get('name')
     if not name:
         return jsonify({"msg": "Name is required"}), 400
 
     new_table = Table(
         place_id=place_id,
+        layout_id=safe_int(data.get('layout_id'), None) or None,
         name=name,
-        capacity_people=int(capacity_people),
-        capacity_pets=int(capacity_pets),
-        pos_x=int(pos_x),
-        pos_y=int(pos_y),
-        shape=shape
+        capacity_people=safe_int(data.get('capacity_people'), 2),
+        capacity_pets=safe_int(data.get('capacity_pets'), 0),
+        pos_x=safe_int(data.get('pos_x'), 20),
+        pos_y=safe_int(data.get('pos_y'), 20),
+        shape=data.get('shape', 'square'),
+        width=safe_int(data.get('width'), 80),
+        height=safe_int(data.get('height'), 80),
+        rotation=safe_int(data.get('rotation'), 0),
     )
     db.session.add(new_table)
     db.session.commit()
@@ -3187,19 +3191,25 @@ def update_table(table_id):
     if 'name' in data:
         table.name = data['name']
     if 'capacity_people' in data:
-        table.capacity_people = safe_int(
-            data['capacity_people'], table.capacity_people)
+        table.capacity_people = safe_int(data['capacity_people'], table.capacity_people)
     if 'capacity_pets' in data:
-        table.capacity_pets = safe_int(
-            data['capacity_pets'], table.capacity_pets)
+        table.capacity_pets = safe_int(data['capacity_pets'], table.capacity_pets)
     if 'pos_x' in data:
         table.pos_x = safe_int(data['pos_x'], table.pos_x)
     if 'pos_y' in data:
         table.pos_y = safe_int(data['pos_y'], table.pos_y)
     if 'shape' in data:
         table.shape = data['shape']
+    if 'width' in data:
+        table.width = safe_int(data['width'], table.width)
+    if 'height' in data:
+        table.height = safe_int(data['height'], table.height)
+    if 'rotation' in data:
+        table.rotation = safe_int(data['rotation'], table.rotation)
     if 'is_occupied' in data:
         table.is_occupied = bool(data['is_occupied'])
+    if 'layout_id' in data:
+        table.layout_id = safe_int(data['layout_id'], None) or None
 
     db.session.commit()
     return jsonify(table.serialize()), 200
@@ -3213,6 +3223,147 @@ def delete_table(table_id):
     db.session.delete(table)
     db.session.commit()
     return jsonify({"msg": "Table deleted"}), 200
+
+
+# --- Floor Layout routes ---
+
+@api.route('/places/<int:place_id>/layouts', methods=['GET'])
+def get_place_layouts(place_id):
+    layouts = db.session.execute(
+        select(FloorLayout).where(FloorLayout.place_id == place_id)
+    ).scalars().all()
+    return jsonify([l.serialize() for l in layouts]), 200
+
+
+@api.route('/places/<int:place_id>/layouts', methods=['POST'])
+def create_place_layout(place_id):
+    data = request.get_json(silent=True) or {}
+    name = data.get('name', '').strip()
+    if not name:
+        return jsonify({"msg": "Name is required"}), 400
+
+    layout = FloorLayout(
+        place_id=place_id,
+        name=name,
+        description=data.get('description', ''),
+        is_default=bool(data.get('is_default', False)),
+    )
+    db.session.add(layout)
+    db.session.commit()
+    return jsonify(layout.serialize()), 201
+
+
+@api.route('/layouts/<int:layout_id>', methods=['PUT'])
+def update_layout(layout_id):
+    layout = db.session.get(FloorLayout, layout_id)
+    if not layout:
+        return jsonify({"msg": "Layout not found"}), 404
+
+    data = request.get_json(silent=True) or {}
+    if 'name' in data:
+        layout.name = data['name'].strip() or layout.name
+    if 'description' in data:
+        layout.description = data['description']
+    if 'is_default' in data:
+        layout.is_default = bool(data['is_default'])
+
+    db.session.commit()
+    return jsonify(layout.serialize()), 200
+
+
+@api.route('/layouts/<int:layout_id>', methods=['DELETE'])
+def delete_layout(layout_id):
+    layout = db.session.get(FloorLayout, layout_id)
+    if not layout:
+        return jsonify({"msg": "Layout not found"}), 404
+    db.session.delete(layout)
+    db.session.commit()
+    return jsonify({"msg": "Layout deleted"}), 200
+
+
+# --- Room Element routes ---
+
+@api.route('/layouts/<int:layout_id>/elements', methods=['GET'])
+def get_layout_elements(layout_id):
+    elements = db.session.execute(
+        select(RoomElement).where(RoomElement.layout_id == layout_id)
+    ).scalars().all()
+    return jsonify([e.serialize() for e in elements]), 200
+
+
+@api.route('/layouts/<int:layout_id>/elements', methods=['POST'])
+def create_layout_element(layout_id):
+    layout = db.session.get(FloorLayout, layout_id)
+    if not layout:
+        return jsonify({"msg": "Layout not found"}), 404
+
+    data = request.get_json(silent=True) or {}
+
+    def safe_int(val, default=0):
+        try:
+            return int(val) if val not in [None, ""] else default
+        except (ValueError, TypeError):
+            return default
+
+    element = RoomElement(
+        layout_id=layout_id,
+        element_type=data.get('element_type', 'wall'),
+        pos_x=safe_int(data.get('pos_x'), 20),
+        pos_y=safe_int(data.get('pos_y'), 20),
+        width=safe_int(data.get('width'), 120),
+        height=safe_int(data.get('height'), 20),
+        rotation=safe_int(data.get('rotation'), 0),
+        color=data.get('color'),
+        label=data.get('label', ''),
+    )
+    db.session.add(element)
+    db.session.commit()
+    return jsonify(element.serialize()), 201
+
+
+@api.route('/elements/<int:element_id>', methods=['PUT'])
+def update_element(element_id):
+    element = db.session.get(RoomElement, element_id)
+    if not element:
+        return jsonify({"msg": "Element not found"}), 404
+
+    data = request.get_json(silent=True) or {}
+
+    def safe_int(val, default):
+        try:
+            return int(val) if val not in [None, ""] else default
+        except (ValueError, TypeError):
+            return default
+
+    if 'element_type' in data:
+        element.element_type = data['element_type']
+    if 'pos_x' in data:
+        element.pos_x = safe_int(data['pos_x'], element.pos_x)
+    if 'pos_y' in data:
+        element.pos_y = safe_int(data['pos_y'], element.pos_y)
+    if 'width' in data:
+        element.width = safe_int(data['width'], element.width)
+    if 'height' in data:
+        element.height = safe_int(data['height'], element.height)
+    if 'rotation' in data:
+        element.rotation = safe_int(data['rotation'], element.rotation)
+    if 'color' in data:
+        element.color = data['color']
+    if 'label' in data:
+        element.label = data['label']
+
+    db.session.commit()
+    return jsonify(element.serialize()), 200
+
+
+@api.route('/elements/<int:element_id>', methods=['DELETE'])
+def delete_element(element_id):
+    element = db.session.get(RoomElement, element_id)
+    if not element:
+        return jsonify({"msg": "Element not found"}), 404
+    db.session.delete(element)
+    db.session.commit()
+    return jsonify({"msg": "Element deleted"}), 200
 
 
 @api.route('/places/<int:place_id>/schedule', methods=['GET'])
