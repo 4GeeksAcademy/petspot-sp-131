@@ -1,47 +1,41 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import LogoPetSpot from "../assets/img/logo/Logo_PetSpot.svg"
 
 export const Navbar = () => {
 	return (
-		<nav className="navbar navbar-light bg-light">
-			<div className="container">
-				<Link to="/">
-					<span className="navbar-brand mb-0 h1">React Boilerplate</span>
+		<nav className="navbar sticky-top navbar-expand-md">
+			<div className="container-fluid h-100 py-3">
+				<Link to="/" className="navbar-brand">
+					<img src={LogoPetSpot} alt="PetSpot logo" style={{ height: "48px", width: "auto", display: "block" }} />
 				</Link>
-				<div className="d-flex gap-2 align-items-center flex-wrap">
-					<Link to="/reservations">
-						<button className="btn btn-primary">Reservations</button>
-					</Link>
-
-					<Link to="/news">
-                        <button className="btn btn-primary">News</button>
-                    </Link>
-
-					<Link to="/tell-me-more">
-						<button
-							className="btn"
-							style={{
-								background: "linear-gradient(135deg, #7c3aed, #a855f7)",
-								color: "white",
-								fontWeight: 600,
-								border: "none",
-								boxShadow: "0 4px 15px rgba(124, 58, 237, 0.35)",
-								transition: "all 0.2s",
-							}}
-							onMouseEnter={e => {
-								e.currentTarget.style.transform = "translateY(-2px)";
-								e.currentTarget.style.boxShadow = "0 8px 25px rgba(124, 58, 237, 0.5)";
-							}}
-							onMouseLeave={e => {
-								e.currentTarget.style.transform = "translateY(0)";
-								e.currentTarget.style.boxShadow = "0 4px 15px rgba(124, 58, 237, 0.35)";
-							}}
-						>
-							✨ Tell me more about it
-						</button>
-					</Link>
+				<button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarTogglerDemo01" aria-controls="navbarTogglerDemo01" aria-expanded="false" aria-label="Toggle navigation">
+					<span className="navbar-toggler-icon"></span>
+				</button>
+				<div className="collapse navbar-collapse" id="navbarTogglerDemo01">
+					<ul className="navbar-nav me-auto mb-2 mb-lg-0">
+						<li className="nav-item">
+							<Link className="nav-link active" aria-current="page" to="#">About us</Link>
+						</li>
+						<li className="nav-item">
+							<Link to="/user/login" className="nav-link fw-bold">
+								Login User
+							</ Link>
+						</li>
+						<li className="nav-item">
+							<Link to="/signup/user" className="nav-link fw-bold">
+								Join Today User
+							</Link>
+						</li>
+						<li className="nav-item">
+							<Link to="/places/login" className="nav-link fw-bold ">
+								Login Place
+							</Link>
+						</li>
+					</ul>
 				</div>
+
 			</div>
 		</nav>
-	);
+	)
 };
