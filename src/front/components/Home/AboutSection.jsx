@@ -1,10 +1,25 @@
-const teamImage =
-    "https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=2561&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D";
+import fatimaImage from "../../assets/img/profpic_sq_web.png";
+import ramonImage from "../../assets/img/_1 - Ramón - HeadshotPro.png";
 
-const teamMembers = [
-    { name: "Fatima Olea" },
-    { name: "Jairo Xxx" },
-    { name: "Ramon Xxx" }
+const TEAM_MEMBERS = [
+    {
+        name: "Fátima Olea",
+        image: fatimaImage,
+        linkedin: "https://www.linkedin.com/in/fatimaolea",
+        website: "https://www.fatimaolea.dev/"
+    },
+    {
+        name: "Jairo Martínez",
+        image: "",
+        linkedin: "https://linkedin.com/",
+        website: "#"
+    },
+    {
+        name: "Ramón Camacho",
+        image: ramonImage,
+        linkedin: "https://www.linkedin.com/in/ramon-camacho-rojas/",
+        website: "#"
+    }
 ];
 
 function AboutSection() {
@@ -18,16 +33,28 @@ function AboutSection() {
                 </p>
 
                 <div className="about-section__team">
-                    {teamMembers.map(member => (
+                    {TEAM_MEMBERS.map((member) => (
                         <article key={member.name} className="about-section__member">
                             <div className="about-section__image-wrapper">
-                                <img src={teamImage} alt={member.name} className="about-section__image" />
+                                <img src={member.image} alt={member.name} className="about-section__image" />
 
                                 <div className="about-section__overlay">
-                                    <a href="#" className="about-section__social-link" aria-label={`${member.name} LinkedIn`}>
+                                    <a
+                                        href={member.linkedin}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="about-section__social-link"
+                                        aria-label={`${member.name} LinkedIn`}
+                                    >
                                         <i className="fa-brands fa-linkedin-in" />
                                     </a>
-                                    <a href="#" className="about-section__social-link" aria-label={`${member.name} website`}>
+                                    <a
+                                        href={member.website}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="about-section__social-link"
+                                        aria-label={`${member.name} website`}
+                                    >
                                         <i className="fa-solid fa-globe" />
                                     </a>
                                 </div>
