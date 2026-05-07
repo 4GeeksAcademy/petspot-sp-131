@@ -233,7 +233,7 @@
 }
 
 .user-places__card.is-selected {
-    border-color: rgba(254, 143, 144, 0.7);
+    border: 5px solid var(--pink-dark);
     box-shadow: 0 0 0 0.2rem rgba(254, 143, 144, 0.16), 0 18px 34px rgba(0, 0, 0, 0.08);
 }
 
