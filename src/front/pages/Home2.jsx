@@ -13,9 +13,7 @@ import "../styles/home2.css";
 function Home2() {
     return (
         <div className="home2-page">
-            <header className="home2-page__header">
-                <Home2Navbar />
-            </header>
+            <Home2Navbar />
 
             <main className="home2-page__main">
                 <section className="home2-page__section">

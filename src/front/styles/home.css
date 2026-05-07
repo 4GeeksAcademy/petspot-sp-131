@@ -11,9 +11,10 @@ header {
 /* =========================
    HOME NAVBAR
 ========================= */
+
 .home-navbar {
     z-index: 1000;
-    height: 90px;
+    height: 80px;
     background-color: var(--white);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
     font-family: var(--font-family-base);
@@ -24,7 +25,8 @@ header {
     align-items: center;
     justify-content: space-between;
     gap: 2rem;
-    min-height: 90px;
+    min-height: 80px;
+    padding: 0 40px;
 }
 
 .home-navbar__logo {
@@ -35,7 +37,7 @@ header {
 
 .home-navbar__logo img {
     display: block;
-    height: 30px;
+    height: 48px;
     width: auto;
 }
 
@@ -50,7 +52,7 @@ header {
 .home-navbar__links {
     display: flex;
     align-items: center;
-    gap: 2.25rem;
+    gap: 2rem;
     margin: 0 auto;
 }
 
@@ -58,9 +60,11 @@ header {
 .home-navbar__login,
 .home-navbar__signup {
     color: var(--black);
-    font-size: 1rem;
+    font-size: 0.95rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
     line-height: 1;
-    transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+    transition: color 0.2s ease, transform 0.2s ease;
 }
 
 .home-navbar__links a:hover,
@@ -92,18 +96,21 @@ header {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-height: 46px;
-    padding: 0.75rem 1.6rem;
+    min-height: 42px;
+    padding: 0.6rem 1.4rem;
     border: 1px solid var(--black);
-    border-radius: 18px;
-    background-color: var(--white);
+    border-radius: 999px;
+    background-color: var(--black);
+    color: var(--white);
     cursor: pointer;
     font-family: inherit;
+    font-weight: 600;
+    transition: all 0.2s ease;
 }
 
 .home-navbar__signup:hover,
 .home-navbar__signup:focus-visible {
-    background-color: rgba(0, 0, 0, 0.04);
+    background-color: #222;
     transform: translateY(-1px);
 }
 
@@ -128,19 +135,65 @@ header {
     margin: 0 auto;
     background-color: var(--black);
     border-radius: 999px;
-    transition: transform 0.2s ease, opacity 0.2s ease;
 }
 
-.home-navbar__toggle.is-open span:nth-child(1) {
-    transform: translateY(6px) rotate(45deg);
-}
+/* MOBILE NAVBAR */
+@media (max-width: 991.98px) {
+    .home-navbar {
+        height: 96px;
+    }
 
-.home-navbar__toggle.is-open span:nth-child(2) {
-    opacity: 0;
-}
+    .home-navbar__inner {
+        min-height: 96px;
+        padding: 0 32px;
+    }
 
-.home-navbar__toggle.is-open span:nth-child(3) {
-    transform: translateY(-6px) rotate(-45deg);
+    .home-navbar__logo img {
+        height: 42px;
+    }
+
+    .home-navbar__toggle {
+        display: inline-flex;
+    }
+
+    .home-navbar__menu {
+        position: absolute;
+        top: 96px;
+        left: 24px;
+        right: 24px;
+        display: none;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 4rem;
+        padding: 1.5rem;
+        background-color: var(--white);
+        border-radius: 24px;
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.12);
+    }
+
+    .home-navbar__menu.is-open {
+        display: flex;
+    }
+
+    .home-navbar__links {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+        margin: 0;
+    }
+
+    .home-navbar__actions {
+        display: flex;
+        align-items: center;
+        gap: 2.5rem;
+        flex-shrink: 0;
+    }
+
+    .home-navbar__login,
+    .home-navbar__signup {
+        justify-content: center;
+        width: 100%;
+    }
 }
 
 /* =========================
@@ -832,7 +885,7 @@ header {
     pointer-events: none;
 }
 
-.reviews-section__review + .reviews-section__review {
+.reviews-section__review+.reviews-section__review {
     margin-top: 2rem;
 }
 
@@ -1083,8 +1136,8 @@ header {
     margin: 0;
 }
 
-.home-footer__links li + li,
-.home-footer__bottom li + li {
+.home-footer__links li+li,
+.home-footer__bottom li+li {
     margin-top: 0.95rem;
 }
 
@@ -1145,7 +1198,7 @@ header {
     gap: 2rem;
 }
 
-.home-footer__bottom nav li + li {
+.home-footer__bottom nav li+li {
     margin-top: 0;
 }
 
@@ -1204,13 +1257,15 @@ header {
 
     .home-navbar__links {
         flex-direction: column;
-        align-items: flex-start;
-        gap: 1.15rem;
+        align-items: center;
+        gap: 1.2rem;
         margin: 0;
     }
 
     .home-navbar__actions {
-        justify-content: space-between;
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
     }
 
     .explore-places__title {
@@ -1340,11 +1395,15 @@ header {
     }
 
     .home-navbar__logo img {
-        height: 26px;
+        height: 46px;
     }
 
     .home-navbar__menu {
-        padding: 1.25rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 4rem;
+        flex: 1;
     }
 
     .home-navbar__actions {
