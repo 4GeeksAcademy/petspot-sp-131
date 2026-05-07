@@ -2,10 +2,36 @@ import { useEffect, useMemo, useRef } from "react";
 import { GoogleMap, InfoWindowF, MarkerF, useJsApiLoader } from "@react-google-maps/api";
 import { Link } from "react-router-dom";
 import { getDefaultPlaceThumbnail } from "../../Places/placeFormUtils";
+import { MUTED_MAP_STYLES } from "../../mapStyles";
 
 const FALLBACK_CENTER = { lat: 40.4168, lng: -3.7038 };
 const FIT_BOUNDS_PADDING = { top: 150, right: 80, bottom: 110, left: 80 };
 const MAX_FIT_BOUNDS_ZOOM = 12;
+const HOME_PIN_COLORS = {
+    place: {
+        fill: "#fe8f90",
+        glyph: "#ffffff"
+    },
+    selected: {
+        fill: "#000000",
+        stroke: "#fe8f90",
+        glyph: "#ffffff"
+    },
+    user: {
+        fill: "#fddad3",
+        stroke: "#000000",
+        glyph: "#000000"
+    }
+};
+
+function createMarkerSvg({ fill, stroke, glyph }) {
+    return `
+        <svg xmlns="http://www.w3.org/2000/svg" width="44" height="56" viewBox="0 0 44 56" fill="none">
+            <path d="M22 54C22 54 39 36.71 39 23C39 13.6112 31.3888 6 22 6C12.6112 6 5 13.6112 5 23C5 36.71 22 54 22 54Z" fill="${fill}" stroke="${stroke}" stroke-width="2.6" stroke-linejoin="round"/>
+            <circle cx="22" cy="23" r="7.2" fill="${glyph}" />
+        </svg>
+    `.trim();
+}
 
 function UserPlacesMap({
     places = [],
@@ -51,6 +77,29 @@ function UserPlacesMap({
                 : null,
         [placesWithCoordinates, selectedPlace]
     );
+
+    const markerIcons = useMemo(() => {
+        if (!window.google?.maps) {
+            return {
+                place: undefined,
+                selected: undefined,
+                user: undefined
+            };
+        }
+
+        const buildIcon = (colorConfig) => ({
+            url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(createMarkerSvg(colorConfig))}`,
+            scaledSize: new window.google.maps.Size(44, 56),
+            anchor: new window.google.maps.Point(22, 54),
+            labelOrigin: new window.google.maps.Point(22, 23)
+        });
+
+        return {
+            place: buildIcon(HOME_PIN_COLORS.place),
+            selected: buildIcon(HOME_PIN_COLORS.selected),
+            user: buildIcon(HOME_PIN_COLORS.user)
+        };
+    }, [isLoaded]);
 
     useEffect(() => {
         if (!selectedPlace) {
@@ -128,6 +177,9 @@ function UserPlacesMap({
                 mapContainerClassName="user-places__map-canvas"
                 center={initialCenter}
                 zoom={6}
+                options={{
+                    styles: MUTED_MAP_STYLES
+                }}
                 onLoad={(map) => {
                     mapRef.current = map;
                 }}
@@ -136,6 +188,7 @@ function UserPlacesMap({
                     <MarkerF
                         position={userPosition}
                         title={user.name ? `${user.name}'s location` : "Your location"}
+                        icon={markerIcons.user}
                     />
                 )}
 
@@ -144,6 +197,11 @@ function UserPlacesMap({
                         key={place.id}
                         position={place.position}
                         title={place.name}
+                        icon={
+                            String(place.id) === String(selectedPlaceWithCoordinates?.id)
+                                ? markerIcons.selected
+                                : markerIcons.place
+                        }
                         onClick={() => {
                             setSelectedPlace(place);
                             mapRef.current?.panTo(place.position);

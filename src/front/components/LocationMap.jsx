@@ -1,4 +1,6 @@
 import { GoogleMap, MarkerF, useJsApiLoader } from "@react-google-maps/api";
+import { MUTED_MAP_STYLES } from "./mapStyles";
+
 
 function LocationMap({ latitude, longitude, label = "Location", draggable = false, onPositionChange }) {
     const { isLoaded } = useJsApiLoader({
@@ -13,16 +15,18 @@ function LocationMap({ latitude, longitude, label = "Location", draggable = fals
         lng: Number(longitude),
     };
 
-
-
     return (
         <GoogleMap
             mapContainerStyle={{ height: "300px", width: "100%", borderRadius: "5px" }}
             center={position}
             zoom={15}
+            options={{
+                styles: MUTED_MAP_STYLES
+            }}
         >
             <MarkerF
                 position={position}
+                title={label}
                 draggable={draggable}
                 onDragEnd={(event) => {
                     if (!draggable || !onPositionChange) return;
