@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef } from "react";
 import { GoogleMap, InfoWindowF, MarkerF, useJsApiLoader } from "@react-google-maps/api";
 import { Link } from "react-router-dom";
+import { getDefaultPlaceThumbnail } from "../../Places/placeFormUtils";
 
 const FALLBACK_CENTER = { lat: 40.4168, lng: -3.7038 };
 const FIT_BOUNDS_PADDING = { top: 150, right: 80, bottom: 110, left: 80 };
@@ -156,23 +157,35 @@ function UserPlacesMap({
                         onCloseClick={() => setSelectedPlace(null)}
                     >
                         <div className="user-places__map-info">
-                            <h6 className="user-places__map-info-title">{selectedPlaceWithCoordinates.name}</h6>
-                            <p className="user-places__map-info-type">
-                                {selectedPlaceWithCoordinates.establishment_type
-                                    ? selectedPlaceWithCoordinates.establishment_type.toUpperCase()
-                                    : "Establishment"}
-                            </p>
-                            {(selectedPlaceWithCoordinates.city?.city || selectedPlaceWithCoordinates.address) && (
-                                <p className="user-places__map-info-address">
-                                    {selectedPlaceWithCoordinates.city?.city || selectedPlaceWithCoordinates.address}
+                            <div className="user-places__map-info-media">
+                                <img
+                                    src={
+                                        selectedPlaceWithCoordinates.image_url ||
+                                        getDefaultPlaceThumbnail(selectedPlaceWithCoordinates.establishment_type)
+                                    }
+                                    alt={selectedPlaceWithCoordinates.name}
+                                    className="user-places__map-info-image"
+                                />
+                            </div>
+                            <div className="user-places__map-info-content">
+                                <p className="user-places__map-info-type">
+                                    {selectedPlaceWithCoordinates.establishment_type
+                                        ? selectedPlaceWithCoordinates.establishment_type.toUpperCase()
+                                        : "Establishment"}
                                 </p>
-                            )}
-                            <Link
-                                to={`/user/private/places/view/${selectedPlaceWithCoordinates.id}`}
-                                className="user-places__map-info-link"
-                            >
-                                View details
-                            </Link>
+                                <h6 className="user-places__map-info-title">{selectedPlaceWithCoordinates.name}</h6>
+                                {(selectedPlaceWithCoordinates.city?.city || selectedPlaceWithCoordinates.address) && (
+                                    <p className="user-places__map-info-address">
+                                        {selectedPlaceWithCoordinates.city?.city || selectedPlaceWithCoordinates.address}
+                                    </p>
+                                )}
+                                <Link
+                                    to={`/user/private/places/view/${selectedPlaceWithCoordinates.id}`}
+                                    className="user-places__map-info-link"
+                                >
+                                    View details
+                                </Link>
+                            </div>
                         </div>
                     </InfoWindowF>
                 )}
