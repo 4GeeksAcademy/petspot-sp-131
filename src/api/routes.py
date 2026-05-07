@@ -1167,10 +1167,11 @@ def signup_user():
     if user:
         return jsonify({"msg": "Ya se encuentra un usuario con ese email"}), 409
 
+    hashed_password = generate_password_hash(password)
     new_user = User(
         name=name,
         email=email,
-        password=password,
+        password=hashed_password,
         is_active=True
     )
 
