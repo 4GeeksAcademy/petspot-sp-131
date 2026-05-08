@@ -3229,6 +3229,12 @@ def delete_table(table_id):
     table = db.session.get(Table, table_id)
     if not table:
         return jsonify({"msg": "Table not found"}), 404
+    # Detach any reservations seated at this table before deletion
+    seated = db.session.execute(
+        select(Reservation).where(Reservation.table_id == table_id)
+    ).scalars().all()
+    for res in seated:
+        res.table_id = None
     db.session.delete(table)
     db.session.commit()
     return jsonify({"msg": "Table deleted"}), 200

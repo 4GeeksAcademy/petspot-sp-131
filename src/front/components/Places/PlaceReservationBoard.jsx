@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { createPortal } from "react-dom";
 import { DndContext, useSensor, useSensors, PointerSensor, closestCenter } from "@dnd-kit/core";
 import { useDroppable, useDraggable } from "@dnd-kit/core";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
@@ -455,7 +456,7 @@ function RoomElementItem({ element, onDelete, onUpdate, editMode }) {
 }
 
 // ─── Draggable Reservation Card (sidebar) ────────────────────────────────────
-function ReservationCard({ reservation, onUpdateStatus }) {
+function ReservationCard({ reservation, onUpdateStatus, onUnseat }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `res-${reservation.id}`,
     data: { type: "reservation", reservation },
@@ -515,6 +516,11 @@ function ReservationCard({ reservation, onUpdateStatus }) {
           {reservation.status !== "confirmed" && reservation.status !== "cancelled" && (
             <button onClick={() => onUpdateStatus(reservation.id, "confirmed")} className="btn-icon-sm btn-icon-success" title="Confirm">
               <i className="fas fa-check" style={{ fontSize: "0.55rem" }} />
+            </button>
+          )}
+          {reservation.table_id && onUnseat && (
+            <button onClick={() => onUnseat(reservation.id)} className="btn-icon-sm btn-icon-warn" title="Remove from table">
+              <i className="fas fa-chair" style={{ fontSize: "0.55rem" }} />
             </button>
           )}
           {reservation.status !== "cancelled" && (
@@ -656,7 +662,7 @@ function ReservationsChart({ reservations, onBarClick, selectedDate }) {
 }
 
 // ─── Hourly accordion group ───────────────────────────────────────────────────
-function HourGroup({ hour, reservations, onUpdateStatus, defaultOpen, scrollRef }) {
+function HourGroup({ hour, reservations, onUpdateStatus, onUnseat, defaultOpen, scrollRef }) {
   const [open, setOpen] = useState(defaultOpen || false);
   // Scroll into view when made active via chart click
   const divRef = useRef(null);
@@ -695,7 +701,7 @@ function HourGroup({ hour, reservations, onUpdateStatus, defaultOpen, scrollRef 
       {open && (
         <div style={{ padding: "6px 4px 0" }}>
           {reservations.map((r) => (
-            <ReservationCard key={r.id} reservation={r} onUpdateStatus={onUpdateStatus} />
+            <ReservationCard key={r.id} reservation={r} onUpdateStatus={onUpdateStatus} onUnseat={onUnseat} />
           ))}
         </div>
       )}
@@ -1276,6 +1282,15 @@ function PlaceReservationBoard({ placeId }) {
     else alert((await res.json()).msg || "Error");
   };
 
+  const handleUnseatReservation = async (reservationId) => {
+    const res = await fetch(`${backendUrl}/api/reservations/${reservationId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${tokenPlace()}` },
+      body: JSON.stringify({ table_id: null }),
+    });
+    if (res.ok) fetchReservations();
+  };
+
   // ── Drag & drop ────────────────────────────────────────────────────────────
   const handleDragEnd = async (event) => {
     const { active, over } = event;
@@ -1458,6 +1473,7 @@ function PlaceReservationBoard({ placeId }) {
                           hour={parseInt(hour)}
                           reservations={list}
                           onUpdateStatus={handleUpdateStatus}
+                          onUnseat={handleUnseatReservation}
                           defaultOpen={chartFilter ? true : parseInt(hour) === currentHour}
                         />
                       ))
@@ -1480,6 +1496,7 @@ function PlaceReservationBoard({ placeId }) {
                           hour={parseInt(hour)}
                           reservations={list}
                           onUpdateStatus={handleUpdateStatus}
+                          onUnseat={handleUnseatReservation}
                           defaultOpen={true}
                         />
                       ))
@@ -1618,25 +1635,6 @@ function PlaceReservationBoard({ placeId }) {
         </div>
       </DndContext>
 
-      {/* Modals */}
-      <TableModal
-        editingTable={editingTable}
-        newTable={newTable}
-        setEditingTable={setEditingTable}
-        setNewTable={setNewTable}
-        onSubmit={handleSaveTable}
-        layoutId={activeLayoutId}
-      />
-      <BulkTableModal onBulkCreate={handleBulkCreate} />
-      <LayoutModal
-        layouts={layouts}
-        activeLayoutId={activeLayoutId}
-        onSelect={switchLayout}
-        onCreate={handleCreateLayout}
-        onRename={handleRenameLayout}
-        onDelete={handleDeleteLayout}
-      />
-
       {/* Global styles */}
       <style>{`
         .prb-root {
@@ -1753,6 +1751,30 @@ function PlaceReservationBoard({ placeId }) {
         .prb-canvas::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
       `}</style>
     </div>
+
+    {/* Modals rendered via portal directly into <body> so Bootstrap z-index/pointer-events work correctly */}
+    {createPortal(
+      <>
+        <TableModal
+          editingTable={editingTable}
+          newTable={newTable}
+          setEditingTable={setEditingTable}
+          setNewTable={setNewTable}
+          onSubmit={handleSaveTable}
+          layoutId={activeLayoutId}
+        />
+        <BulkTableModal onBulkCreate={handleBulkCreate} />
+        <LayoutModal
+          layouts={layouts}
+          activeLayoutId={activeLayoutId}
+          onSelect={switchLayout}
+          onCreate={handleCreateLayout}
+          onRename={handleRenameLayout}
+          onDelete={handleDeleteLayout}
+        />
+      </>,
+      document.body
+    )}
   );
 }
 
