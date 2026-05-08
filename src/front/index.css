@@ -21,13 +21,13 @@
   --ps-white: var(--white);
   --ps-font-main: var(--font-family-base);
 
-  --admin-bg: #eef2fb;
-  --admin-card: #ffffff;
-  --admin-primary: #5a54c4;
-  --admin-primary-soft: #e7e9ff;
-  --admin-text: #111111;
-  --admin-muted: #777777;
-  --admin-border: #d6dae5;
+  --admin-bg: #fdf6f1;
+  --admin-card: #fffaf7;
+  --admin-primary: #c97b63;
+  --admin-primary-soft: #f3d9cc;
+  --admin-text: #3d2b25;
+  --admin-muted: #8a7065;
+  --admin-border: #ead8cc;
 }
 
 body {
@@ -636,4 +636,75 @@ footer {
     flex-direction: column;
     align-items: flex-start;
   }
+}
+
+/* ===== BOOTSTRAP OVERRIDES — warm palette ===== */
+
+/* Auth / public forms: Bootstrap form-control inputs inherit warm tones */
+.auth-field .form-control,
+.auth-field .form-select,
+.auth-field input.form-control,
+.auth-card input,
+.auth-card select,
+.auth-card textarea {
+  background-color: rgba(255, 237, 233, 0.45) !important;
+  border-color: var(--ps-border) !important;
+  color: var(--ps-text) !important;
+}
+
+.auth-field .form-control:focus,
+.auth-card input:focus,
+.auth-card select:focus,
+.auth-card textarea:focus {
+  background-color: rgba(255, 237, 233, 0.7) !important;
+  box-shadow: 0 0 0 3px rgba(254, 143, 144, 0.2) !important;
+  border-color: var(--ps-border) !important;
+}
+
+/* Private area (pvt-main): Bootstrap form-control warm override */
+.pvt-main .form-control,
+.pvt-main .form-select,
+.pvt-main .input-group-text,
+.pvt-main .form-check-input {
+  background-color: var(--admin-surface) !important;
+  border-color: var(--admin-border) !important;
+  color: var(--admin-text) !important;
+}
+
+.pvt-main .form-control:focus,
+.pvt-main .form-select:focus {
+  border-color: var(--admin-primary) !important;
+  box-shadow: 0 0 0 3px rgba(201, 123, 99, 0.18) !important;
+}
+
+.pvt-main .form-control:disabled,
+.pvt-main .form-control[readonly] {
+  background-color: var(--admin-surface-alt) !important;
+  opacity: 0.7;
+}
+
+/* Bootstrap .card and .bg-* overrides in pvt-main */
+.pvt-main .card,
+.pvt-main .bg-white,
+.pvt-main .bg-light,
+.pvt-main .bg-secondary-subtle {
+  background-color: var(--admin-surface) !important;
+  border-color: var(--admin-border) !important;
+}
+
+.pvt-main .card-header,
+.pvt-main .card-footer {
+  background-color: var(--admin-surface-alt) !important;
+  border-color: var(--admin-border) !important;
+}
+
+.pvt-main .list-group-item {
+  background-color: var(--admin-surface) !important;
+  border-color: var(--admin-border) !important;
+  color: var(--admin-text) !important;
+}
+
+/* Also cover the bg-white utility class globally where it appears outside cards */
+.bg-white {
+  background-color: #fffaf7 !important;
 }

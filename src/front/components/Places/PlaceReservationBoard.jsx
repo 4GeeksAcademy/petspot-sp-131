@@ -482,10 +482,10 @@ function ReservationCard({ reservation, onUpdateStatus, onUnseat }) {
     >
       <div
         style={{
-          background: "white",
+          background: "#fffaf7",
           borderRadius: "12px",
           padding: "10px 12px",
-          boxShadow: isDragging ? "0 8px 24px rgba(0,0,0,0.18)" : "0 2px 8px rgba(0,0,0,0.08)",
+          boxShadow: isDragging ? "0 8px 24px rgba(61,43,37,0.18)" : "0 2px 8px rgba(61,43,37,0.08)",
           borderLeft: `4px solid ${sc.dot}`,
           display: "flex",
           justifyContent: "space-between",
@@ -500,14 +500,14 @@ function ReservationCard({ reservation, onUpdateStatus, onUnseat }) {
             {reservation.user_name || "Guest"}
           </div>
           <div style={{ display: "flex", gap: "6px", alignItems: "center", marginTop: "4px", flexWrap: "wrap" }}>
-            <span style={{ background: "#eef2ff", color: "#4338ca", borderRadius: "20px", padding: "1px 8px", fontSize: "0.65rem", fontWeight: 600 }}>
+            <span style={{ background: "#fef0e8", color: "#c97b63", borderRadius: "20px", padding: "1px 8px", fontSize: "0.65rem", fontWeight: 600 }}>
               {reservation.reservation_time?.substring(0, 5)}
             </span>
             <span style={{ background: sc.bg, color: sc.text, borderRadius: "20px", padding: "1px 8px", fontSize: "0.65rem", fontWeight: 600 }}>
               {reservation.status}
             </span>
           </div>
-          <div style={{ marginTop: "4px", fontSize: "0.68rem", color: "#64748b" }}>
+          <div style={{ marginTop: "4px", fontSize: "0.68rem", color: "#8a7065" }}>
             <i className="fas fa-users me-1" />{reservation.people_count}
             {reservation.pet_id && <><i className="fas fa-paw ms-2 me-1 text-success" />Pet</>}
             {reservation.notes && <span className="ms-2" title={reservation.notes}><i className="fas fa-sticky-note" /></span>}
@@ -595,8 +595,8 @@ function ReservationsChart({ reservations, onBarClick, selectedDate }) {
             style={{
               flex: 1, border: "none", borderRadius: "8px", padding: "4px 2px",
               fontSize: "0.62rem", fontWeight: mode === m ? 700 : 500, cursor: "pointer",
-              background: mode === m ? "#4338ca" : "#f1f5f9",
-              color: mode === m ? "white" : "#64748b",
+              background: mode === m ? "#c97b63" : "#fdf3ee",
+              color: mode === m ? "white" : "#8a7065",
               transition: "all 0.15s",
             }}
           >
@@ -606,9 +606,9 @@ function ReservationsChart({ reservations, onBarClick, selectedDate }) {
       </div>
 
       {/* Chart */}
-      <div style={{ background: "#f8fafc", borderRadius: "12px", padding: "8px 4px 4px" }}>
+      <div style={{ background: "#fdf6f1", borderRadius: "12px", padding: "8px 4px 4px" }}>
         {data.length === 0 ? (
-          <div style={{ height: 80, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", color: "#cbd5e1" }}>
+          <div style={{ height: 80, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", color: "#dcc9bf" }}>
             <i className="fas fa-chart-bar" style={{ fontSize: "1.4rem" }} />
             <span style={{ fontSize: "0.65rem", marginTop: "6px" }}>No reservations</span>
           </div>
@@ -617,7 +617,7 @@ function ReservationsChart({ reservations, onBarClick, selectedDate }) {
           <BarChart data={data} barCategoryGap="35%">
             <XAxis
               dataKey="label"
-              tick={{ fontSize: 8, fill: "#94a3b8" }}
+              tick={{ fontSize: 8, fill: "#a08070" }}
               axisLine={false}
               tickLine={false}
             />
@@ -646,7 +646,7 @@ function ReservationsChart({ reservations, onBarClick, selectedDate }) {
                 return (
                   <Cell
                     key={entry.key}
-                    fill={isActive || isSelected ? "#4338ca" : "#a5b4fc"}
+                    fill={isActive || isSelected ? "#c97b63" : "#f3d9cc"}
                   />
                 );
               })}
@@ -655,7 +655,7 @@ function ReservationsChart({ reservations, onBarClick, selectedDate }) {
         </ResponsiveContainer>
         )}
         {activeBar !== null && (
-          <div style={{ textAlign: "center", fontSize: "0.65rem", color: "#4338ca", fontWeight: 600, marginTop: "2px" }}>
+          <div style={{ textAlign: "center", fontSize: "0.65rem", color: "#c97b63", fontWeight: 600, marginTop: "2px" }}>
             <i className="fas fa-filter me-1" />
             Filtered · click again to clear
           </div>
@@ -681,7 +681,7 @@ function HourGroup({ hour, reservations, onUpdateStatus, onUnseat, defaultOpen, 
         onClick={() => setOpen((o) => !o)}
         style={{
           width: "100%",
-          background: open ? "#eef2ff" : "#f8fafc",
+          background: open ? "#fef0e8" : "#fdf6f1",
           border: "none",
           borderRadius: "8px",
           padding: "6px 10px",
@@ -692,14 +692,14 @@ function HourGroup({ hour, reservations, onUpdateStatus, onUnseat, defaultOpen, 
           transition: "background 0.15s",
         }}
       >
-        <span style={{ fontWeight: 600, fontSize: "0.75rem", color: open ? "#4338ca" : "#475569" }}>
+        <span style={{ fontWeight: 600, fontSize: "0.75rem", color: open ? "#c97b63" : "#6b4f43" }}>
           {hour}:00 – {hour + 1}:00
         </span>
         <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-          <span style={{ background: open ? "#4338ca" : "#cbd5e1", color: "white", borderRadius: "20px", padding: "1px 7px", fontSize: "0.65rem", fontWeight: 700 }}>
+          <span style={{ background: open ? "#c97b63" : "#dcc9bf", color: "white", borderRadius: "20px", padding: "1px 7px", fontSize: "0.65rem", fontWeight: 700 }}>
             {reservations.length}
           </span>
-          <i className={`fas fa-chevron-${open ? "up" : "down"}`} style={{ fontSize: "0.6rem", color: "#94a3b8" }} />
+          <i className={`fas fa-chevron-${open ? "up" : "down"}`} style={{ fontSize: "0.6rem", color: "#a08070" }} />
         </span>
       </button>
       {open && (
@@ -751,9 +751,9 @@ function LayoutModal({ layouts, activeLayoutId, onSelect, onCreate, onRename, on
                       onClick={() => onSelect(l.id)}
                       style={{
                         flex: 1, textAlign: "left", border: activeLayoutId === l.id ? "2px solid #4338ca" : "2px solid transparent",
-                        background: activeLayoutId === l.id ? "#eef2ff" : "#f8fafc",
+                        background: activeLayoutId === l.id ? "#fef0e8" : "#fdf6f1",
                         borderRadius: "10px", padding: "6px 12px", cursor: "pointer", fontWeight: activeLayoutId === l.id ? 700 : 400,
-                        color: activeLayoutId === l.id ? "#4338ca" : "#374151", fontSize: "0.85rem",
+                        color: activeLayoutId === l.id ? "#c97b63" : "#3d2b25", fontSize: "0.85rem",
                       }}
                     >
                       <i className="fas fa-layer-group me-2" />{l.name}
@@ -855,8 +855,8 @@ function TableModal({ editingTable, newTable, setEditingTable, setNewTable, onSu
                       type="button"
                       onClick={() => setData({ ...data, shape: s.value })}
                       style={{
-                        border: `2px solid ${data.shape === s.value ? "#4338ca" : "#e2e8f0"}`,
-                        background: data.shape === s.value ? "#eef2ff" : "white",
+                        border: `2px solid ${data.shape === s.value ? "#c97b63" : "#ead8cc"}`,
+                        background: data.shape === s.value ? "#fef0e8" : "#fffaf7",
                         borderRadius: "10px",
                         padding: "8px 4px",
                         cursor: "pointer",
@@ -865,7 +865,7 @@ function TableModal({ editingTable, newTable, setEditingTable, setNewTable, onSu
                       }}
                     >
                       <div style={{ fontSize: "1.2rem" }}>{s.icon}</div>
-                      <div style={{ fontSize: "0.6rem", fontWeight: 600, color: data.shape === s.value ? "#4338ca" : "#64748b", marginTop: "2px" }}>{s.label}</div>
+                      <div style={{ fontSize: "0.6rem", fontWeight: 600, color: data.shape === s.value ? "#c97b63" : "#8a7065", marginTop: "2px" }}>{s.label}</div>
                     </button>
                   ))}
                 </div>
@@ -906,7 +906,7 @@ function BulkTableModal({ onBulkCreate }) {
               <button type="button" className="btn-close" data-bs-dismiss="modal" />
             </div>
             <div className="modal-body p-4">
-              <div style={{ background: "#f8fafc", borderRadius: "12px", padding: "12px 14px", marginBottom: "16px", fontSize: "0.8rem", color: "#475569" }}>
+              <div style={{ background: "#fdf6f1", borderRadius: "12px", padding: "12px 14px", marginBottom: "16px", fontSize: "0.8rem", color: "#6b4f43" }}>
                 <i className="fas fa-info-circle me-2 text-primary" />
                 Tables will be named <strong>{prefix}1</strong>, <strong>{prefix}2</strong>… and placed in a grid.
               </div>
@@ -939,8 +939,8 @@ function BulkTableModal({ onBulkCreate }) {
                       type="button"
                       onClick={() => setShape(s.value)}
                       style={{
-                        border: `2px solid ${shape === s.value ? "#4338ca" : "#e2e8f0"}`,
-                        background: shape === s.value ? "#eef2ff" : "white",
+                        border: `2px solid ${shape === s.value ? "#c97b63" : "#ead8cc"}`,
+                        background: shape === s.value ? "#fef0e8" : "#fffaf7",
                         borderRadius: "10px",
                         padding: "8px 4px",
                         cursor: "pointer",
@@ -949,7 +949,7 @@ function BulkTableModal({ onBulkCreate }) {
                       }}
                     >
                       <div style={{ fontSize: "1.2rem" }}>{s.icon}</div>
-                      <div style={{ fontSize: "0.6rem", fontWeight: 600, color: shape === s.value ? "#4338ca" : "#64748b", marginTop: "2px" }}>{s.label}</div>
+                      <div style={{ fontSize: "0.6rem", fontWeight: 600, color: shape === s.value ? "#c97b63" : "#8a7065", marginTop: "2px" }}>{s.label}</div>
                     </button>
                   ))}
                 </div>
@@ -1010,7 +1010,7 @@ function AddElementPanel({ onAdd }) {
   return (
     <div
       style={{
-        background: "white",
+        background: "#fdf6f1",
         borderRadius: "16px",
         padding: "14px 14px",
         boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
@@ -1019,7 +1019,7 @@ function AddElementPanel({ onAdd }) {
         gap: "10px",
       }}
     >
-      <div style={{ fontWeight: 700, fontSize: "0.75rem", color: "#374151", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+      <div style={{ fontWeight: 700, fontSize: "0.75rem", color: "#3d2b25", textTransform: "uppercase", letterSpacing: "0.05em" }}>
         <i className="fas fa-shapes me-2 text-primary" />Add Element
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "5px" }}>
@@ -1028,15 +1028,15 @@ function AddElementPanel({ onAdd }) {
             key={key}
             onClick={() => setType(key)}
             style={{
-              border: `2px solid ${type === key ? "#4338ca" : "#e2e8f0"}`,
-              background: type === key ? "#eef2ff" : "white",
+              border: `2px solid ${type === key ? "#c97b63" : "#ead8cc"}`,
+              background: type === key ? "#fef0e8" : "#fffaf7",
               borderRadius: "8px",
               padding: "5px 4px",
               cursor: "pointer",
               textAlign: "center",
               fontSize: "0.6rem",
               fontWeight: type === key ? 700 : 500,
-              color: type === key ? "#4338ca" : "#64748b",
+              color: type === key ? "#c97b63" : "#8a7065",
               transition: "all 0.15s",
             }}
           >
@@ -1054,7 +1054,7 @@ function AddElementPanel({ onAdd }) {
         />
       )}
       <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
-        <label style={{ fontSize: "0.7rem", color: "#64748b", flex: 1 }}>Colour</label>
+        <label style={{ fontSize: "0.7rem", color: "#8a7065", flex: 1 }}>Colour</label>
         <input
           type="color"
           value={color || preset.color}
@@ -1064,7 +1064,7 @@ function AddElementPanel({ onAdd }) {
       </div>
       <button
         onClick={handleAdd}
-        style={{ background: "linear-gradient(135deg, #4338ca, #6366f1)", color: "white", border: "none", borderRadius: "10px", padding: "8px 14px", fontWeight: 700, fontSize: "0.78rem", cursor: "pointer" }}
+        style={{ background: "linear-gradient(135deg, #c97b63, #b56950)", color: "white", border: "none", borderRadius: "10px", padding: "8px 14px", fontWeight: 700, fontSize: "0.78rem", cursor: "pointer" }}
       >
         <i className="fas fa-plus me-2" />Place on Canvas
       </button>
@@ -1433,15 +1433,15 @@ function PlaceReservationBoard({ placeId }) {
                   style={{
                     flex: 1, border: "none", borderRadius: "10px", padding: "7px 4px",
                     fontWeight: 700, fontSize: "0.72rem", cursor: "pointer",
-                    background: sidebarSection === key ? "#4338ca" : "#f1f5f9",
-                    color: sidebarSection === key ? "white" : "#64748b",
+                    background: sidebarSection === key ? "#c97b63" : "#fdf3ee",
+                    color: sidebarSection === key ? "white" : "#8a7065",
                     transition: "all 0.15s",
                   }}
                 >
                   {label}
                   <span style={{
                     marginLeft: "5px",
-                    background: sidebarSection === key ? "rgba(255,255,255,0.25)" : "#e2e8f0",
+                    background: sidebarSection === key ? "rgba(255,255,255,0.25)" : "#ead8cc",
                     borderRadius: "20px", padding: "0 5px", fontSize: "0.65rem",
                   }}>
                     {count}
@@ -1452,11 +1452,11 @@ function PlaceReservationBoard({ placeId }) {
 
             {/* Active filter badge */}
             {chartFilter && (
-              <div style={{ margin: "0 12px 8px", background: "#eef2ff", borderRadius: "8px", padding: "5px 10px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span style={{ fontSize: "0.65rem", color: "#4338ca", fontWeight: 600 }}>
+              <div style={{ margin: "0 12px 8px", background: "#fef0e8", borderRadius: "8px", padding: "5px 10px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ fontSize: "0.65rem", color: "#c97b63", fontWeight: 600 }}>
                   <i className="fas fa-filter me-1" />Filtered by chart
                 </span>
-                <button onClick={() => setChartFilter(null)} style={{ border: "none", background: "none", color: "#4338ca", cursor: "pointer", fontSize: "0.7rem", fontWeight: 700 }}>
+                <button onClick={() => setChartFilter(null)} style={{ border: "none", background: "none", color: "#c97b63", cursor: "pointer", fontSize: "0.7rem", fontWeight: 700 }}>
                   ✕ Clear
                 </button>
               </div>
@@ -1521,7 +1521,7 @@ function PlaceReservationBoard({ placeId }) {
               <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                 {/* Layout selector */}
                 <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                  <i className="fas fa-layer-group" style={{ color: "#6366f1", fontSize: "0.9rem" }} />
+                  <i className="fas fa-layer-group" style={{ color: "#b56950", fontSize: "0.9rem" }} />
                   <span style={{ fontWeight: 700, fontSize: "0.85rem", color: "#1e293b" }}>
                     {activeLayout?.name || "No layout"}
                   </span>
@@ -1531,13 +1531,13 @@ function PlaceReservationBoard({ placeId }) {
                     key={l.id}
                     onClick={() => switchLayout(l.id)}
                     style={{
-                      border: `2px solid ${l.id === activeLayoutId ? "#4338ca" : "#e2e8f0"}`,
-                      background: l.id === activeLayoutId ? "#eef2ff" : "white",
+                      border: `2px solid ${l.id === activeLayoutId ? "#c97b63" : "#ead8cc"}`,
+                      background: l.id === activeLayoutId ? "#fef0e8" : "#fffaf7",
                       borderRadius: "20px",
                       padding: "4px 12px",
                       fontSize: "0.72rem",
                       fontWeight: l.id === activeLayoutId ? 700 : 500,
-                      color: l.id === activeLayoutId ? "#4338ca" : "#64748b",
+                      color: l.id === activeLayoutId ? "#c97b63" : "#8a7065",
                       cursor: "pointer",
                       transition: "all 0.15s",
                     }}
@@ -1548,7 +1548,7 @@ function PlaceReservationBoard({ placeId }) {
                 <button
                   data-bs-toggle="modal"
                   data-bs-target="#layoutModal"
-                  style={{ border: "2px dashed #cbd5e1", background: "white", borderRadius: "20px", padding: "4px 12px", fontSize: "0.72rem", color: "#94a3b8", cursor: "pointer" }}
+                  style={{ border: "2px dashed #dcc9bf", background: "#fffaf7", borderRadius: "20px", padding: "4px 12px", fontSize: "0.72rem", color: "#a08070", cursor: "pointer" }}
                 >
                   <i className="fas fa-cog me-1" /> Manage
                 </button>
@@ -1560,8 +1560,8 @@ function PlaceReservationBoard({ placeId }) {
                   style={{
                     border: "none", borderRadius: "20px", padding: "6px 16px",
                     fontSize: "0.78rem", fontWeight: 700, cursor: "pointer",
-                    background: editMode ? "#4338ca" : "#f1f5f9",
-                    color: editMode ? "white" : "#475569",
+                    background: editMode ? "#c97b63" : "#fdf3ee",
+                    color: editMode ? "white" : "#6b4f43",
                     transition: "all 0.15s",
                   }}
                   title={editMode ? "Exit edit mode" : "Enter edit mode to move elements"}
@@ -1572,7 +1572,7 @@ function PlaceReservationBoard({ placeId }) {
                 <button
                   data-bs-toggle="modal"
                   data-bs-target="#bulkTableModal"
-                  style={{ border: "none", borderRadius: "20px", padding: "6px 14px", fontSize: "0.78rem", fontWeight: 600, cursor: "pointer", background: "#f1f5f9", color: "#475569" }}
+                  style={{ border: "none", borderRadius: "20px", padding: "6px 14px", fontSize: "0.78rem", fontWeight: 600, cursor: "pointer", background: "#fdf3ee", color: "#6b4f43" }}
                 >
                   <i className="fas fa-th me-1" /> Bulk Add
                 </button>
@@ -1580,7 +1580,7 @@ function PlaceReservationBoard({ placeId }) {
                   data-bs-toggle="modal"
                   data-bs-target="#tableModal"
                   onClick={() => setEditingTable(null)}
-                  style={{ border: "none", borderRadius: "20px", padding: "6px 16px", fontSize: "0.78rem", fontWeight: 700, cursor: "pointer", background: "linear-gradient(135deg, #4338ca, #6366f1)", color: "white" }}
+                  style={{ border: "none", borderRadius: "20px", padding: "6px 16px", fontSize: "0.78rem", fontWeight: 700, cursor: "pointer", background: "linear-gradient(135deg, #c97b63, #b56950)", color: "white" }}
                 >
                   <i className="fas fa-plus me-2" />New Table
                 </button>
@@ -1600,8 +1600,8 @@ function PlaceReservationBoard({ placeId }) {
                 {/* Zone label if no layout */}
                 {!activeLayoutId && (
                   <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", textAlign: "center", opacity: 0.25, pointerEvents: "none" }}>
-                    <i className="fas fa-layer-group" style={{ fontSize: "3rem", color: "#4338ca" }} />
-                    <p style={{ marginTop: "12px", fontWeight: 700, fontSize: "1rem", color: "#374151" }}>
+                    <i className="fas fa-layer-group" style={{ fontSize: "3rem", color: "#c97b63" }} />
+                    <p style={{ marginTop: "12px", fontWeight: 700, fontSize: "1rem", color: "#3d2b25" }}>
                       Create or select a layout to get started
                     </p>
                   </div>
@@ -1663,10 +1663,10 @@ function PlaceReservationBoard({ placeId }) {
         .prb-sidebar {
           width: var(--sidebar-w);
           flex-shrink: 0;
-          background: white;
+          background: #fffaf7;
           display: flex;
           flex-direction: column;
-          border-right: 1px solid #f1f5f9;
+          border-right: 1px solid #ead8cc;
           overflow: hidden;
         }
         .prb-sidebar-section {
@@ -1676,24 +1676,24 @@ function PlaceReservationBoard({ placeId }) {
           display: block;
           font-size: 0.65rem;
           font-weight: 700;
-          color: #94a3b8;
+          color: #a08070;
           text-transform: uppercase;
           letter-spacing: 0.08em;
           margin-bottom: 6px;
         }
         .prb-date-input {
           width: 100%;
-          border: 2px solid #f1f5f9;
+          border: 2px solid #ead8cc;
           border-radius: 10px;
           padding: 7px 10px;
           font-size: 0.82rem;
-          color: #1e293b;
+          color: #3d2b25;
           font-weight: 600;
           outline: none;
           transition: border-color 0.15s;
-          background: #f8fafc;
+          background: #fdf6f1;
         }
-        .prb-date-input:focus { border-color: #4338ca; background: white; }
+        .prb-date-input:focus { border-color: #c97b63; background: #fffaf7; }
         .prb-sidebar-list {
           flex: 1;
           overflow-y: auto;
@@ -1702,7 +1702,7 @@ function PlaceReservationBoard({ placeId }) {
         .prb-empty-state {
           text-align: center;
           padding: 40px 16px;
-          color: #94a3b8;
+          color: #a08070;
           font-size: 0.8rem;
         }
         .prb-main {
@@ -1712,8 +1712,8 @@ function PlaceReservationBoard({ placeId }) {
           overflow: hidden;
         }
         .prb-toolbar {
-          background: white;
-          border-bottom: 1px solid #f1f5f9;
+          background: #fffaf7;
+          border-bottom: 1px solid #ead8cc;
           padding: 10px 16px;
           display: flex;
           justify-content: space-between;
@@ -1725,7 +1725,9 @@ function PlaceReservationBoard({ placeId }) {
           flex: 1;
           position: relative;
           overflow: auto;
-          background: #f0f2f8;
+          background: #f7ebe2;
+          background-image: radial-gradient(circle, #dcc9bf 1px, transparent 1px);
+          background-size: 24px 24px;
           min-width: 0;
           min-height: 600px;
         }
@@ -1736,27 +1738,27 @@ function PlaceReservationBoard({ placeId }) {
           width: 22px; height: 22px;
           border-radius: 50%;
           border: none;
-          background: white;
-          color: #374151;
+          background: #fffaf7;
+          color: #3d2b25;
           display: flex; align-items: center; justify-content: center;
           cursor: pointer;
-          box-shadow: 0 2px 6px rgba(0,0,0,0.18);
+          box-shadow: 0 2px 6px rgba(61,43,37,0.18);
           transition: transform 0.1s;
           flex-shrink: 0;
         }
         .btn-icon-sm:hover { transform: scale(1.15); }
         .btn-icon-success { background: #16a34a; color: white; }
         .btn-icon-danger { background: #dc2626; color: white; }
-        .btn-icon-danger-outline { background: white; color: #dc2626; border: 1.5px solid #dc2626; }
+        .btn-icon-danger-outline { background: #fffaf7; color: #dc2626; border: 1.5px solid #dc2626; }
         .btn-icon-warn { background: #d97706; color: white; }
-        .btn-icon-dark { background: #1e293b; color: white; }
+        .btn-icon-dark { background: #3d2b25; color: white; }
         /* Scrollbar */
         .prb-sidebar-list::-webkit-scrollbar,
         .prb-canvas::-webkit-scrollbar { width: 5px; height: 5px; }
         .prb-sidebar-list::-webkit-scrollbar-track,
         .prb-canvas::-webkit-scrollbar-track { background: transparent; }
         .prb-sidebar-list::-webkit-scrollbar-thumb,
-        .prb-canvas::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .prb-canvas::-webkit-scrollbar-thumb { background: #dcc9bf; border-radius: 10px; }
       `}</style>
     </div>
 

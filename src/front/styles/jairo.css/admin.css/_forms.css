@@ -1,3 +1,62 @@
+/* ── Bootstrap form overrides – keep warm palette in admin/private area ── */
+.pvt-main .form-control,
+.pvt-main .form-select,
+.pvt-main .input-group-text {
+  background-color: var(--admin-surface);
+  border-color: var(--admin-border);
+  color: var(--admin-text);
+}
+
+.pvt-main .form-control:focus,
+.pvt-main .form-select:focus {
+  background-color: var(--admin-surface);
+  border-color: var(--admin-primary);
+  box-shadow: 0 0 0 3px rgba(201, 123, 99, 0.18);
+  color: var(--admin-text);
+}
+
+.pvt-main .form-control:disabled,
+.pvt-main .form-control[readonly] {
+  background-color: var(--admin-surface-alt);
+  opacity: 0.75;
+}
+
+.pvt-main .form-check-input {
+  background-color: var(--admin-surface);
+  border-color: var(--admin-border);
+}
+
+.pvt-main .form-check-input:checked {
+  background-color: var(--admin-primary);
+  border-color: var(--admin-primary);
+}
+
+.pvt-main .card,
+.pvt-main .bg-white,
+.pvt-main .bg-light,
+.pvt-main .bg-secondary-subtle {
+  background-color: var(--admin-surface) !important;
+  border-color: var(--admin-border) !important;
+}
+
+.pvt-main .card-header,
+.pvt-main .card-footer {
+  background-color: var(--admin-surface-alt) !important;
+  border-color: var(--admin-border) !important;
+}
+
+.pvt-main .list-group-item,
+.pvt-main .list-group-item-action {
+  background-color: var(--admin-surface);
+  border-color: var(--admin-border);
+  color: var(--admin-text);
+}
+
+.pvt-main .list-group-item-action:hover {
+  background-color: var(--admin-primary-soft);
+}
+
+/* ─────────────────────────────────────────────────────────── */
 .admin-form-group {
   margin-bottom: 16px;
 }
