@@ -1,7 +1,12 @@
 import { Link } from "react-router-dom";
 
-function UserReservationCard({ reservationObj, onCancelReservation }) {
+const statusStyle = {
+    confirmed: { bg: "rgba(255,255,255,0.9)", color: "#5a8a3a", border: "rgba(255,255,255,0.6)" },
+    pending: { bg: "rgba(255,255,255,0.9)", color: "#b07a3a", border: "rgba(255,255,255,0.6)" },
+    cancelled: { bg: "rgba(255,255,255,0.9)", color: "#b85450", border: "rgba(255,255,255,0.6)" },
+};
 
+function UserReservationCard({ reservationObj, onCancelReservation }) {
     const {
         id,
         place_name,
@@ -15,102 +20,102 @@ function UserReservationCard({ reservationObj, onCancelReservation }) {
         place_id
     } = reservationObj;
 
+    const st = statusStyle[status] || statusStyle.pending;
+
     return (
-        <div className="card mb-4 mx-auto w-100 shadow-lg border-0" style={{ 
-            maxWidth: "800px", 
-            borderRadius: "20px", 
-            background: "rgba(255, 255, 255, 0.7)", 
-            backdropFilter: "blur(12px)",
-            border: "1px solid rgba(255, 255, 255, 0.3)",
-            overflow: "hidden"
+        <div className="mb-3 mx-auto w-100" style={{
+            maxWidth: 800,
+            background: "var(--admin-surface)",
+            border: "1px solid var(--admin-border)",
+            borderRadius: "var(--admin-radius)",
+            boxShadow: "var(--admin-shadow-sm)",
+            overflow: "hidden",
         }}>
-            <div className="row g-0">
-                <div className="col-md-4 d-flex flex-column justify-content-center align-items-center p-4 text-white" style={{ 
-                    background: "linear-gradient(135deg, #1a237e 0%, #0d47a1 100%)",
+            <div style={{ display: "flex" }}>
+                <div style={{
+                    minWidth: 120, display: "flex", flexDirection: "column",
+                    alignItems: "center", justifyContent: "center",
+                    background: "var(--admin-primary)", color: "#fff",
+                    padding: "20px 16px", gap: 4,
                 }}>
-                    <div className="display-5 fw-bold mb-0">{reservation_time.substring(0, 5)}</div>
-                    <div className="fs-5 opacity-75">{reservation_date}</div>
-                    <span className={`badge rounded-pill mt-3 px-3 py-2 fw-bold text-uppercase ${status === "confirmed" ? "bg-success" : status === "pending" ? "bg-warning text-dark" : "bg-danger"}`} style={{ fontSize: "0.7rem", letterSpacing: "1px" }}>
+                    <div style={{ fontSize: "1.5rem", fontWeight: 700, lineHeight: 1 }}>
+                        {reservation_time?.substring(0, 5)}
+                    </div>
+                    <div style={{ fontSize: "0.78rem", opacity: 0.85 }}>{reservation_date}</div>
+                    <span style={{
+                        marginTop: 8, background: st.bg, color: st.color,
+                        border: `1px solid ${st.border}`, borderRadius: "var(--admin-radius-sm)",
+                        padding: "2px 10px", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase",
+                        letterSpacing: "0.5px",
+                    }}>
                         {status}
                     </span>
                 </div>
-                <div className="col-md-8">
-                    <div className="card-body p-4">
-                        <div className="d-flex justify-content-between align-items-start mb-3">
-                            <h3 className="card-title fw-bold mb-0" style={{ color: "#1a237e" }}>{place_name}</h3>
-                            <Link to={`/user/private/places/view/${place_id}`} className="btn btn-link text-decoration-none p-0 fw-bold">
-                                Details <i className="fas fa-chevron-right small ms-1"></i>
-                            </Link>
-                        </div>
 
-                        <div className="row g-3 mb-4">
-                            <div className="col-sm-6">
-                                <div className="d-flex align-items-center text-muted">
-                                    <div className="bg-light rounded-circle p-2 me-3" style={{ width: "40px", height: "40px", display: "grid", placeItems: "center" }}>
-                                        <i className="fas fa-users text-primary"></i>
-                                    </div>
-                                    <div>
-                                        <small className="d-block text-uppercase fw-bold" style={{ fontSize: "0.65rem" }}>Guests</small>
-                                        <span className="fw-bold text-dark">{people_count} People</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="col-sm-6">
-                                <div className="d-flex align-items-center text-muted">
-                                    <div className="bg-light rounded-circle p-2 me-3" style={{ width: "40px", height: "40px", display: "grid", placeItems: "center" }}>
-                                        <i className="fas fa-paw text-success"></i>
-                                    </div>
-                                    <div>
-                                        <small className="d-block text-uppercase fw-bold" style={{ fontSize: "0.65rem" }}>Pets</small>
-                                        <span className="fw-bold text-dark">{pet_name ? pet_name : "No pets"}</span>
-                                    </div>
-                                </div>
-                            </div>
-                            {zone_preference && (
-                                <div className="col-12">
-                                    <div className="d-flex align-items-center text-muted">
-                                        <div className="bg-light rounded-circle p-2 me-3" style={{ width: "40px", height: "40px", display: "grid", placeItems: "center" }}>
-                                            <i className="fas fa-layer-group text-info"></i>
-                                        </div>
-                                        <div>
-                                            <small className="d-block text-uppercase fw-bold" style={{ fontSize: "0.65rem" }}>Preferred Zone</small>
-                                            <span className="fw-bold text-dark">{zone_preference}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
+                <div style={{ flex: 1, padding: "16px 20px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
+                        <h5 style={{ fontWeight: 700, color: "var(--admin-text)", margin: 0, fontSize: "1.05rem" }}>{place_name}</h5>
+                        <Link to={`/user/private/places/view/${place_id}`} style={{
+                            color: "var(--admin-primary)", fontSize: "0.8rem", fontWeight: 600, textDecoration: "none",
+                        }}>
+                            Ver lugar →
+                        </Link>
+                    </div>
 
-                        {notes && (
-                            <div className="mb-4 p-3 bg-light rounded-3 border-start border-4 border-primary">
-                                <small className="d-block text-uppercase fw-bold text-muted mb-1" style={{ fontSize: "0.6rem" }}>Notes for the place</small>
-                                <p className="mb-0 small italic">"{notes}"</p>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 12 }}>
+                        <div style={{ fontSize: "0.8rem", color: "var(--admin-text-muted)" }}>
+                            <i className="fas fa-users me-1" style={{ color: "var(--admin-primary)" }} />
+                            {people_count} personas
+                        </div>
+                        <div style={{ fontSize: "0.8rem", color: "var(--admin-text-muted)" }}>
+                            <i className="fas fa-paw me-1" style={{ color: "var(--admin-primary)" }} />
+                            {pet_name || "Sin mascota"}
+                        </div>
+                        {zone_preference && (
+                            <div style={{ fontSize: "0.8rem", color: "var(--admin-text-muted)" }}>
+                                <i className="fas fa-layer-group me-1" style={{ color: "var(--admin-primary)" }} />
+                                {zone_preference}
                             </div>
                         )}
+                    </div>
 
-                        <div className="d-flex flex-wrap gap-2 pt-3 border-top justify-content-end">
-                            {status === "confirmed" && (
-                                <Link to={`/user/private/reviews/add/${id}`} className="btn btn-sm btn-outline-warning rounded-pill px-3">
-                                    <i className="fas fa-star me-1"></i> Review
-                                </Link>
-                            )}
-                            <Link 
-                                to={`/user/private/chats?id=${place_id}&name=${encodeURIComponent(place_name)}`} 
-                                className="btn btn-sm btn-outline-success rounded-pill px-3"
-                            >
-                                <i className="fas fa-comment me-1"></i> Chat
-                            </Link>
-                            {status !== "cancelled" && (
-                                <button
-                                    type="button"
-                                    className="btn btn-sm btn-outline-danger rounded-pill px-3"
-                                    onClick={() => onCancelReservation(id)}
-                                >
-                                    <i className="fas fa-times me-1"></i> Cancel
-                                </button>
-                            )}
+                    {notes && (
+                        <div style={{
+                            background: "var(--admin-bg)", borderLeft: "3px solid var(--admin-primary)",
+                            borderRadius: "0 var(--admin-radius-sm) var(--admin-radius-sm) 0",
+                            padding: "8px 12px", marginBottom: 12, fontSize: "0.8rem",
+                            color: "var(--admin-text-muted)", fontStyle: "italic",
+                        }}>
+                            "{notes}"
                         </div>
+                    )}
 
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8, borderTop: "1px solid var(--admin-border)", paddingTop: 12, justifyContent: "flex-end" }}>
+                        {status === "confirmed" && (
+                            <Link to={`/user/private/reviews/add/${id}`} style={{
+                                background: "rgba(212,165,116,0.12)", color: "var(--admin-warning)",
+                                border: "1px solid rgba(212,165,116,0.35)", borderRadius: "var(--admin-radius-sm)",
+                                padding: "4px 12px", fontSize: "0.78rem", fontWeight: 600, textDecoration: "none",
+                            }}>
+                                <i className="fas fa-star me-1" /> Reseña
+                            </Link>
+                        )}
+                        <Link to={`/user/private/chats?id=${place_id}&name=${encodeURIComponent(place_name)}`} style={{
+                            background: "var(--admin-primary-soft)", color: "var(--admin-primary)",
+                            border: "1px solid var(--admin-border)", borderRadius: "var(--admin-radius-sm)",
+                            padding: "4px 12px", fontSize: "0.78rem", fontWeight: 600, textDecoration: "none",
+                        }}>
+                            <i className="fas fa-comment me-1" /> Chat
+                        </Link>
+                        {status !== "cancelled" && (
+                            <button type="button" onClick={() => onCancelReservation(id)} style={{
+                                background: "rgba(184,84,80,0.08)", color: "var(--admin-danger)",
+                                border: "1px solid rgba(184,84,80,0.25)", borderRadius: "var(--admin-radius-sm)",
+                                padding: "4px 12px", fontSize: "0.78rem", fontWeight: 600, cursor: "pointer",
+                            }}>
+                                <i className="fas fa-times me-1" /> Cancelar
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>

@@ -323,7 +323,8 @@ header {
 ========================= */
 .home-hero {
     background-color: var(--pink-light);
-    padding: 1.5rem 0 2.5rem;
+    /* padding: 1.5rem 0 2.5rem; */
+    padding: 200px 0;
 }
 
 .home-hero__inner {
@@ -340,7 +341,7 @@ header {
 
 .home-hero__title {
     margin: 0 0 1.5rem;
-    font-size: 28pt;
+    font-size: 50pt;
     font-weight: 800;
     line-height: 1.08;
     letter-spacing: -0.04em;
@@ -350,7 +351,7 @@ header {
     margin: 0;
     font-size: 14pt;
     line-height: 1.45;
-    max-width: 28ch;
+    max-width: 500px;
 }
 
 .home-hero__actions {
@@ -685,8 +686,8 @@ header {
 }
 
 .how-it-works__paw-line--left {
-    left: -20rem;
-    transform: rotate(-90deg);
+    top: 100px;
+    left: -5rem;
 }
 
 .how-it-works__paw-line--right {
@@ -986,6 +987,136 @@ header {
     gap: 0.4rem;
     color: #ffbf1f;
     font-size: 1.8rem;
+}
+
+/* =========================
+   LATEST NEWS
+========================= */
+.home-latest-news {
+    padding: 0 0 5rem;
+    background-color: var(--pink-light);
+    font-family: var(--font-family-base);
+    overflow: hidden;
+}
+
+.home-latest-news__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1.5rem;
+    margin-bottom: 2.5rem;
+}
+
+.home-latest-news__title {
+    margin: 0;
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+}
+
+.home-latest-news__header-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 1rem;
+}
+
+.home-latest-news__view-all {
+    min-height: 3.5rem;
+    padding: 0.8rem 1.45rem;
+    border-radius: 1.1rem;
+    font-size: 1.1rem;
+}
+
+.home-latest-news__controls {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.home-latest-news__arrow {
+    background: rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 50%;
+}
+
+.home-latest-news__arrow:disabled {
+    opacity: 0.4;
+}
+
+.home-latest-news__carousel {
+    overflow: hidden;
+}
+
+.home-latest-news__track {
+    display: flex;
+    transition: transform 0.35s ease;
+}
+
+.home-latest-news__slide {
+    flex-shrink: 0;
+    padding: 0 0.95rem 1.25rem 0;
+}
+
+.home-latest-news__card-shell {
+    position: relative;
+    height: 100%;
+}
+
+.home-latest-news__card-outline {
+    position: absolute;
+    top: 1.05rem;
+    left: 1.05rem;
+    right: 0;
+    bottom: 0;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: 2rem;
+}
+
+.home-latest-news__card {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    min-height: 242px;
+    padding: 1.5rem;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    border-radius: 2rem;
+    background-color: var(--white);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.04);
+}
+
+.home-latest-news__badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.52rem 0.95rem;
+    border-radius: 999px;
+    background-color: var(--pink-dark);
+    color: var(--white);
+    font-size: 10pt;
+    line-height: 1;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.home-latest-news__card-title {
+    margin: 1.2rem 0 0;
+    max-width: 15ch;
+    font-size: 1.1rem;
+    font-weight: 800;
+    line-height: 1.25;
+    letter-spacing: -0.03em;
+}
+
+.home-latest-news__read-more {
+    gap: 0.6rem;
+    margin-top: auto;
+    min-height: 3.2rem;
+    padding: 0.75rem 1.35rem;
+    background-color: transparent;
+    font-size: 1.1rem;
 }
 
 /* =========================
@@ -1349,6 +1480,10 @@ header {
         display: none;
     }
 
+    .home-latest-news {
+        padding-bottom: 4rem;
+    }
+
     .about-section {
         padding: 4rem 0;
     }
@@ -1624,6 +1759,45 @@ header {
 
     .reviews-section__stars {
         font-size: 1.45rem;
+    }
+
+    .home-latest-news {
+        padding-bottom: 3.25rem;
+    }
+
+    .home-latest-news__header {
+        flex-direction: column;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+
+    .home-latest-news__title {
+        text-align: center;
+    }
+
+    .home-latest-news__header-actions {
+        width: 100%;
+        align-items: stretch;
+    }
+
+    .home-latest-news__view-all {
+        width: 100%;
+    }
+
+    .home-latest-news__controls {
+        justify-content: center;
+    }
+
+    .home-latest-news__slide {
+        padding-right: 0.7rem;
+    }
+
+    .home-latest-news__card {
+        min-height: 228px;
+    }
+
+    .home-latest-news__read-more {
+        width: 100%;
     }
 
     .about-section {

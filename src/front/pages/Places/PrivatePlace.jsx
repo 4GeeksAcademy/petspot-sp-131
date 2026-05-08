@@ -65,15 +65,32 @@ function PrivatePlace() {
         }
     }
 
+    const placeName = localStorage.getItem("place_name") || "Mi local";
+
     return (
-        <div className="container mt-5">
-            <h1 className="text-center mb-4 display-4">Dashboard</h1>
-            <div className="d-flex justify-content-center gap-3 mb-5">
-                <Link to="/places/private/edit" className="btn btn-warning">Edit Profile</Link>
-                <Link to="/places/private/dashboard" className="btn btn-primary mx-2">Manage Reservations & Tables</Link>
-                <Link to="/places/private/chats" className="btn btn-info">View Chats</Link>
-                <button onClick={handleDeleteProfile} className="btn btn-danger">Delete Profile</button>
-                <button onClick={handleLogOutClick} className="btn btn-secondary">Log Out</button>
+        <div>
+            <div className="pvt-welcome">
+                <div>
+                    <h2 className="pvt-welcome__title">¡Bienvenido, {placeName}! 🐾</h2>
+                    <p className="pvt-welcome__sub">Gestiona tus reservas, mesas y chats desde aquí.</p>
+                </div>
+                <div className="pvt-welcome__icon">
+                    <i className="fa-solid fa-store" aria-hidden="true" />
+                </div>
+            </div>
+            <div className="d-flex flex-wrap gap-2 mb-4">
+                <Link to="/places/private/edit" className="btn btn-sm" style={{ background: "var(--admin-warning)", color: "#fff", border: "none" }}>
+                    <i className="fa-solid fa-pen me-1" />Editar perfil
+                </Link>
+                <Link to="/places/private/dashboard" className="btn btn-sm" style={{ background: "var(--admin-primary)", color: "#fff", border: "none" }}>
+                    <i className="fa-solid fa-table-cells me-1" />Reservas y mesas
+                </Link>
+                <Link to="/places/private/chats" className="btn btn-sm" style={{ background: "var(--admin-accent)", color: "#fff", border: "none" }}>
+                    <i className="fa-solid fa-comments me-1" />Chats
+                </Link>
+                <button onClick={handleDeleteProfile} className="btn btn-sm btn-danger">
+                    <i className="fa-solid fa-trash me-1" />Eliminar perfil
+                </button>
             </div>
             
             <div className="row">

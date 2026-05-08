@@ -36,6 +36,7 @@ import AdminDashboardPage from "./pages/AdminDashboardPage";
 
 import RequireAdmin from "./components/RequireAdmin";
 import AdminLayout from "./components/Admin/AdminLayout";
+import PlaceLayout from "./components/Places/PlaceLayout";
 
 import { Reviews } from "./pages/Reviews/Reviews.jsx";
 import { ReviewDetail } from "./pages/Reviews/ReviewDetail.jsx";
@@ -136,10 +137,13 @@ export const router = createBrowserRouter(
       <Route path="usuario/admin/login" element={<AdminLogin />} />
       <Route path="places/login" element={<LoginPlace />} />
       <Route path="places/signup" element={<SignupPlace />} />
-      <Route path="places/private" element={<RequirePlace><PrivatePlace /></RequirePlace>} />
-      <Route path="places/private/dashboard" element={<RequirePlace><PlaceDashboard /></RequirePlace>} />
-      <Route path="places/private/edit" element={<RequirePlace><EditPrivatePlace /></RequirePlace>} />
-      <Route path="places/private/chats" element={<RequirePlace><PlaceChats /></RequirePlace>} />
+
+      <Route element={<RequirePlace><PlaceLayout /></RequirePlace>}>
+        <Route path="places/private" element={<PrivatePlace />} />
+        <Route path="places/private/dashboard" element={<PlaceDashboard />} />
+        <Route path="places/private/edit" element={<EditPrivatePlace />} />
+        <Route path="places/private/chats" element={<PlaceChats />} />
+      </Route>
 
       <Route element={<RequireAdmin><AdminLayout /></RequireAdmin>}>
         <Route path="user" element={<User />} />

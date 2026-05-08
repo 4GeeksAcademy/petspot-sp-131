@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { Navbar } from "../../components/Navbar";
 import useGlobalReducer from "../../hooks/useGlobalReducer";
-import userHero from "../../assets/img/user.png";
+import { Navbar } from "../../components/Navbar";
+import userHero from "../../assets/img/user.png"
+
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
@@ -18,18 +19,13 @@ function UserLogin() {
 
         if (userToken) {
             if (store.userToken !== userToken) {
-                dispatch({
-                    type: "SET_USER_TOKEN",
-                    payload: userToken
-                });
+                dispatch({ type: "SET_USER_TOKEN", payload: userToken });
             }
-
             navigate("/user/private", { replace: true });
         }
         else {
-            dispatch({ type: "USER_LOGOUT" });
+            dispatch({ type: "USER_LOGOUT" })
         }
-
     }, [dispatch, navigate, store.userToken]);
 
     async function handleSubmit(event) {
@@ -43,18 +39,11 @@ function UserLogin() {
             return;
         }
 
-        const body = {
-            email: trimmedEmail,
-            password: trimmedPassword
-        };
-
         try {
             const response = await fetch(`${backendUrl}/api/user/login`, {
                 method: "POST",
-                body: JSON.stringify(body),
-                headers: {
-                    "Content-Type": "application/json"
-                }
+                body: JSON.stringify({ email: trimmedEmail, password: trimmedPassword }),
+                headers: { "Content-Type": "application/json" }
             });
 
             const responseJS = await response.json();
@@ -76,12 +65,13 @@ function UserLogin() {
         <>
             <Navbar />
             <div className="auth-page">
+
                 <div className="auth-hero">
                     <h1 className="auth-hero-title">My Account</h1>
 
                     <div className="auth-breadcrumb">
                         <Link to="/">Home</Link>
-                        <span>&gt;</span>
+                        <span>›</span>
                         <span>Login</span>
                     </div>
                     <div className="auth-hero-image">
@@ -90,7 +80,9 @@ function UserLogin() {
                 </div>
 
                 <div className="auth-panel">
+
                     <form onSubmit={handleSubmit} className="auth-card">
+
                         <h2 className="auth-title">Welcome Back</h2>
                         <p className="auth-subtitle">Please login to your account</p>
 
@@ -134,11 +126,14 @@ function UserLogin() {
                                 Register
                             </Link>
                         </div>
+
                     </form>
+
                 </div>
             </div>
         </>
     );
+        
 }
 
-export default UserLogin;
+            export default UserLogin;

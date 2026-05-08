@@ -89,6 +89,7 @@ class Place(db.Model):
     reservations: Mapped[list["Reservation"]] = relationship("Reservation", back_populates="place", cascade="all, delete-orphan")
     tables: Mapped[list["Table"]] = relationship("Table", back_populates="place", cascade="all, delete-orphan")
     schedules: Mapped[list["PlaceSchedule"]] = relationship("PlaceSchedule", back_populates="place", cascade="all, delete-orphan")
+    layouts: Mapped[list["FloorLayout"]] = relationship("FloorLayout", back_populates="place", cascade="all, delete-orphan")
 
     start_time: Mapped["Time"] = mapped_column(Time, nullable=True)
     end_time: Mapped["Time"] = mapped_column(Time, nullable=True)
@@ -139,20 +140,87 @@ class PlaceSchedule(db.Model):
             "is_closed": self.is_closed
         }
 
+class FloorLayout(db.Model):
+    __tablename__ = "floor_layouts"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    place_id: Mapped[int] = mapped_column(ForeignKey("places.id"), nullable=False)
+    name: Mapped[str] = mapped_column(String(100), nullable=False)
+    description: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    is_default: Mapped[bool] = mapped_column(Boolean(), default=False)
+
+    place: Mapped["Place"] = relationship("Place", back_populates="layouts")
+    tables: Mapped[list["Table"]] = relationship("Table", back_populates="layout", cascade="all, delete-orphan")
+    elements: Mapped[list["RoomElement"]] = relationship("RoomElement", back_populates="layout", cascade="all, delete-orphan")
+
+    def __repr__(self):
+        return f'<FloorLayout {self.name}>'
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "place_id": self.place_id,
+            "name": self.name,
+            "description": self.description,
+            "is_default": self.is_default,
+        }
+
+
+class RoomElement(db.Model):
+    __tablename__ = "room_elements"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    layout_id: Mapped[int] = mapped_column(ForeignKey("floor_layouts.id"), nullable=False)
+    # wall, stage, bar, window, pillar, text, entrance, exit, divider
+    element_type: Mapped[str] = mapped_column(String(30), nullable=False, default="wall")
+    pos_x: Mapped[int] = mapped_column(nullable=False, default=0)
+    pos_y: Mapped[int] = mapped_column(nullable=False, default=0)
+    width: Mapped[int] = mapped_column(nullable=False, default=120)
+    height: Mapped[int] = mapped_column(nullable=False, default=20)
+    rotation: Mapped[int] = mapped_column(nullable=False, default=0)
+    color: Mapped[str | None] = mapped_column(String(30), nullable=True)
+    label: Mapped[str | None] = mapped_column(String(100), nullable=True)
+
+    layout: Mapped["FloorLayout"] = relationship("FloorLayout", back_populates="elements")
+
+    def __repr__(self):
+        return f'<RoomElement {self.element_type}>'
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "layout_id": self.layout_id,
+            "element_type": self.element_type,
+            "pos_x": self.pos_x,
+            "pos_y": self.pos_y,
+            "width": self.width,
+            "height": self.height,
+            "rotation": self.rotation,
+            "color": self.color,
+            "label": self.label,
+        }
+
+
 class Table(db.Model):
     __tablename__ = "tables"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     place_id: Mapped[int] = mapped_column(ForeignKey("places.id"), nullable=False)
+    layout_id: Mapped[int | None] = mapped_column(ForeignKey("floor_layouts.id"), nullable=True)
     name: Mapped[str] = mapped_column(String(50), nullable=False)
     capacity_people: Mapped[int] = mapped_column(nullable=False)
     capacity_pets: Mapped[int] = mapped_column(nullable=False)
     pos_x: Mapped[int] = mapped_column(nullable=True, default=0)
     pos_y: Mapped[int] = mapped_column(nullable=True, default=0)
+    # square, round, rectangle, diamond, oval
     shape: Mapped[str] = mapped_column(String(20), nullable=True, default="square")
+    width: Mapped[int] = mapped_column(nullable=True, default=80)
+    height: Mapped[int] = mapped_column(nullable=True, default=80)
+    rotation: Mapped[int] = mapped_column(nullable=True, default=0)
     is_occupied: Mapped[bool] = mapped_column(nullable=True, default=False)
 
     place: Mapped["Place"] = relationship("Place", back_populates="tables")
+    layout: Mapped["FloorLayout | None"] = relationship("FloorLayout", back_populates="tables")
 
     def __repr__(self):
         return f'<Table {self.name}>'
@@ -161,13 +229,17 @@ class Table(db.Model):
         return {
             "id": self.id,
             "place_id": self.place_id,
+            "layout_id": self.layout_id,
             "name": self.name,
             "capacity_people": self.capacity_people,
             "capacity_pets": self.capacity_pets,
             "pos_x": self.pos_x,
             "pos_y": self.pos_y,
             "shape": self.shape,
-            "is_occupied": self.is_occupied if self.is_occupied is not None else False
+            "width": self.width if self.width is not None else 80,
+            "height": self.height if self.height is not None else 80,
+            "rotation": self.rotation if self.rotation is not None else 0,
+            "is_occupied": self.is_occupied if self.is_occupied is not None else False,
         }
 
 class City(db.Model):

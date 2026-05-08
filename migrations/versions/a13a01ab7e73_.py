@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: dc0cdb223824
+Revision ID: a13a01ab7e73
 Revises: 
-Create Date: 2026-05-04 12:58:17.122056
+Create Date: 2026-05-06 22:02:39.127619
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'dc0cdb223824'
+revision = 'a13a01ab7e73'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -120,6 +120,15 @@ def upgrade():
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('user_id', 'place_id', name='uq_favorite_user_place')
     )
+    op.create_table('floor_layouts',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('place_id', sa.Integer(), nullable=False),
+    sa.Column('name', sa.String(length=100), nullable=False),
+    sa.Column('description', sa.String(length=255), nullable=True),
+    sa.Column('is_default', sa.Boolean(), nullable=False),
+    sa.ForeignKeyConstraint(['place_id'], ['places.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
     op.create_table('place_schedules',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('place_id', sa.Integer(), nullable=False),
@@ -130,16 +139,35 @@ def upgrade():
     sa.ForeignKeyConstraint(['place_id'], ['places.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
+    op.create_table('room_elements',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('layout_id', sa.Integer(), nullable=False),
+    sa.Column('element_type', sa.String(length=30), nullable=False),
+    sa.Column('pos_x', sa.Integer(), nullable=False),
+    sa.Column('pos_y', sa.Integer(), nullable=False),
+    sa.Column('width', sa.Integer(), nullable=False),
+    sa.Column('height', sa.Integer(), nullable=False),
+    sa.Column('rotation', sa.Integer(), nullable=False),
+    sa.Column('color', sa.String(length=30), nullable=True),
+    sa.Column('label', sa.String(length=100), nullable=True),
+    sa.ForeignKeyConstraint(['layout_id'], ['floor_layouts.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
     op.create_table('tables',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('place_id', sa.Integer(), nullable=False),
+    sa.Column('layout_id', sa.Integer(), nullable=True),
     sa.Column('name', sa.String(length=50), nullable=False),
     sa.Column('capacity_people', sa.Integer(), nullable=False),
     sa.Column('capacity_pets', sa.Integer(), nullable=False),
     sa.Column('pos_x', sa.Integer(), nullable=True),
     sa.Column('pos_y', sa.Integer(), nullable=True),
     sa.Column('shape', sa.String(length=20), nullable=True),
+    sa.Column('width', sa.Integer(), nullable=True),
+    sa.Column('height', sa.Integer(), nullable=True),
+    sa.Column('rotation', sa.Integer(), nullable=True),
     sa.Column('is_occupied', sa.Boolean(), nullable=True),
+    sa.ForeignKeyConstraint(['layout_id'], ['floor_layouts.id'], ),
     sa.ForeignKeyConstraint(['place_id'], ['places.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
@@ -155,6 +183,10 @@ def upgrade():
     sa.Column('zone_preference', sa.String(length=100), nullable=True),
     sa.Column('notes', sa.Text(), nullable=True),
     sa.Column('status', sa.Enum('CONFIRMED', 'PENDING', 'CANCELLED', name='reservation_status'), nullable=False),
+    sa.Column('paypal_order_id', sa.String(length=255), nullable=True),
+    sa.Column('paypal_capture_id', sa.String(length=255), nullable=True),
+    sa.Column('payment_status', sa.String(length=50), nullable=True),
+    sa.Column('refunded_at', sa.DateTime(), nullable=True),
     sa.ForeignKeyConstraint(['pet_id'], ['pets.id'], ),
     sa.ForeignKeyConstraint(['place_id'], ['places.id'], ),
     sa.ForeignKeyConstraint(['table_id'], ['tables.id'], ),
@@ -182,7 +214,9 @@ def downgrade():
     op.drop_table('review')
     op.drop_table('reservations')
     op.drop_table('tables')
+    op.drop_table('room_elements')
     op.drop_table('place_schedules')
+    op.drop_table('floor_layouts')
     op.drop_table('favorites')
     op.drop_table('chat')
     op.drop_table('places')

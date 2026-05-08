@@ -45,30 +45,42 @@ function UserDeletePetCard() {
 
     if (isLoading) {
         return (
-            <p className="text-center text-body-secondary alert alert-secondary mx-auto" style={{ maxWidth: 600 }}>
-                Loading pet details...
+            <p style={{ textAlign: "center", color: "var(--admin-text-muted)", padding: "20px 0" }}>
+                Cargando…
             </p>
         );
     }
 
     return (
-        <div
-            className="mx-auto p-5 bg-secondary-subtle border-0 rounded text-start"
-            style={{ maxWidth: 700 }}
-        >
-            <p className="mb-3 fw-semibold text-danger">
-                Warning: this action will permanently delete {pet?.name ? `"${pet.name}"` : "this pet"}.
+        <div style={{
+            maxWidth: 700, margin: "0 auto",
+            background: "var(--admin-surface)",
+            border: "1px solid var(--admin-border)",
+            borderRadius: "var(--admin-radius)",
+            boxShadow: "var(--admin-shadow-sm)",
+            padding: "28px 32px",
+        }}>
+            <p style={{ marginBottom: 8, fontWeight: 600, color: "var(--admin-danger)", fontSize: "0.9rem" }}>
+                Atención: esta acción eliminará permanentemente {pet?.name ? `"${pet.name}"` : "esta mascota"}.
             </p>
-            <p className="mb-0">
-                Once deleted, this pet will be removed from your profile and private user area.
+            <p style={{ marginBottom: 0, color: "var(--admin-text-muted)", fontSize: "0.875rem" }}>
+                Una vez eliminada, la mascota se borrará de tu perfil y del área privada.
             </p>
 
-            <div className="d-grid d-sm-flex gap-2 justify-content-sm-center mt-5">
-                <Link to="/user/private/pets" className="btn btn-outline-secondary">
-                    Go Back to My Pets
+            <div className="d-flex flex-wrap gap-2 justify-content-center mt-4">
+                <Link to="/user/private/pets" style={{
+                    background: "transparent", color: "var(--admin-text-muted)",
+                    border: "1px solid var(--admin-border)", borderRadius: "var(--admin-radius-sm)",
+                    padding: "7px 20px", fontSize: "0.85rem", fontWeight: 600, textDecoration: "none",
+                }}>
+                    Volver a mascotas
                 </Link>
-                <button type="button" className="btn btn-danger" onClick={handleDeletePet} disabled={isDeleting}>
-                    {isDeleting ? "Deleting..." : "Delete Pet"}
+                <button type="button" onClick={handleDeletePet} disabled={isDeleting} style={{
+                    background: "var(--admin-danger)", color: "#fff", border: "none",
+                    borderRadius: "var(--admin-radius-sm)", padding: "7px 20px",
+                    fontSize: "0.85rem", fontWeight: 600, cursor: "pointer",
+                }}>
+                    {isDeleting ? "Eliminando..." : "Eliminar mascota"}
                 </button>
             </div>
         </div>
