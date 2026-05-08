@@ -3555,3 +3555,122 @@ def get_place_statistics(place_id):
 
     result = [{"date": str(row[0]), "count": row[1]} for row in stats]
     return jsonify(result), 200
+
+
+@api.route('/seed', methods=['GET'])
+def seed_database():
+    """Temporary seed endpoint — remove after use."""
+    import random
+    from werkzeug.security import generate_password_hash
+
+    results = []
+
+    try:
+        # 1. Cities
+        from api.cities import cities as cities_data
+        cities_added = 0
+        for city_name in cities_data:
+            exists = db.session.execute(select(City).where(City.name == city_name)).scalar_one_or_none()
+            if not exists:
+                db.session.add(City(name=city_name))
+                cities_added += 1
+        db.session.commit()
+        results.append(f"Cities: {cities_added} added")
+    except Exception as e:
+        db.session.rollback()
+        results.append(f"Cities error: {str(e)}")
+
+    try:
+        # 2. Admin
+        exists = db.session.execute(select(AdminUser).where(AdminUser.email == "admin@petspot.com")).scalar_one_or_none()
+        if not exists:
+            admin = AdminUser(email="admin@petspot.com", password=generate_password_hash("Admin1234"), is_active=True)
+            db.session.add(admin)
+            db.session.commit()
+            results.append("Admin created: admin@petspot.com / Admin1234")
+        else:
+            results.append("Admin already exists")
+    except Exception as e:
+        db.session.rollback()
+        results.append(f"Admin error: {str(e)}")
+
+    try:
+        # 3. Users
+        users_added = 0
+        for i in range(1, 6):
+            email = f"user{i}@test.com"
+            exists = db.session.execute(select(User).where(User.email == email)).scalar_one_or_none()
+            if not exists:
+                db.session.add(User(email=email, password=generate_password_hash("123456"), is_active=True, name=f"User_{i}"))
+                users_added += 1
+        db.session.commit()
+        results.append(f"Users: {users_added} added")
+    except Exception as e:
+        db.session.rollback()
+        results.append(f"Users error: {str(e)}")
+
+    try:
+        # 4. Places
+        city = db.session.execute(select(City)).scalars().first()
+        places_added = 0
+        for i in range(1, 6):
+            email = f"place{i}@test.com"
+            exists = db.session.execute(select(Place).where(Place.email == email)).scalar_one_or_none()
+            if not exists and city:
+                place = Place(
+                    email=email,
+                    password=generate_password_hash("123456"),
+                    is_active=True,
+                    name=f"Place_{i}",
+                    establishment_type=random.choice(list(EstablishmentType)),
+                    city_id=city.id,
+                    pet_rules="Pets welcome",
+                    requires_reservation_payment=False
+                )
+                db.session.add(place)
+                places_added += 1
+        db.session.commit()
+        results.append(f"Places: {places_added} added")
+    except Exception as e:
+        db.session.rollback()
+        results.append(f"Places error: {str(e)}")
+
+    try:
+        # 5. Races
+        races_added = 0
+        sample_races = [("Labrador", "Perro"), ("Bulldog", "Perro"), ("Golden Retriever", "Perro"),
+                        ("Siamese", "Gato"), ("Persian", "Gato")]
+        for name, animal in sample_races:
+            exists = db.session.execute(select(Race).where(Race.name == name)).scalar_one_or_none()
+            if not exists:
+                db.session.add(Race(name=name, animal_type=animal))
+                races_added += 1
+        db.session.commit()
+        results.append(f"Races: {races_added} added")
+    except Exception as e:
+        db.session.rollback()
+        results.append(f"Races error: {str(e)}")
+
+    try:
+        # 6. Pets
+        users = db.session.execute(select(User)).scalars().all()
+        races = db.session.execute(select(Race)).scalars().all()
+        pets_added = 0
+        for i, user in enumerate(users[:5]):
+            race = races[i % len(races)] if races else None
+            pet = Pet(
+                name=f"Pet_{i+1}",
+                user_id=user.id,
+                animal_type=PetAnimalType.dog if race and race.animal_type == "Perro" else PetAnimalType.cat,
+                size=PetSize.medium,
+                race_id=race.id if race else None
+            )
+            db.session.add(pet)
+            pets_added += 1
+        db.session.commit()
+        results.append(f"Pets: {pets_added} added")
+    except Exception as e:
+        db.session.rollback()
+        results.append(f"Pets error: {str(e)}")
+
+    return jsonify({"status": "done", "results": results}), 200
