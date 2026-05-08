@@ -12,11 +12,7 @@ import {
 } from "../../../services/userPrivateService";
 
 
-const FALLBACK_IMAGES = {
-    dog:   "https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=400&auto=format&fit=crop&q=60",
-    cat:   "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=400&auto=format&fit=crop&q=60",
-    other: "https://images.unsplash.com/vector-1738926674638-65961800cd33?q=80&w=400&auto=format&fit=crop",
-};
+const OTHER_PET_FALLBACK_IMAGE = "https://images.unsplash.com/vector-1738926674638-65961800cd33?q=80&w=1160&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D";
 
 const initialFormData = {
     name: "",
@@ -175,7 +171,7 @@ function UserPetForm({ mode = "create", petId = null }) {
 
     const previewImage = imageFile
         ? URL.createObjectURL(imageFile)
-        : formData.url || FALLBACK_IMAGES[formData.animal_type] || FALLBACK_IMAGES.other;
+        : formData.url || (formData.animal_type === "other" ? OTHER_PET_FALLBACK_IMAGE : null);
 
     return (
         <div style={{

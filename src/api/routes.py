@@ -2177,17 +2177,15 @@ def get_user_pets():
     if not user:
         return jsonify({"msg": "User not found"}), 404
 
-    pets = db.session.execute(
-        db.select(Pet).options(joinedload(Pet.race)).where(
-            Pet.user_id == user.id)).scalars().all()
+    pets = db.session.execute(db.select(Pet).where(
+        Pet.user_id == user.id)).scalars().all()
     return jsonify([pet.serialize() for pet in pets]), 200
 
 
 @api.route('/pets/<int:pet_id>', methods=['GET'])
 def get_pet(pet_id):
-    pet = db.session.execute(
-        db.select(Pet).options(joinedload(Pet.race)).where(
-            Pet.id == pet_id)).scalars().first()
+    pet = db.session.execute(db.select(Pet).where(
+        Pet.id == pet_id)).scalars().first()
     if not pet:
         return jsonify({"msg": "Pet not found"}), 404
     return jsonify(pet.serialize()), 200
