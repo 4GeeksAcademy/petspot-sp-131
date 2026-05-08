@@ -3563,3 +3563,95 @@ def get_place_statistics(place_id):
 
 
 
+
+
+@api.route('/seed-chats', methods=['GET'])
+def seed_chats():
+    """Temporary: seeds chat messages. Remove after use."""
+    import random
+    from datetime import datetime, timedelta
+
+    user_messages = [
+        "Hola, ¿admitís perros en el interior?",
+        "Buenos días, ¿tenéis terraza pet-friendly?",
+        "¿Podemos ir con un golden retriever?",
+        "¿Hay espacio para mascotas grandes?",
+        "¿Tenéis agua para los perros?",
+        "¿Se puede reservar mesa en terraza con mascota?",
+        "¿Admitís gatos también?",
+        "¿Cuál es vuestro horario los fines de semana?",
+        "¿Tenéis menú del día?",
+        "Somos 4 personas y un perro, ¿podemos ir sin reserva?",
+        "¿Hay aparcamiento cerca?",
+        "¿Podemos llevar el carrito del bebé además de la mascota?",
+    ]
+    place_messages = [
+        "¡Hola! Sí, admitimos mascotas en terraza con correa.",
+        "Buenos días, por supuesto que sí, tenemos zona pet-friendly.",
+        "Claro que sí, todas las razas son bienvenidas.",
+        "Sin problema, tenemos mesas amplias en terraza.",
+        "Sí, ponemos agua y snacks para las mascotas.",
+        "Por supuesto, puedes reservar desde la app.",
+        "Sí, admitimos perros y gatos siempre que vengan con correa.",
+        "Abrimos de 9:00 a 23:00 todos los días.",
+        "Sí, tenemos menú del día de lunes a viernes.",
+        "¡Claro! Os esperamos, mejor con reserva para aseguraros mesa.",
+        "Hay parking público a 200 metros.",
+        "Sin problema, tenemos espacio de sobra.",
+    ]
+
+    try:
+        users = db.session.execute(select(User)).scalars().all()
+        places = db.session.execute(select(Place)).scalars().all()
+
+        if not users or not places:
+            return jsonify({"status": "error", "msg": "No users or places found."}), 400
+
+        chats_added = 0
+        now = datetime.utcnow()
+
+        # Ensure user1@petspot.com always gets chats
+        user1 = db.session.execute(select(User).where(User.email == "user1@petspot.com")).scalar_one_or_none()
+        priority_users = [user1] * 5 if user1 else []
+
+        # Random pairs + guaranteed user1 pairs
+        all_users = priority_users + random.choices(users, k=30)
+        seen = set()
+
+        for u in all_users:
+            p = random.choice(places)
+            key = (u.id, p.id)
+            if key in seen:
+                continue
+            seen.add(key)
+
+            n_exchanges = random.randint(3, 6)
+            msg_time = now - timedelta(days=random.randint(1, 30), hours=random.randint(0, 12))
+
+            for i in range(n_exchanges):
+                db.session.add(Chat(
+                    user_id=u.id, place_id=p.id,
+                    message=random.choice(user_messages),
+                    sender="user",
+                    created_at=msg_time,
+                    is_read=True,
+                ))
+                chats_added += 1
+                msg_time += timedelta(minutes=random.randint(2, 30))
+
+                db.session.add(Chat(
+                    user_id=u.id, place_id=p.id,
+                    message=random.choice(place_messages),
+                    sender="place",
+                    created_at=msg_time,
+                    is_read=random.random() > 0.3,
+                ))
+                chats_added += 1
+                msg_time += timedelta(minutes=random.randint(5, 60))
+
+        db.session.commit()
+        return jsonify({"status": "done", "chats_added": chats_added, "conversations": len(seen)}), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"status": "error", "error": str(e)}), 500
