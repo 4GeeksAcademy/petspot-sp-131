@@ -1380,6 +1380,7 @@ function PlaceReservationBoard({ placeId }) {
   );
 
   return (
+    <>
     <div className="prb-root">
       <DndContext sensors={sensors} onDragEnd={handleDragEnd} collisionDetection={closestCenter}>
         <div className="prb-layout">
@@ -1775,6 +1776,7 @@ function PlaceReservationBoard({ placeId }) {
       </>,
       document.body
     )}
+    </>
   );
 }
 
