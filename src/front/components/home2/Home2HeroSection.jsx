@@ -1,7 +1,8 @@
 import { Link } from "react-router-dom";
+import heroMain from "../../assets/img/hero2.png";
 
 const heroImages = {
-    main: "https://petperks.dexignzone.com/xhtml/images/shop/dog-02.png",
+    main: heroMain,
     accentOne: "https://petperks.dexignzone.com/xhtml/images/shop/min-3.png",
     accentTwo: "https://petperks.dexignzone.com/xhtml/images/shop/dog-01.png",
     accentThree: "https://petperks.dexignzone.com/xhtml/images/shop/product4.png"

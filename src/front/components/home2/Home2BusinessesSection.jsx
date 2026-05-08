@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import businessImage from "../../assets/img/business.jpg";
 
 const businessSteps = [
     {
@@ -36,11 +37,8 @@ function Home2BusinessesSection() {
         <section id="for-businesses" className="home2-businesses" aria-labelledby="home2-businesses-title">
             <div className="container">
                 <h2 id="home2-businesses-title" className="home2-businesses__title">
-                    For businesses
+                    For businesses ready to welcome pets
                 </h2>
-                <p className="home2-businesses__subtitle">
-                    Manage your pet-friendly establishment from one place.
-                </p>
 
                 <div className="home2-businesses__layout">
                     <div className="home2-businesses__list" role="tablist" aria-label="PetSpot business features">
@@ -75,7 +73,15 @@ function Home2BusinessesSection() {
                         </Link>
                     </article>
 
-                    <div className="home2-businesses__visuals" aria-hidden="true">
+                    <div className="home2-businesses__visual">
+                        <img
+                            src={businessImage}
+                            alt=""
+                            className="home2-businesses__hero-image"
+                        />
+                    </div>
+
+                    {/* <div className="home2-businesses__visuals" aria-hidden="true">
                         <div className="home2-businesses__badge home2-businesses__badge--top">Business dashboard</div>
 
                         <div className="home2-businesses__image-card home2-businesses__image-card--top">
@@ -110,7 +116,7 @@ function Home2BusinessesSection() {
                         <div className="home2-businesses__badge home2-businesses__badge--bottom">
                             Visibility, bookings, connection
                         </div>
-                    </div>
+                    </div> */}
                 </div>
             </div>
         </section>

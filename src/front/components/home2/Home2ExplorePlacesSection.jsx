@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import useGlobalReducer from "../../hooks/useGlobalReducer";
 import { getPlaces } from "../../services/userPrivateService";
 import fallbackPlaceImage from "../../assets/img/rigo-baby.jpg";
@@ -6,6 +6,7 @@ import fallbackPlaceImage from "../../assets/img/rigo-baby.jpg";
 function Home2ExplorePlacesSection() {
     const { store, dispatch } = useGlobalReducer();
     const [activeCity, setActiveCity] = useState("all");
+    const carouselRef = useRef(null);
 
     useEffect(() => {
         if (store.places.length > 0) return;
@@ -38,44 +39,56 @@ function Home2ExplorePlacesSection() {
     }, [store.places]);
 
     const filteredPlaces = useMemo(() => {
-        const matchingPlaces = activeCity === "all"
-            ? store.places
-            : store.places.filter(place => place.city?.city === activeCity);
+        const matchingPlaces =
+            activeCity === "all"
+                ? store.places
+                : store.places.filter(place => place.city?.city === activeCity);
 
-        return matchingPlaces.slice(0, 8);
+        return matchingPlaces.slice(0, 12);
     }, [activeCity, store.places]);
+
+    const scrollCarousel = direction => {
+        if (!carouselRef.current) return;
+
+        carouselRef.current.scrollBy({
+            left: direction === "left" ? -360 : 360,
+            behavior: "smooth"
+        });
+    };
 
     return (
         <section id="explore-places" className="home2-explore" aria-labelledby="home2-explore-title">
             <div className="container">
                 <div className="home2-explore__header">
-                    <h2 id="home2-explore-title" className="home2-explore__title">
-                        Explore pet-friendly places
-                    </h2>
-                </div>
+                    <div>
+                        <span className="home2-explore__eyebrow">Recommended places</span>
+                        <h2 id="home2-explore-title" className="home2-explore__title">
+                            Recommended pet-friendly spots
+                        </h2>
+                    </div>
 
-                <div className="home2-explore__filters" role="tablist" aria-label="Filter places by city">
-                    <button
-                        type="button"
-                        className={`home2-explore__filter${activeCity === "all" ? " home2-explore__filter--active" : ""}`}
-                        onClick={() => setActiveCity("all")}
-                    >
-                        All places
-                    </button>
-
-                    {cities.map(city => (
+                    <div className="home2-explore__controls">
                         <button
-                            key={city}
                             type="button"
-                            className={`home2-explore__filter${activeCity === city ? " home2-explore__filter--active" : ""}`}
-                            onClick={() => setActiveCity(city)}
+                            className="home2-explore__arrow"
+                            onClick={() => scrollCarousel("left")}
+                            aria-label="Previous places"
                         >
-                            {city}
+                            <i className="fa-solid fa-arrow-left-long" />
                         </button>
-                    ))}
+
+                        <button
+                            type="button"
+                            className="home2-explore__arrow"
+                            onClick={() => scrollCarousel("right")}
+                            aria-label="Next places"
+                        >
+                            <i className="fa-solid fa-arrow-right-long" />
+                        </button>
+                    </div>
                 </div>
 
-                <div className="home2-explore__grid">
+                <div className="home2-explore__carousel" ref={carouselRef}>
                     {filteredPlaces.length === 0 && (
                         <article className="home2-explore__empty">
                             <p>No places available yet for this city.</p>
@@ -86,7 +99,11 @@ function Home2ExplorePlacesSection() {
                         const placeType = place.establishment_type
                             ? place.establishment_type.charAt(0).toUpperCase() + place.establishment_type.slice(1)
                             : "Place";
-                        const placeAddress = place.address || place.city?.city || "Pet-friendly location";
+
+                        const placeAddress =
+                            place.address ||
+                            place.city?.city ||
+                            "Pet-friendly location";
 
                         return (
                             <article key={place.id} className="home2-explore__card">
@@ -96,6 +113,7 @@ function Home2ExplorePlacesSection() {
                                         alt={place.name}
                                         className="home2-explore__image"
                                     />
+
                                     <button
                                         type="button"
                                         className="home2-explore__heart"
@@ -109,6 +127,10 @@ function Home2ExplorePlacesSection() {
                                     <span className="home2-explore__type">{placeType}</span>
                                     <h3 className="home2-explore__name">{place.name}</h3>
                                     <p className="home2-explore__address">{placeAddress}</p>
+
+                                    <a href={`/places/view/${place.id}`} className="home2-explore__button">
+                                        View details
+                                    </a>
                                 </div>
                             </article>
                         );

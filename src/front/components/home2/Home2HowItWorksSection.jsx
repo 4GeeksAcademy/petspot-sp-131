@@ -1,46 +1,58 @@
+
 import { useState } from "react";
+import userHero from "../../assets/img/user.png";
 
 const featureSteps = [
     {
-        title: "Find places",
-        description: "Explore pet-friendly cafes, bars and restaurants near you.",
+        title: "Find nearby pet-friendly places",
+        description: "Discover restaurants, cafés, parks, beaches and hotels that welcome pets.",
         cta: "Explore places"
     },
     {
         title: "Check pet rules",
-        description: "See accepted pets, restrictions and useful information before visiting.",
-        cta: "Explore places"
+        description: "Review accepted pets, restrictions and useful details before visiting.",
+        cta: "See details"
     },
     {
-        title: "Reserve and connect",
-        description: "Book a table and chat directly with establishments when needed.",
-        cta: "Explore places"
+        title: "Reserve your spot",
+        description: "Book a table or save the place for your next pet-friendly plan.",
+        cta: "Start booking"
     },
     {
-        title: "Enjoy together",
-        description: "Create better experiences for you and your pet.",
-        cta: "Explore places"
+        title: "Chat with establishments",
+        description: "Connect directly with businesses when you need extra information.",
+        cta: "Connect now"
+    },
+    {
+        title: "Save favorites",
+        description: "Keep your favorite pet-friendly spots ready for future plans.",
+        cta: "Save places"
     }
 ];
-
-const visualImages = {
-    top: "https://petperks.dexignzone.com/xhtml/images/shop/ser-1.png",
-    bottom: "https://petperks.dexignzone.com/xhtml/images/shop/ser-2.png"
-};
 
 function Home2HowItWorksSection() {
     const [activeStepIndex, setActiveStepIndex] = useState(0);
     const activeStep = featureSteps[activeStepIndex];
 
     return (
-        <section id="how-it-works" className="home2-how" aria-labelledby="home2-how-title">
+        <section
+            id="how-it-works"
+            className="home2-how"
+            aria-labelledby="home2-how-title"
+        >
             <div className="container">
+
                 <h2 id="home2-how-title" className="home2-how__title">
-                    How it works for pet owners
+                    Everything you need for pet-friendly plans
                 </h2>
 
                 <div className="home2-how__layout">
-                    <div className="home2-how__list" role="tablist" aria-label="PetSpot pet owner steps">
+
+                    <div
+                        className="home2-how__list"
+                        role="tablist"
+                        aria-label="PetSpot benefits"
+                    >
                         {featureSteps.map((step, index) => {
                             const isActive = activeStepIndex === index;
 
@@ -50,12 +62,17 @@ function Home2HowItWorksSection() {
                                     type="button"
                                     role="tab"
                                     aria-selected={isActive}
-                                    className={`home2-how__list-item${isActive ? " home2-how__list-item--active" : ""}`}
+                                    className={`home2-how__list-item${isActive ? " home2-how__list-item--active" : ""
+                                        }`}
                                     onClick={() => setActiveStepIndex(index)}
                                     onMouseEnter={() => setActiveStepIndex(index)}
                                 >
                                     <span>{step.title}</span>
-                                    <span className="home2-how__arrow" aria-hidden="true">
+
+                                    <span
+                                        className="home2-how__arrow"
+                                        aria-hidden="true"
+                                    >
                                         <i className="fa-solid fa-arrow-right-long" />
                                     </span>
                                 </button>
@@ -64,35 +81,37 @@ function Home2HowItWorksSection() {
                     </div>
 
                     <article className="home2-how__card">
-                        <span className="home2-how__card-eyebrow">Featured Step</span>
-                        <h3 className="home2-how__card-title">{activeStep.title}</h3>
-                        <p className="home2-how__card-text">{activeStep.description}</p>
-                        <a href="#explore-places" className="home2-how__button">
+                        <span className="home2-how__card-eyebrow">
+                            Featured step
+                        </span>
+
+                        <h3 className="home2-how__card-title">
+                            {activeStep.title}
+                        </h3>
+
+                        <p className="home2-how__card-text">
+                            {activeStep.description}
+                        </p>
+
+                        <a
+                            href="#explore-places"
+                            className="home2-how__button"
+                        >
                             {activeStep.cta}
                         </a>
                     </article>
 
-                    <div className="home2-how__visuals" aria-hidden="true">
-                        
-
-                        <div className="home2-how__image-card home2-how__image-card--top">
-                            <img
-                                src={visualImages.top}
-                                alt=""
-                                className="home2-how__image"
-                            />
-                        </div>
-
-                        <div className="home2-how__image-card home2-how__image-card--bottom">
-                            <img
-                                src={visualImages.bottom}
-                                alt=""
-                                className="home2-how__image"
-                            />
-                        </div>
-
-                       
+                    <div
+                        className="home2-how__visual"
+                        aria-hidden="true"
+                    >
+                        <img
+                            src={userHero}
+                            alt=""
+                            className="home2-how__hero-image"
+                        />
                     </div>
+
                 </div>
             </div>
         </section>
@@ -100,3 +119,4 @@ function Home2HowItWorksSection() {
 }
 
 export default Home2HowItWorksSection;
+

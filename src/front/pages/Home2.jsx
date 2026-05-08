@@ -1,6 +1,6 @@
 import Home2Navbar from "../components/home2/Home2Navbar";
 import Home2HeroSection from "../components/home2/Home2HeroSection";
-import Home2CitiesSection from "../components/home2/Home2CitiesSection";
+import Home2Categories from "../components/home2/Home2Categories";
 import Home2HowItWorksSection from "../components/home2/Home2HowItWorksSection";
 import Home2EstablishmentsCarousel from "../components/home2/Home2EstablishmentsCarousel";
 import Home2BusinessesSection from "../components/home2/Home2BusinessesSection";
@@ -20,19 +20,16 @@ function Home2() {
                     <Home2HeroSection />
                 </section>
                 <section className="home2-page__section">
-                    <Home2CitiesSection />
+                    <Home2Categories />
                 </section>
                 <section className="home2-page__section">
                     <Home2HowItWorksSection />
                 </section>
                 <section className="home2-page__section">
-                    <Home2EstablishmentsCarousel />
+                    <Home2ExplorePlacesSection />
                 </section>
                 <section className="home2-page__section">
                     <Home2BusinessesSection />
-                </section>
-                <section className="home2-page__section">
-                    <Home2ExplorePlacesSection />
                 </section>
                 <section className="home2-page__section">
                     <Home2PhotoCollageSection />
@@ -45,7 +42,7 @@ function Home2() {
                 </section>
             </main>
 
-           
+
         </div>
     );
 }
