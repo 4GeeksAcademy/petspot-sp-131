@@ -1,4 +1,5 @@
 
+import os
 import click, random, requests
 from api.cities import cities
 from api.routes import resolve_place_address_geocode
@@ -585,7 +586,9 @@ def setup_commands(app):
 
         print("Fetching races from The Cat API...")
         try:
-            cat_res = requests.get('https://api.thecatapi.com/v1/breeds')
+            cat_api_key = os.getenv("CAT_API_KEY", "")
+            cat_headers = {"x-api-key": cat_api_key} if cat_api_key else {}
+            cat_res = requests.get('https://api.thecatapi.com/v1/breeds', headers=cat_headers)
             if cat_res.status_code == 200:
                 cats = cat_res.json()
                 cat_count = 0
