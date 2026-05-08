@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from api.models import db, User, Place, EstablishmentType, City, Favorite, AdminUser, Review, Reservation, ReservationStatus, Chat, News, PostType, Race, Pet, PetAnimalType, PetSize, PlaceSchedule, Table
 from werkzeug.security import generate_password_hash
 from sqlalchemy import select
+from sqlalchemy.orm import joinedload
 from decimal import Decimal
 
 """
@@ -499,6 +500,20 @@ def setup_commands(app):
 
         return print(f"Test news sync complete. {created_count} new posts added.")
 
+    @app.cli.command("sync-pet-urls")
+    def sync_pet_urls():
+        """Copy race.url into pet.url for any pet that has no url but belongs to a race with one."""
+        pets = db.session.execute(
+            select(Pet).options(joinedload(Pet.race)).where(Pet.url == None)
+        ).unique().scalars().all()
+        updated = 0
+        for pet in pets:
+            if pet.race and pet.race.url:
+                pet.url = pet.race.url
+                updated += 1
+        db.session.commit()
+        print(f"sync-pet-urls: updated {updated} pets.")
+
     @app.cli.command("insert-external-races")
     def insert_external_races():
         import os
@@ -512,31 +527,59 @@ def setup_commands(app):
                 dog_count = 0
                 for dog in dogs:
                     name = dog.get('name')
+                    image_url = dog.get('image', {}).get('url')
                     if name:
                         exists = db.session.execute(select(Race).where(Race.name == name, Race.animal_type == "Perro")).scalars().first()
                         if not exists:
-                            new_race = Race(name=name, animal_type="Perro")
+                            new_race = Race(name=name, animal_type="Perro", url=image_url)
                             db.session.add(new_race)
                             dog_count += 1
+                        elif image_url and not exists.url:
+                            # Update existing race that has no URL yet
+                            exists.url = image_url
                 db.session.commit()
-                print(f"Inserted {dog_count} dog races.")
+                print(f"Inserted/updated {dog_count} dog races.")
             else:
                 print(f"Unable to connect to The Dog API ({dog_res.status_code}). Using fallback list...")
+                # Build slug→CDN URL from Dog CEO API for each fallback breed
                 fallback_dogs = [
-                    "Golden Retriever", "Labrador Retriever", "Bulldog", "Poodle", 
-                    "Beagle", "Chihuahua", "German Shepherd", "Yorkshire Terrier", 
-                    "Boxer", "Husky", "Pomeranian", "Dachshund", "Pug", 
-                    "Cocker Spaniel", "Rottweiler", "Doberman", "Pitbull", "Border Collie"
+                    ("Golden Retriever",    "goldenretriever"),
+                    ("Labrador Retriever",  "labrador"),
+                    ("Bulldog",             "bulldog/english"),
+                    ("Poodle",              "poodle/standard"),
+                    ("Beagle",              "beagle"),
+                    ("Chihuahua",           "chihuahua"),
+                    ("German Shepherd",     "germanshepherd"),
+                    ("Yorkshire Terrier",   "yorkshire"),
+                    ("Boxer",               "boxer"),
+                    ("Husky",               "husky"),
+                    ("Pomeranian",          "pomeranian"),
+                    ("Dachshund",           "dachshund"),
+                    ("Pug",                 "pug"),
+                    ("Cocker Spaniel",      "spaniel/cocker"),
+                    ("Rottweiler",          "rottweiler"),
+                    ("Doberman",            "doberman"),
+                    ("Border Collie",       "collie/border"),
                 ]
                 dog_count = 0
-                for name in fallback_dogs:
+                for name, slug in fallback_dogs:
                     exists = db.session.execute(select(Race).where(Race.name == name, Race.animal_type == "Perro")).scalars().first()
+                    # Try to get image from Dog CEO API
+                    image_url = None
+                    try:
+                        ceo_res = requests.get(f'https://dog.ceo/api/breed/{slug}/images/random', timeout=5)
+                        if ceo_res.status_code == 200:
+                            image_url = ceo_res.json().get('message')
+                    except Exception:
+                        pass
                     if not exists:
-                        new_race = Race(name=name, animal_type="Perro")
+                        new_race = Race(name=name, animal_type="Perro", url=image_url)
                         db.session.add(new_race)
                         dog_count += 1
+                    elif image_url and not exists.url:
+                        exists.url = image_url
                 db.session.commit()
-                print(f"Inserted {dog_count} dog races from the fallback list.")
+                print(f"Inserted/updated {dog_count} dog races from fallback list.")
         except Exception as e:
             print(f"Dog API exception: {e}")
 
@@ -548,14 +591,17 @@ def setup_commands(app):
                 cat_count = 0
                 for cat in cats:
                     name = cat.get('name')
+                    image_url = cat.get('image', {}).get('url')
                     if name:
                         exists = db.session.execute(select(Race).where(Race.name == name, Race.animal_type == "Gato")).scalars().first()
                         if not exists:
-                            new_race = Race(name=name, animal_type="Gato")
+                            new_race = Race(name=name, animal_type="Gato", url=image_url)
                             db.session.add(new_race)
                             cat_count += 1
+                        elif image_url and not exists.url:
+                            exists.url = image_url
                 db.session.commit()
-                print(f"Inserted {cat_count} cat races.")
+                print(f"Inserted/updated {cat_count} cat races.")
             else:
                 print(f"Unable to connect to The Cat API ({cat_res.status_code}).")
         except Exception as e:
