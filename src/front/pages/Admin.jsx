@@ -30,10 +30,10 @@ export const Admin = () => {
 
   return (
     <div className="container py-4">
-      <div className="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+      <div className="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3" style={{ borderColor: "var(--admin-border)" }}>
         <div>
-          <h1 className="display-5 fw-bold text-primary mb-0">Admin Panel</h1>
-          <p className="text-muted">Manage the entire PetSpot ecosystem from here.</p>
+          <h1 className="display-5 fw-bold mb-0" style={{ color: "var(--admin-text)" }}>Admin Panel</h1>
+          <p className="mb-0" style={{ color: "var(--admin-text-muted)" }}>Manage the entire PetSpot ecosystem from here.</p>
         </div>
 
         {!isLogged ? (
