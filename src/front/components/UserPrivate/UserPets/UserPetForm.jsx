@@ -6,7 +6,6 @@ import {
     getPetById,
     getPrivateUser,
     getRaces,
-    importRaces,
     updatePet,
     uploadPetImage
 } from "../../../services/userPrivateService";
@@ -109,17 +108,6 @@ function UserPetForm({ mode = "create", petId = null }) {
     function handleImageChange(event) {
         const nextImageFile = event.target.files?.[0] || null;
         setImageFile(nextImageFile);
-    }
-
-    async function handleImportRaces() {
-        try {
-            const responseJSON = await importRaces();
-            const racesResponse = await getRaces();
-            setRaces(racesResponse);
-            alert(responseJSON.msg || "Races imported successfully.");
-        } catch (error) {
-            alert(error.message || "Unable to import races right now. Please try again.");
-        }
     }
 
     async function handleSubmit(event) {
@@ -260,12 +248,7 @@ function UserPetForm({ mode = "create", petId = null }) {
 
                 {(formData.animal_type === "dog" || formData.animal_type === "cat") && (
                     <div className="mb-3">
-                        <label htmlFor="petRace" className="form-label d-flex justify-content-between align-items-center">
-                            <span>Breed *</span>
-                            <button type="button" className="btn btn-sm btn-outline-primary" onClick={handleImportRaces}>
-                                Import Races
-                            </button>
-                        </label>
+                        <label htmlFor="petRace" className="form-label">Raza *</label>
                         <select
                             id="petRace"
                             name="race_id"
