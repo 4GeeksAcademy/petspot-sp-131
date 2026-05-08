@@ -58,7 +58,15 @@ function UserPetCard({ petObj }) {
                 <img
                     src={imageUrl}
                     alt={petObj.name}
-                    style={{ width: "100%", height: 220, objectFit: "cover" }}
+                    style={{
+                        width: "100%",
+                        height: 220,
+                        objectFit: "cover",
+                        objectPosition: "center top",
+                        display: "block",
+                        maxHeight: 220,
+                        overflow: "hidden",
+                    }}
                     onError={() => setImgError(true)}
                 />
             )}
