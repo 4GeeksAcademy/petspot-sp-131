@@ -1148,7 +1148,10 @@ function PlaceReservationBoard({ placeId }) {
     }
   }, [fetchLayouts, fetchTables, fetchElements, fetchReservations, fetchAllReservations, activeLayoutId]);
 
-  useEffect(() => { if (placeId) fetchAll(); }, [placeId, selectedDate]);
+  // Full load only when the place changes (layouts, tables, elements + reservations)
+  useEffect(() => { if (placeId) fetchAll(); }, [placeId]);
+  // Lightweight reload: only reservations when the selected date changes
+  useEffect(() => { if (placeId) fetchReservations(); }, [selectedDate]);
   // Keep full-range chart data fresh when the place changes
   useEffect(() => { if (placeId) fetchAllReservations(); }, [placeId]);
 
