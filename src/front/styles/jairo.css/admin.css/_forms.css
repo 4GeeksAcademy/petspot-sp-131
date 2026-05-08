@@ -148,3 +148,84 @@
   font-size: 0.875rem;
   color: var(--admin-text);
 }
+
+/* ══════════════════════════════════════════════════════════════
+   Bootstrap overrides — warm salmon palette for .admin-main
+   (Favorites, Reviews, Reservations, News, Chat, Cities pages)
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── Headings & text ───────────────────────────────────────── */
+.admin-main h1, .admin-main h2, .admin-main h3,
+.admin-main h4, .admin-main h5, .admin-main h6 {
+  color: var(--admin-text);
+}
+.admin-main .text-primary  { color: var(--admin-primary) !important; }
+.admin-main .text-muted,
+.admin-main .text-secondary { color: var(--admin-text-muted) !important; }
+
+/* ── Cards & panels ────────────────────────────────────────── */
+.admin-main .card,
+.admin-main .bg-white       { background-color: var(--admin-surface)     !important; border-color: var(--admin-border) !important; }
+.admin-main .bg-light,
+.admin-main .bg-secondary-subtle,
+.admin-main .bg-body-secondary { background-color: var(--admin-surface-alt) !important; border-color: var(--admin-border) !important; }
+.admin-main .card-header    { background-color: var(--admin-surface-alt) !important; border-color: var(--admin-border) !important; color: var(--admin-text) !important; }
+.admin-main .card-footer    { background-color: var(--admin-surface)     !important; border-color: var(--admin-border) !important; }
+.admin-main .border-bottom,
+.admin-main .border-top     { border-color: var(--admin-border) !important; }
+
+/* ── Form controls ─────────────────────────────────────────── */
+.admin-main .form-control,
+.admin-main .form-select    { background-color: var(--admin-surface) !important; border-color: var(--admin-border) !important; color: var(--admin-text) !important; }
+.admin-main .form-control:focus,
+.admin-main .form-select:focus { border-color: var(--admin-primary) !important; box-shadow: 0 0 0 3px rgba(201,123,99,0.18) !important; }
+.admin-main .form-control:disabled,
+.admin-main .form-control[readonly] { background-color: var(--admin-surface-alt) !important; }
+.admin-main .input-group-text { background-color: var(--admin-surface-alt) !important; border-color: var(--admin-border) !important; color: var(--admin-text-muted) !important; }
+.admin-main label           { color: var(--admin-text); }
+
+/* ── Tables ────────────────────────────────────────────────── */
+.admin-main .table          { color: var(--admin-text); --bs-table-bg: var(--admin-surface); --bs-table-border-color: var(--admin-border); }
+.admin-main .table th       { color: var(--admin-text-muted); border-color: var(--admin-border); }
+.admin-main .table td       { border-color: var(--admin-border); }
+.admin-main .table-striped > tbody > tr:nth-of-type(odd) > * { --bs-table-accent-bg: var(--admin-surface-alt); }
+.admin-main .table-hover    > tbody > tr:hover > * { --bs-table-accent-bg: var(--admin-primary-soft); }
+
+/* ── List groups ───────────────────────────────────────────── */
+.admin-main .list-group-item { background-color: var(--admin-surface) !important; border-color: var(--admin-border) !important; color: var(--admin-text) !important; }
+.admin-main .list-group-item-action:hover { background-color: var(--admin-primary-soft) !important; color: var(--admin-primary) !important; }
+
+/* ── Alerts ────────────────────────────────────────────────── */
+.admin-main .alert-info     { background-color: var(--admin-primary-soft) !important; border-color: var(--admin-border) !important; color: var(--admin-text) !important; }
+.admin-main .alert-warning  { background-color: #fdf3e3 !important; border-color: #d4a574 !important; color: #7a4f1d !important; }
+
+/* ── Buttons ───────────────────────────────────────────────── */
+
+/* Primary (blue → salmon) */
+.admin-main .btn-primary    { background-color: var(--admin-primary) !important; border-color: var(--admin-primary) !important; color: #fff !important; }
+.admin-main .btn-primary:hover { background-color: var(--admin-primary-hover) !important; border-color: var(--admin-primary-hover) !important; }
+.admin-main .btn-outline-primary { color: var(--admin-primary) !important; border-color: var(--admin-primary) !important; }
+.admin-main .btn-outline-primary:hover { background-color: var(--admin-primary-soft) !important; color: var(--admin-primary) !important; }
+
+/* Success (green → salmon) */
+.admin-main .btn-success    { background-color: var(--admin-primary) !important; border-color: var(--admin-primary) !important; color: #fff !important; }
+.admin-main .btn-success:hover { background-color: var(--admin-primary-hover) !important; border-color: var(--admin-primary-hover) !important; }
+.admin-main .btn-outline-success { color: var(--admin-primary) !important; border-color: var(--admin-primary) !important; }
+.admin-main .btn-outline-success:hover { background-color: var(--admin-primary-soft) !important; }
+
+/* Info (cyan → warm brown) */
+.admin-main .btn-info       { background-color: var(--admin-accent) !important; border-color: var(--admin-accent) !important; color: #fff !important; }
+.admin-main .btn-outline-info { color: var(--admin-accent) !important; border-color: var(--admin-accent) !important; }
+.admin-main .btn-outline-info:hover { background-color: var(--admin-primary-soft) !important; color: var(--admin-accent) !important; }
+
+/* Secondary (grey → warm muted) */
+.admin-main .btn-secondary  { background-color: var(--admin-text-muted) !important; border-color: var(--admin-text-muted) !important; color: #fff !important; }
+.admin-main .btn-outline-secondary { color: var(--admin-text-muted) !important; border-color: var(--admin-border) !important; }
+.admin-main .btn-outline-secondary:hover { background-color: var(--admin-surface-alt) !important; color: var(--admin-text) !important; }
+
+/* Dark */
+.admin-main .btn-dark       { background-color: var(--admin-text) !important; border-color: var(--admin-text) !important; color: #fff !important; }
+
+/* Pagination */
+.admin-main .page-link      { color: var(--admin-primary); border-color: var(--admin-border); background-color: var(--admin-surface); }
+.admin-main .page-item.active .page-link { background-color: var(--admin-primary) !important; border-color: var(--admin-primary) !important; }
