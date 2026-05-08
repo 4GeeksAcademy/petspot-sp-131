@@ -1,0 +1,357 @@
+/* ============================================================
+   Shared private-area layout  (Place + User)
+   Uses the same --admin-* custom properties from _variables.css
+   ============================================================ */
+
+.pvt-root {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--admin-bg);
+  color: var(--admin-text);
+  font-family: inherit;
+  overflow: hidden;
+}
+
+/* ── Topbar ─────────────────────────────────────── */
+.pvt-topbar-wrapper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--admin-topbar-height);
+  z-index: 1030;
+  flex-shrink: 0;
+}
+
+.pvt-topbar {
+  height: var(--admin-topbar-height);
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  background: var(--admin-surface);
+  border-bottom: 1px solid var(--admin-border);
+  box-shadow: var(--admin-shadow-sm);
+  gap: 12px;
+}
+
+.pvt-topbar__hamburger {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--admin-text);
+  font-size: 1.15rem;
+  padding: 6px 8px;
+  border-radius: 6px;
+  line-height: 1;
+  transition: background 150ms;
+}
+
+.pvt-topbar__hamburger:hover {
+  background: var(--admin-primary-soft);
+  color: var(--admin-primary);
+}
+
+.pvt-topbar__logo-area {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: var(--admin-text);
+  font-weight: 700;
+  font-size: 1.05rem;
+  letter-spacing: -0.02em;
+}
+
+.pvt-topbar__logo-icon {
+  color: var(--admin-primary);
+  font-size: 1.1rem;
+}
+
+.pvt-topbar__logo-text {
+  color: var(--admin-text);
+}
+
+.pvt-topbar__right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
+}
+
+.pvt-topbar__name {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--admin-text-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pvt-topbar__logout {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-sm);
+  color: var(--admin-text-muted);
+  font-size: 0.82rem;
+  padding: 5px 12px;
+  cursor: pointer;
+  transition: all 150ms;
+  white-space: nowrap;
+}
+
+.pvt-topbar__logout:hover {
+  border-color: var(--admin-danger);
+  color: var(--admin-danger);
+  background: rgba(184, 84, 80, 0.06);
+}
+
+/* ── Body ───────────────────────────────────────── */
+.pvt-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  padding-top: var(--admin-topbar-height);
+  overflow: hidden;
+}
+
+/* ── Sidebar wrapper ────────────────────────────── */
+.pvt-sidebar-wrapper {
+  position: fixed;
+  top: var(--admin-topbar-height);
+  left: 0;
+  width: var(--admin-sidebar-width);
+  height: calc(100vh - var(--admin-topbar-height));
+  z-index: 1020;
+  transition: transform 200ms ease;
+}
+
+/* ── Sidebar inner ──────────────────────────────── */
+.pvt-sidebar {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--admin-surface);
+  border-right: 1px solid var(--admin-border);
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0 0 16px;
+}
+
+.pvt-sidebar::-webkit-scrollbar { width: 4px; }
+.pvt-sidebar::-webkit-scrollbar-track { background: transparent; }
+.pvt-sidebar::-webkit-scrollbar-thumb { background: var(--admin-border); border-radius: 4px; }
+
+.pvt-sidebar__logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 18px 20px 14px;
+  text-decoration: none;
+  border-bottom: 1px solid var(--admin-border);
+  margin-bottom: 8px;
+}
+
+.pvt-sidebar__logo-icon {
+  color: var(--admin-primary);
+  font-size: 1.2rem;
+}
+
+.pvt-sidebar__logo-text {
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--admin-text);
+  letter-spacing: -0.02em;
+}
+
+.pvt-sidebar__section {
+  padding: 0 12px 4px;
+  margin-top: 6px;
+}
+
+.pvt-sidebar__section-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--admin-text-muted);
+  padding: 8px 8px 4px;
+}
+
+.pvt-sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: var(--admin-radius-sm);
+  text-decoration: none;
+  font-size: 0.875rem;
+  color: var(--admin-text);
+  transition: background 140ms, color 140ms;
+  margin-bottom: 2px;
+  cursor: pointer;
+}
+
+.pvt-sidebar-item:hover {
+  background: var(--admin-primary-soft);
+  color: var(--admin-primary);
+}
+
+.pvt-sidebar-item--active {
+  background: var(--admin-primary-soft);
+  color: var(--admin-primary);
+  font-weight: 600;
+}
+
+.pvt-sidebar-item__icon {
+  width: 18px;
+  text-align: center;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+  color: inherit;
+}
+
+.pvt-sidebar__footer {
+  margin-top: auto;
+  padding: 12px 12px 0;
+  border-top: 1px solid var(--admin-border);
+}
+
+.pvt-sidebar__profile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 8px;
+}
+
+.pvt-sidebar__profile-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--admin-text);
+}
+
+.pvt-sidebar__profile-role {
+  font-size: 0.72rem;
+  color: var(--admin-text-muted);
+  margin-top: 1px;
+}
+
+.pvt-sidebar__logout-btn {
+  margin-left: auto;
+  background: none;
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-sm);
+  color: var(--admin-text-muted);
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 150ms;
+  flex-shrink: 0;
+}
+
+.pvt-sidebar__logout-btn:hover {
+  border-color: var(--admin-danger);
+  color: var(--admin-danger);
+  background: rgba(184, 84, 80, 0.06);
+}
+
+/* ── Backdrop (mobile) ──────────────────────────── */
+.pvt-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(61, 43, 37, 0.45);
+  z-index: 1015;
+}
+
+.pvt-backdrop--visible {
+  display: block;
+}
+
+/* ── Main content ───────────────────────────────── */
+.pvt-main {
+  flex: 1;
+  margin-left: var(--admin-sidebar-width);
+  padding: 24px;
+  min-width: 0;
+  background-color: var(--admin-bg);
+  overflow-y: auto;
+  height: 100%;
+}
+
+/* ── Welcome banner ─────────────────────────────── */
+.pvt-welcome {
+  background: linear-gradient(135deg, var(--admin-primary) 0%, var(--admin-accent) 100%);
+  border-radius: var(--admin-radius);
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 24px;
+  color: #fff;
+}
+
+.pvt-welcome__title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin: 0 0 4px;
+  color: #fff;
+}
+
+.pvt-welcome__sub {
+  font-size: 0.875rem;
+  opacity: 0.88;
+  margin: 0;
+}
+
+.pvt-welcome__icon {
+  font-size: 2.4rem;
+  opacity: 0.22;
+}
+
+/* ── Chat container ─────────────────────────────── */
+.pvt-chat-container {
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius);
+  overflow: hidden;
+  max-height: calc(100vh - var(--admin-topbar-height) - 80px);
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Responsive ≤ 992px ─────────────────────────── */
+@media (max-width: 991.98px) {
+  .pvt-topbar__hamburger {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .pvt-sidebar-wrapper {
+    transform: translateX(-100%);
+    top: 0;
+    height: 100vh;
+    z-index: 1040;
+  }
+
+  .pvt-sidebar-wrapper--open {
+    transform: translateX(0);
+  }
+
+  .pvt-main {
+    margin-left: 0;
+    padding: 16px;
+  }
+}

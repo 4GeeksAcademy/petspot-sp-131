@@ -1,16 +1,12 @@
 import { forwardRef } from "react";
 import { Link } from "react-router-dom";
 import useGlobalReducer from "../../../hooks/useGlobalReducer";
-import {
-    handleAddToFavorites,
-    handleRemoveFromFavorites
-} from "../../../services/userPrivateService";
+import { handleAddToFavorites, handleRemoveFromFavorites } from "../../../services/userPrivateService";
 
 const UserPlaceCard = forwardRef(function UserPlaceCard({ placeObj, isSelected = false, onSelect }, ref) {
     const { store, dispatch } = useGlobalReducer();
     const { name, pet_rules, city, establishment_type, id, image_url, address } = placeObj;
     const isFavorite = (store.privateUser?.favorite_places || []).includes(id);
-
 
     async function addToFavorites() {
         try {
@@ -89,7 +85,7 @@ const UserPlaceCard = forwardRef(function UserPlaceCard({ placeObj, isSelected =
                 </p>
                 <h5 className="user-places__title">{name}</h5>
                 <p className="user-places__address">
-                    {address} ({city.city})
+                    {address} ({city?.city})
                 </p>
                 <div className="user-places__summary">{pet_rules}</div>
                 <div className="user-places__actions" onClick={stopCardSelection}>

@@ -1,34 +1,33 @@
 function UserReviewCard({ reviewObj }) {
-    const {
-        place_name,
-        rating,
-        title,
-        content,
-        created_at
-    } = reviewObj;
+    const { place_name, rating, title, content, created_at } = reviewObj;
 
     return (
-        <div className="card mb-3 mx-auto w-100 bg-secondary-subtle border-0" style={{ maxWidth: 800 }}>
-            <div className="card-body">
-                <h5 className="card-title card-header bg-secondary-subtle mb-3 ps-0 h2">{place_name}</h5>
-                <div className="mb-3">
-                    <strong>Rating:</strong>{" "}
-                    {[1, 2, 3, 4, 5].map((num) => (
-                        <i
-                            key={num}
-                            className={`fa-star ${num <= rating ? "fa-solid text-warning" : "fa-regular text-secondary"}`}
-                        ></i>
-                    ))}
-                </div>
-                <div className="mb-3">
-                    <strong>Title:</strong> {title}
-                </div>
-                <div className="mb-3">
-                    <strong>Review:</strong> {content}
-                </div>
-                <div className="mb-0">
-                    <strong>Created at:</strong> {created_at}
-                </div>
+        <div className="mb-3 mx-auto w-100" style={{
+            maxWidth: 800,
+            background: "var(--admin-surface)",
+            border: "1px solid var(--admin-border)",
+            borderRadius: "var(--admin-radius)",
+            boxShadow: "var(--admin-shadow-sm)",
+            padding: "16px 20px 20px",
+        }}>
+            <h5 style={{ fontWeight: 700, fontSize: "1.1rem", color: "var(--admin-text)", borderBottom: "1px solid var(--admin-border)", paddingBottom: 10, marginBottom: 12 }}>
+                {place_name}
+            </h5>
+            <div style={{ fontSize: "0.875rem", color: "var(--admin-text)", marginBottom: 8 }}>
+                <strong>Valoración:</strong>{" "}
+                {[1, 2, 3, 4, 5].map((num) => (
+                    <i key={num} className={`fa-star ${num <= rating ? "fa-solid" : "fa-regular"}`}
+                        style={{ color: num <= rating ? "var(--admin-warning)" : "var(--admin-border)", marginLeft: 2 }} />
+                ))}
+            </div>
+            <div style={{ fontSize: "0.875rem", color: "var(--admin-text)", marginBottom: 6 }}>
+                <strong>Título:</strong> <span style={{ color: "var(--admin-text-muted)" }}>{title}</span>
+            </div>
+            <div style={{ fontSize: "0.875rem", color: "var(--admin-text)", marginBottom: 6 }}>
+                <strong>Reseña:</strong> <span style={{ color: "var(--admin-text-muted)" }}>{content}</span>
+            </div>
+            <div style={{ fontSize: "0.78rem", color: "var(--admin-text-muted)", marginTop: 8 }}>
+                {created_at}
             </div>
         </div>
     );

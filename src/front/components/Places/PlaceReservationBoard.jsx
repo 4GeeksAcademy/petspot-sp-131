@@ -135,13 +135,14 @@ function TableFurniture({ table, reservations, onDelete, onEdit, onMove, editMod
   const hasReservations = reservations.length > 0;
   const isOccupied = table.is_occupied;
 
+  /* Salmon tones: light=available  medium=reserved  dark=occupied */
   let accent = isOccupied
-    ? { bg: "#c0392b", border: "rgba(192,57,43,0.5)", glow: "rgba(192,57,43,0.35)" }
+    ? { bg: "#8b4a3a", border: "rgba(139,74,58,0.55)", glow: "rgba(139,74,58,0.35)", text: "#fff" }
     : hasReservations
-    ? { bg: "#1565C0", border: "rgba(21,101,192,0.5)", glow: "rgba(21,101,192,0.35)" }
-    : { bg: "#1b7f4f", border: "rgba(27,127,79,0.4)", glow: "rgba(27,127,79,0.3)" };
+    ? { bg: "#c97b63", border: "rgba(201,123,99,0.55)", glow: "rgba(201,123,99,0.35)", text: "#fff" }
+    : { bg: "#f3d9cc", border: "rgba(201,123,99,0.35)", glow: "rgba(201,123,99,0.15)", text: "#3d2b25" };
 
-  if (isOver) accent = { bg: "#0d6efd", border: "white", glow: "rgba(13,110,253,0.4)" };
+  if (isOver) accent = { bg: "#d4a574", border: "#fff", glow: "rgba(212,165,116,0.45)", text: "#fff" };
 
   const shapeStyle = getShapeStyle(table.shape, w, h);
 
@@ -180,8 +181,8 @@ function TableFurniture({ table, reservations, onDelete, onEdit, onMove, editMod
           ...shapeStyle,
           background: accent.bg,
           border: `2px solid ${accent.border}`,
-          boxShadow: `0 4px 18px ${accent.glow}, 0 2px 6px rgba(0,0,0,0.2)`,
-          color: "white",
+          boxShadow: `0 4px 18px ${accent.glow}, 0 2px 6px rgba(0,0,0,0.12)`,
+          color: accent.text,
           userSelect: "none",
           overflow: "hidden",
         }}

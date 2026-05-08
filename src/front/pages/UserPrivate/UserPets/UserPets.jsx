@@ -3,14 +3,19 @@ import UserPetsList from "../../../components/UserPrivate/UserPets/UserPetsList"
 
 function UserPets() {
     return (
-        <div className="mx-auto">
-            <h1 className="text-center my-5 display-3">My Pets</h1>
-            <div className="d-grid d-sm-flex gap-2 justify-content-sm-center my-5">
-                <Link to="/user/private/profile" className="btn btn-outline-secondary">
-                    Go Back to My Profile
-                </Link>
-                <Link to="/user/private/pets/add" className="btn btn-success">
-                    Add Pet
+        <div>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
+                <h5 style={{ fontWeight: 700, color: "var(--admin-text)", margin: 0 }}>
+                    <i className="fa-solid fa-paw me-2" style={{ color: "var(--admin-primary)" }} />
+                    Mis mascotas
+                </h5>
+                <Link to="/user/private/pets/add" style={{
+                    background: "var(--admin-primary)", color: "#fff", border: "none",
+                    borderRadius: "var(--admin-radius-sm)", padding: "7px 16px",
+                    fontSize: "0.85rem", fontWeight: 600, textDecoration: "none",
+                    display: "flex", alignItems: "center", gap: 6,
+                }}>
+                    <i className="fa-solid fa-plus" /> Añadir mascota
                 </Link>
             </div>
             <UserPetsList />

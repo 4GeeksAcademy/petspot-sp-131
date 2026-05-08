@@ -55,25 +55,40 @@ function UserDeleteProfile() {
     }
 
     return (
-        <div className="text-center mx-auto">
-            <h1 className="text-center my-5 display-3">Delete Account</h1>
-            <div
-                className="mx-auto p-5 bg-secondary-subtle border-0 rounded text-start"
-                style={{ maxWidth: 700 }}
-            >
-                <p className="mb-3 fw-semibold text-danger">
-                    Warning: this action will permanently delete your account.
+        <div>
+            <h5 style={{ fontWeight: 700, color: "var(--admin-text)", marginBottom: 20 }}>
+                <i className="fa-solid fa-trash me-2" style={{ color: "var(--admin-danger)" }} />
+                Eliminar cuenta
+            </h5>
+            <div style={{
+                maxWidth: 700,
+                background: "var(--admin-surface)",
+                border: "1px solid var(--admin-border)",
+                borderRadius: "var(--admin-radius)",
+                boxShadow: "var(--admin-shadow-sm)",
+                padding: "28px 32px",
+            }}>
+                <p style={{ marginBottom: 8, fontWeight: 600, color: "var(--admin-danger)", fontSize: "0.9rem" }}>
+                    Atención: esta acción eliminará permanentemente tu cuenta.
                 </p>
-                <p className="mb-0">
-                    Once your account is deleted, your access to the private user area will be removed immediately.
+                <p style={{ marginBottom: 0, color: "var(--admin-text-muted)", fontSize: "0.875rem" }}>
+                    Una vez eliminada, perderás acceso al área privada de usuario de forma inmediata.
                 </p>
 
-                <div className="d-grid d-sm-flex gap-2 justify-content-sm-center mt-5">
-                    <Link to="/user/private/profile" className="btn btn-outline-secondary">
-                        Go Back to My Profile
+                <div className="d-flex flex-wrap gap-2 justify-content-center mt-4">
+                    <Link to="/user/private/profile" style={{
+                        background: "transparent", color: "var(--admin-text-muted)",
+                        border: "1px solid var(--admin-border)", borderRadius: "var(--admin-radius-sm)",
+                        padding: "7px 20px", fontSize: "0.85rem", fontWeight: 600, textDecoration: "none",
+                    }}>
+                        Volver a mi perfil
                     </Link>
-                    <button type="button" className="btn btn-danger" onClick={handleDeleteAccount}>
-                        Delete Account
+                    <button type="button" onClick={handleDeleteAccount} style={{
+                        background: "var(--admin-danger)", color: "#fff", border: "none",
+                        borderRadius: "var(--admin-radius-sm)", padding: "7px 20px",
+                        fontSize: "0.85rem", fontWeight: 600, cursor: "pointer",
+                    }}>
+                        Eliminar cuenta
                     </button>
                 </div>
             </div>

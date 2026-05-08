@@ -7,6 +7,8 @@ import {
 
 import { Layout } from "./pages/Layout";
 import Home from "./pages/Home.jsx";
+import Home2 from "./pages/Home2.jsx";
+import About from "./pages/About.jsx";
 import { Demo } from "./pages/Demo";
 import { Single } from "./pages/Single";
 import { User } from "./pages/User";
@@ -34,6 +36,7 @@ import AdminDashboardPage from "./pages/AdminDashboardPage";
 
 import RequireAdmin from "./components/RequireAdmin";
 import AdminLayout from "./components/Admin/AdminLayout";
+import PlaceLayout from "./components/Places/PlaceLayout";
 
 import { Reviews } from "./pages/Reviews/Reviews.jsx";
 import { ReviewDetail } from "./pages/Reviews/ReviewDetail.jsx";
@@ -98,7 +101,9 @@ import PlaceMatcher from "./pages/UserPrivate/PlaceMatcher";
 export const router = createBrowserRouter(
   createRoutesFromElements(
     <Route path="/" element={<Layout />} errorElement={<h1>Not found!</h1>}>
-      <Route index element={<Home />} />
+      <Route index element={<Home2 />} />
+      <Route path="home-v1" element={<Home />} />
+      <Route path="about" element={<About />} />
       <Route path="tell-me-more" element={<TellMeMore />} />
       <Route path="demo" element={<Demo />} />
       <Route path="single/:theId" element={<Single />} />
@@ -132,10 +137,13 @@ export const router = createBrowserRouter(
       <Route path="usuario/admin/login" element={<AdminLogin />} />
       <Route path="places/login" element={<LoginPlace />} />
       <Route path="places/signup" element={<SignupPlace />} />
-      <Route path="places/private" element={<RequirePlace><PrivatePlace /></RequirePlace>} />
-      <Route path="places/private/dashboard" element={<RequirePlace><PlaceDashboard /></RequirePlace>} />
-      <Route path="places/private/edit" element={<RequirePlace><EditPrivatePlace /></RequirePlace>} />
-      <Route path="places/private/chats" element={<RequirePlace><PlaceChats /></RequirePlace>} />
+
+      <Route element={<RequirePlace><PlaceLayout /></RequirePlace>}>
+        <Route path="places/private" element={<PrivatePlace />} />
+        <Route path="places/private/dashboard" element={<PlaceDashboard />} />
+        <Route path="places/private/edit" element={<EditPrivatePlace />} />
+        <Route path="places/private/chats" element={<PlaceChats />} />
+      </Route>
 
       <Route element={<RequireAdmin><AdminLayout /></RequireAdmin>}>
         <Route path="user" element={<User />} />

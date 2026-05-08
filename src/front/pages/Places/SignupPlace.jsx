@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { Navbar } from "../../components/Navbar";
 import useGlobalReducer from "../../hooks/useGlobalReducer";
 import LocationMap from "../../components/LocationMap";
+import { getDefaultPlaceThumbnail } from "../../components/Places/placeFormUtils";
 import placeHero from "../../assets/img/places-hero.png";
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
@@ -227,7 +228,8 @@ function SignupPlace() {
             password: trimmedPassword,
             name: trimmedPlaceName,
             establishment_type: formData.establishment_type,
-            pet_rules: trimmedPetRules
+            pet_rules: trimmedPetRules,
+            image_url: getDefaultPlaceThumbnail(formData.establishment_type)
         };
 
         if (validatedAddress) {

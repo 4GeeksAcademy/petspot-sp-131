@@ -1,4 +1,5 @@
 import pawLine from "../../assets/img/paw-line.png";
+import pawLineTwo from "../../assets/img/paw-line2.png";
 import coupleCafe from "../../assets/img/happy-couple-outdoors-near-cafe.jpg";
 import dogTreats from "../../assets/img/view-adorable-chihuahua-dog-getting-some-treats-home.jpg";
 import ownerDoor from "../../assets/img/happy-bar-owner-holding-dog-while-opening-entrance-door-looking-camera.jpg";
@@ -46,7 +47,7 @@ function HowItWorksSection() {
 
                 <div className="how-it-works__content">
                     <img
-                        src={pawLine}
+                        src={pawLineTwo}
                         alt=""
                         aria-hidden="true"
                         className="how-it-works__paw-line how-it-works__paw-line--left"

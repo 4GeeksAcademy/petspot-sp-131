@@ -39,23 +39,35 @@ function UserChatsList() {
         fetchMessages();
     };
 
-    if (loading) return <div className="text-center p-5">Loading your messages...</div>;
+    if (loading) return (
+        <p style={{ textAlign: "center", color: "var(--admin-text-muted)", padding: "20px 0" }}>Cargando mensajes…</p>
+    );
 
     return (
-        <div className="mx-auto p-5 bg-secondary-subtle border-0 rounded text-start" style={{ maxWidth: 700 }}>
-             <div className="d-flex flex-column gap-3">
+        <div style={{ maxWidth: 700 }}>
+            <div className="d-flex flex-column gap-3">
                 {messages.length > 0 ? (
                     messages.map((msg) => (
-                        <div key={msg.id} className="bg-white p-3 rounded shadow-sm border">
-                            <div className="d-flex justify-content-between align-items-center mb-2">
-                                <span className="fw-bold text-primary">From: {msg.place_name}</span>
-                                <small className="text-muted">{new Date(msg.created_at).toLocaleString()}</small>
+                        <div key={msg.id} style={{
+                            background: "var(--admin-surface)",
+                            border: "1px solid var(--admin-border)",
+                            borderRadius: "var(--admin-radius)",
+                            boxShadow: "var(--admin-shadow-sm)",
+                            padding: "14px 18px",
+                        }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                                <span style={{ fontWeight: 700, color: "var(--admin-primary)", fontSize: "0.9rem" }}>
+                                    {msg.place_name}
+                                </span>
+                                <small style={{ color: "var(--admin-text-muted)", fontSize: "0.78rem" }}>
+                                    {new Date(msg.created_at).toLocaleString()}
+                                </small>
                             </div>
-                            <p className="mb-2">{msg.message}</p>
+                            <p style={{ marginBottom: 0, color: "var(--admin-text)", fontSize: "0.875rem" }}>{msg.message}</p>
                         </div>
                     ))
                 ) : (
-                    <p className="mb-0">No messages yet.</p>
+                    <p style={{ color: "var(--admin-text-muted)", fontSize: "0.875rem" }}>No hay mensajes todavía.</p>
                 )}
             </div>
         </div>
