@@ -3557,120 +3557,312 @@ def get_place_statistics(place_id):
     return jsonify(result), 200
 
 
+
+
 @api.route('/seed', methods=['GET'])
 def seed_database():
-    """Temporary seed endpoint — remove after use."""
+    """Temporary seed endpoint — DELETE after use."""
     import random
+    from datetime import date, time, timedelta
     from werkzeug.security import generate_password_hash
 
     results = []
+    pw = generate_password_hash("123456")
 
+    # ── 1. CITIES ──────────────────────────────────────────────────────────
     try:
-        # 1. Cities
-        from api.cities import cities as cities_data
-        cities_added = 0
-        for city_name in cities_data:
-            exists = db.session.execute(select(City).where(City.name == city_name)).scalar_one_or_none()
-            if not exists:
-                db.session.add(City(name=city_name))
-                cities_added += 1
+        cities_data = [
+            ("Madrid", 40.4168, -3.7038, "Madrid, España"),
+            ("Barcelona", 41.3851, 2.1734, "Barcelona, España"),
+            ("Valencia", 39.4699, -0.3763, "Valencia, España"),
+            ("Sevilla", 37.3891, -5.9845, "Sevilla, España"),
+            ("Bilbao", 43.2630, -2.9350, "Bilbao, España"),
+            ("Málaga", 36.7213, -4.4214, "Málaga, España"),
+            ("Zaragoza", 41.6488, -0.8891, "Zaragoza, España"),
+            ("Murcia", 37.9922, -1.1307, "Murcia, España"),
+        ]
+        city_objs = []
+        for name, lat, lng, addr in cities_data:
+            c = db.session.execute(select(City).where(City.city == name)).scalar_one_or_none()
+            if not c:
+                c = City(city=name, latitude=lat, longitude=lng, address=addr)
+                db.session.add(c)
+                db.session.flush()
+            city_objs.append(c)
         db.session.commit()
-        results.append(f"Cities: {cities_added} added")
+        results.append(f"Cities: {len(city_objs)} ready")
     except Exception as e:
         db.session.rollback()
-        results.append(f"Cities error: {str(e)}")
+        return jsonify({"status": "error", "step": "cities", "error": str(e)}), 500
 
+    # ── 2. ADMIN ───────────────────────────────────────────────────────────
     try:
-        # 2. Admin
-        exists = db.session.execute(select(AdminUser).where(AdminUser.email == "admin@petspot.com")).scalar_one_or_none()
-        if not exists:
-            admin = AdminUser(email="admin@petspot.com", password=generate_password_hash("Admin1234"), is_active=True)
+        admin = db.session.execute(select(AdminUser).where(AdminUser.email == "admin@petspot.com")).scalar_one_or_none()
+        if not admin:
+            admin = AdminUser(name="Admin", email="admin@petspot.com",
+                              password=generate_password_hash("Admin1234"), is_active=True)
             db.session.add(admin)
             db.session.commit()
-            results.append("Admin created: admin@petspot.com / Admin1234")
-        else:
-            results.append("Admin already exists")
+        results.append("Admin: admin@petspot.com / Admin1234")
     except Exception as e:
         db.session.rollback()
-        results.append(f"Admin error: {str(e)}")
+        results.append(f"Admin error: {e}")
 
+    # ── 3. RACES ───────────────────────────────────────────────────────────
     try:
-        # 3. Users
-        users_added = 0
-        for i in range(1, 6):
-            email = f"user{i}@test.com"
-            exists = db.session.execute(select(User).where(User.email == email)).scalar_one_or_none()
-            if not exists:
-                db.session.add(User(email=email, password=generate_password_hash("123456"), is_active=True, name=f"User_{i}"))
-                users_added += 1
+        races_data = [
+            ("Labrador Retriever","Perro"),("Golden Retriever","Perro"),("Bulldog Francés","Perro"),
+            ("Pastor Alemán","Perro"),("Beagle","Perro"),("Poodle","Perro"),("Yorkshire Terrier","Perro"),
+            ("Chihuahua","Perro"),("Boxer","Perro"),("Dachshund","Perro"),("Husky Siberiano","Perro"),
+            ("Border Collie","Perro"),("Shih Tzu","Perro"),("Maltés","Perro"),("Cocker Spaniel","Perro"),
+            ("Persa","Gato"),("Siamés","Gato"),("Maine Coon","Gato"),("Bengalí","Gato"),
+            ("Ragdoll","Gato"),("Esfinge","Gato"),("Angora","Gato"),("Azul Ruso","Gato"),
+        ]
+        race_objs = []
+        for rname, rtype in races_data:
+            r = db.session.execute(select(Race).where(Race.name == rname)).scalar_one_or_none()
+            if not r:
+                r = Race(name=rname, animal_type=rtype)
+                db.session.add(r)
+                db.session.flush()
+            race_objs.append(r)
         db.session.commit()
-        results.append(f"Users: {users_added} added")
+        results.append(f"Races: {len(race_objs)} ready")
     except Exception as e:
         db.session.rollback()
-        results.append(f"Users error: {str(e)}")
+        results.append(f"Races error: {e}")
 
+    # ── 4. USERS (50) ──────────────────────────────────────────────────────
     try:
-        # 4. Places
-        city = db.session.execute(select(City)).scalars().first()
-        places_added = 0
-        for i in range(1, 6):
-            email = f"place{i}@test.com"
-            exists = db.session.execute(select(Place).where(Place.email == email)).scalar_one_or_none()
-            if not exists and city:
-                place = Place(
-                    email=email,
-                    password=generate_password_hash("123456"),
-                    is_active=True,
-                    name=f"Place_{i}",
-                    establishment_type=random.choice(list(EstablishmentType)),
-                    city_id=city.id,
-                    pet_rules="Pets welcome",
-                    requires_reservation_payment=False
-                )
-                db.session.add(place)
-                places_added += 1
+        user_names = [
+            "Carlos","María","Alejandro","Lucía","Miguel","Sofía","Pablo","Elena",
+            "David","Laura","Javier","Ana","Sergio","Carmen","Raúl","Isabel",
+            "Alberto","Marta","Fernando","Patricia","Roberto","Cristina","Andrés","Silvia",
+            "Jorge","Natalia","Óscar","Beatriz","Víctor","Rosa","Diego","Irene",
+            "Ignacio","Pilar","Rubén","Teresa","Álvaro","Raquel","Enrique","Yolanda",
+            "Marcos","Amparo","Gonzalo","Lorena","Adrián","Nuria","Héctor","Verónica",
+            "Tomás","Claudia",
+        ]
+        user_objs = []
+        added = 0
+        for i, uname in enumerate(user_names, 1):
+            email = f"user{i}@petspot.com"
+            u = db.session.execute(select(User).where(User.email == email)).scalar_one_or_none()
+            if not u:
+                u = User(name=uname, email=email, password=pw, is_active=True)
+                db.session.add(u)
+                db.session.flush()
+                added += 1
+            user_objs.append(u)
         db.session.commit()
-        results.append(f"Places: {places_added} added")
+        results.append(f"Users: {added} added ({len(user_objs)} total)")
     except Exception as e:
         db.session.rollback()
-        results.append(f"Places error: {str(e)}")
+        results.append(f"Users error: {e}")
 
+    # ── 5. PETS ────────────────────────────────────────────────────────────
     try:
-        # 5. Races
-        races_added = 0
-        sample_races = [("Labrador", "Perro"), ("Bulldog", "Perro"), ("Golden Retriever", "Perro"),
-                        ("Siamese", "Gato"), ("Persian", "Gato")]
-        for name, animal in sample_races:
-            exists = db.session.execute(select(Race).where(Race.name == name)).scalar_one_or_none()
-            if not exists:
-                db.session.add(Race(name=name, animal_type=animal))
-                races_added += 1
-        db.session.commit()
-        results.append(f"Races: {races_added} added")
-    except Exception as e:
-        db.session.rollback()
-        results.append(f"Races error: {str(e)}")
-
-    try:
-        # 6. Pets
-        users = db.session.execute(select(User)).scalars().all()
-        races = db.session.execute(select(Race)).scalars().all()
+        dog_races = [r for r in race_objs if r.animal_type == "Perro"]
+        cat_races = [r for r in race_objs if r.animal_type == "Gato"]
+        pet_names = ["Max","Bella","Rocky","Luna","Toby","Nala","Buddy","Coco",
+                     "Charlie","Mia","Zeus","Daisy","Rex","Lola","Bruno","Nina",
+                     "Simba","Kira","Thor","Mochi","Canela","Pipa","Teo","Gala"]
+        sizes = list(PetSize)
         pets_added = 0
-        for i, user in enumerate(users[:5]):
-            race = races[i % len(races)] if races else None
-            pet = Pet(
-                name=f"Pet_{i+1}",
-                user_id=user.id,
-                animal_type=PetAnimalType.dog if race and race.animal_type == "Perro" else PetAnimalType.cat,
-                size=PetSize.medium,
-                race_id=race.id if race else None
-            )
-            db.session.add(pet)
-            pets_added += 1
+        all_pet_objs = []
+        for i, u in enumerate(user_objs):
+            n_pets = 2 if i % 3 != 0 else 1
+            for j in range(n_pets):
+                pname = random.choice(pet_names) + f"_{u.id}_{j}"
+                if i % 4 == 3 and cat_races:
+                    pet = Pet(name=pname, user_id=u.id, animal_type=PetAnimalType.CAT,
+                              size=random.choice(sizes), race_id=random.choice(cat_races).id)
+                elif dog_races:
+                    pet = Pet(name=pname, user_id=u.id, animal_type=PetAnimalType.DOG,
+                              size=random.choice(sizes), race_id=random.choice(dog_races).id)
+                else:
+                    continue
+                db.session.add(pet)
+                db.session.flush()
+                all_pet_objs.append(pet)
+                pets_added += 1
         db.session.commit()
         results.append(f"Pets: {pets_added} added")
     except Exception as e:
         db.session.rollback()
-        results.append(f"Pets error: {str(e)}")
+        results.append(f"Pets error: {e}")
+
+    # ── 6. PLACES (200) ────────────────────────────────────────────────────
+    try:
+        prefixes = ["El","La","Los","Bar","Café","Restaurante","Taberna","Bistró","Casa","El Rincón de","La Terraza de"]
+        suffixes = ["las Mascotas","los Amigos","la Alegría","los Peludos","la Familia",
+                    "la Esquina","el Sol","la Luna","las Flores","los Colores","la Tradición","el Sabor"]
+        pet_rules_list = [
+            "Mascotas bienvenidas en terraza","Admitimos perros y gatos con correa",
+            "Zona interior y exterior pet-friendly","Solo mascotas pequeñas en interior",
+            "Terraza completamente pet-friendly","Agua y snacks para mascotas disponibles",
+        ]
+        est_types = list(EstablishmentType)
+        images = [
+            "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800",
+            "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800",
+            "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800",
+            "https://images.unsplash.com/photo-1537047902294-62a40c20a6ae?w=800",
+            "https://images.unsplash.com/photo-1551632436-cbf8dd35adfa?w=800",
+        ]
+        place_objs = []
+        added = 0
+        for i in range(1, 201):
+            email = f"place{i}@petspot.com"
+            p = db.session.execute(select(Place).where(Place.email == email)).scalar_one_or_none()
+            if not p:
+                city = random.choice(city_objs)
+                name = f"{random.choice(prefixes)} {random.choice(suffixes)} {i}"
+                needs_payment = random.random() < 0.3
+                p = Place(
+                    email=email, password=pw, is_active=True, name=name,
+                    establishment_type=random.choice(est_types),
+                    city_id=city.id,
+                    pet_rules=random.choice(pet_rules_list),
+                    image_url=random.choice(images),
+                    requires_reservation_payment=needs_payment,
+                    reservation_price=random.choice([5.0, 10.0, 15.0, 20.0]) if needs_payment else None,
+                    start_time=time(9, 0), end_time=time(23, 0),
+                    latitude=city.latitude + random.uniform(-0.05, 0.05) if city.latitude else None,
+                    longitude=city.longitude + random.uniform(-0.05, 0.05) if city.longitude else None,
+                )
+                db.session.add(p)
+                db.session.flush()
+                for t in range(1, random.randint(3, 6)):
+                    db.session.add(Table(
+                        place_id=p.id, name=f"Mesa {t}",
+                        capacity_people=random.choice([2,4,4,6,8]),
+                        capacity_pets=random.randint(1, 3),
+                        shape=random.choice(["square","round","rectangle"]),
+                        pos_x=t * 120, pos_y=50,
+                    ))
+                added += 1
+            place_objs.append(p)
+        db.session.commit()
+        results.append(f"Places: {added} added ({len(place_objs)} total)")
+    except Exception as e:
+        db.session.rollback()
+        results.append(f"Places error: {e}")
+
+    # ── 7. RESERVATIONS (400) ──────────────────────────────────────────────
+    try:
+        today = date.today()
+        statuses = [ReservationStatus.CONFIRMED, ReservationStatus.CONFIRMED,
+                    ReservationStatus.PENDING, ReservationStatus.CANCELLED]
+        notes_list = ["Sin gluten","Mesa cerca ventana","Cumpleaños","Alérgico al marisco",None,None,None]
+        zones = ["terraza","interior","barra",None]
+        res_added = 0
+        for _ in range(400):
+            u = random.choice(user_objs)
+            p = random.choice(place_objs)
+            days_offset = random.randint(-180, 60)
+            res_date = today + timedelta(days=days_offset)
+            res_time = time(random.choice([12,13,14,19,20,21,22]), random.choice([0,15,30,45]))
+            user_pets = [pet for pet in all_pet_objs if pet.user_id == u.id]
+            pet = random.choice(user_pets) if user_pets and random.random() > 0.3 else None
+            status = ReservationStatus.PENDING if days_offset > 0 else random.choice(statuses)
+            db.session.add(Reservation(
+                user_id=u.id, place_id=p.id,
+                reservation_date=res_date, reservation_time=res_time,
+                people_count=random.choice([1,2,2,3,4,5,6]),
+                pet_id=pet.id if pet else None,
+                zone_preference=random.choice(zones),
+                notes=random.choice(notes_list),
+                status=status,
+            ))
+            res_added += 1
+        db.session.commit()
+        results.append(f"Reservations: {res_added} added")
+    except Exception as e:
+        db.session.rollback()
+        results.append(f"Reservations error: {e}")
+
+    # ── 8. REVIEWS ─────────────────────────────────────────────────────────
+    try:
+        past_confirmed = db.session.execute(
+            select(Reservation).where(
+                Reservation.status == ReservationStatus.CONFIRMED,
+                Reservation.reservation_date < date.today()
+            )
+        ).scalars().all()
+        titles = ["Excelente experiencia","Muy pet-friendly","Repetiremos","Buena comida",
+                  "Ambiente acogedor","Perfecto para mascotas","Recomendable","Nos encantó"]
+        contents = [
+            "Fuimos con nuestro perro y nos trataron genial. El personal muy atento.",
+            "La terraza es perfecta para mascotas. Volveremos sin duda.",
+            "Muy buena comida y un sitio donde tu mascota es bienvenida de verdad.",
+            "Agua y snacks para las mascotas, un detalle que se agradece mucho.",
+            "El ambiente es muy agradable y admiten mascotas sin problema.",
+            "Recomendable al 100%, especialmente para los que tienen perros grandes.",
+        ]
+        reviews_added = 0
+        sample = random.sample(past_confirmed, min(150, len(past_confirmed)))
+        for res in sample:
+            already = db.session.execute(select(Review).where(Review.reservation_id == res.id)).scalar_one_or_none()
+            if not already:
+                db.session.add(Review(
+                    user_id=res.user_id, reservation_id=res.id,
+                    rating=random.randint(3, 5),
+                    title=random.choice(titles), content=random.choice(contents),
+                    created_at=str(res.reservation_date), is_active=True,
+                ))
+                reviews_added += 1
+        db.session.commit()
+        results.append(f"Reviews: {reviews_added} added")
+    except Exception as e:
+        db.session.rollback()
+        results.append(f"Reviews error: {e}")
+
+    # ── 9. FAVORITES ───────────────────────────────────────────────────────
+    try:
+        favs_added = 0
+        for u in random.sample(user_objs, min(30, len(user_objs))):
+            for p in random.sample(place_objs, random.randint(2, 6)):
+                exists = db.session.execute(
+                    select(Favorite).where(Favorite.user_id == u.id, Favorite.place_id == p.id)
+                ).scalar_one_or_none()
+                if not exists:
+                    db.session.add(Favorite(user_id=u.id, place_id=p.id))
+                    favs_added += 1
+        db.session.commit()
+        results.append(f"Favorites: {favs_added} added")
+    except Exception as e:
+        db.session.rollback()
+        results.append(f"Favorites error: {e}")
+
+    # ── 10. NEWS ───────────────────────────────────────────────────────────
+    try:
+        admin = db.session.execute(select(AdminUser).where(AdminUser.email == "admin@petspot.com")).scalar_one_or_none()
+        news_data = [
+            ("PetSpot llega a 8 ciudades españolas","Nos expandimos por toda España para conectar más mascotas con locales pet-friendly.",PostType.NEWS),
+            ("Nueva normativa sobre mascotas en terrazas","El Ministerio actualiza la normativa que regula el acceso de animales a espacios hosteleros.",PostType.NORMATIVE),
+            ("Festival PetSpot 2026 en Madrid","El mayor evento pet-friendly del año llega a Madrid este verano.",PostType.EVENT),
+            ("Consejos para salir a comer con tu perro","Te contamos los mejores tips para que la experiencia sea perfecta para ti y tu mascota.",PostType.NEWS),
+            ("Actualización de condiciones de acceso con mascotas","Nuevas condiciones de uso para locales registrados en nuestra plataforma.",PostType.NORMATIVE),
+            ("PetSpot Market: accesorios para mascotas","Descubre nuestra nueva sección de accesorios recomendados por la comunidad.",PostType.NEWS),
+            ("Concurso de fotos de mascotas en terrazas","Sube la foto más bonita de tu mascota en un local pet-friendly y gana premios.",PostType.EVENT),
+            ("Guía de razas más populares en locales pet-friendly","¿Cuáles son las razas que más frecuentan bares y restaurantes? Te lo contamos.",PostType.NEWS),
+        ]
+        news_added = 0
+        for i, (title, content, ptype) in enumerate(news_data):
+            from datetime import timedelta as td
+            exists = db.session.execute(select(News).where(News.title == title)).scalar_one_or_none()
+            if not exists and admin:
+                db.session.add(News(
+                    id_admin=admin.id, title=title, content=content,
+                    post_date=date.today() - td(days=i * 15),
+                    post_type=ptype,
+                ))
+                news_added += 1
+        db.session.commit()
+        results.append(f"News: {news_added} added")
+    except Exception as e:
+        db.session.rollback()
+        results.append(f"News error: {e}")
 
     return jsonify({"status": "done", "results": results}), 200
