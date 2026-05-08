@@ -3559,6 +3559,18 @@ def get_place_statistics(place_id):
 
 
 
+
+
+@api.route('/migrate', methods=['GET'])
+def run_migrate():
+    """Temporary: creates all DB tables. Remove after use."""
+    try:
+        db.create_all()
+        return jsonify({"status": "ok", "msg": "All tables created"}), 200
+    except Exception as e:
+        return jsonify({"status": "error", "error": str(e)}), 500
+
+
 @api.route('/seed', methods=['GET'])
 def seed_database():
     """Temporary seed endpoint — DELETE after use."""
@@ -3850,12 +3862,11 @@ def seed_database():
         ]
         news_added = 0
         for i, (title, content, ptype) in enumerate(news_data):
-            from datetime import timedelta as td
             exists = db.session.execute(select(News).where(News.title == title)).scalar_one_or_none()
             if not exists and admin:
                 db.session.add(News(
                     id_admin=admin.id, title=title, content=content,
-                    post_date=date.today() - td(days=i * 15),
+                    post_date=date.today() - timedelta(days=i * 15),
                     post_type=ptype,
                 ))
                 news_added += 1
