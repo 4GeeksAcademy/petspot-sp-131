@@ -79,10 +79,13 @@ def sitemap():
 
 @app.errorhandler(404)
 def serve_any_other_file(error):
-    # Check if the requested path is an API endpoint
     path = request.path.lstrip('/')
     if path.startswith('api/'):
         return jsonify({"error": "Not found"}), 404
+    # Serve static files (JS, CSS, images…) if they exist in the dist folder
+    file_path = os.path.join(static_file_dir, path)
+    if os.path.isfile(file_path):
+        return send_from_directory(static_file_dir, path)
     return send_from_directory(static_file_dir, 'index.html')
 
 
