@@ -1,15 +1,47 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
-
-const OTHER_PET_FALLBACK_IMAGE = "https://images.unsplash.com/vector-1738926674638-65961800cd33?q=80&w=1160&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D";
 
 const animalTypeLabel = { dog: "Perro", cat: "Gato", other: "Otro" };
 const sizeLabel = { small: "Pequeño", medium: "Mediano", large: "Grande" };
 
+function PetImagePlaceholder({ petId }) {
+    return (
+        <Link to={`/user/private/pets/edit/${petId}`} style={{ textDecoration: "none" }}>
+            <div style={{
+                width: "100%", height: 220,
+                background: "linear-gradient(135deg, #fdf0eb 0%, #f5ddd3 100%)",
+                display: "flex", flexDirection: "column",
+                alignItems: "center", justifyContent: "center", gap: 10,
+                cursor: "pointer",
+            }}>
+                <span style={{ fontSize: "2.8rem" }}>📷</span>
+                <span style={{
+                    fontSize: "0.82rem", fontWeight: 600,
+                    color: "var(--admin-accent, #8b4a3a)",
+                    textAlign: "center", padding: "0 16px",
+                }}>
+                    Añade una foto de tu mascota
+                </span>
+                <span style={{
+                    fontSize: "0.72rem", color: "var(--admin-text-muted)",
+                    textAlign: "center", padding: "0 20px",
+                }}>
+                    Toca para editar
+                </span>
+            </div>
+        </Link>
+    );
+}
+
 function UserPetCard({ petObj }) {
-    const imageUrl = petObj.url || petObj.race_url || (petObj.animal_type === "other" ? OTHER_PET_FALLBACK_IMAGE : null);
+    const imageUrl = petObj.url || petObj.race_url || null;
+    const [imgError, setImgError] = useState(false);
+
     const animalTypeName = petObj.animal_type === "other"
         ? (petObj.other_type || animalTypeLabel.other)
         : (animalTypeLabel[petObj.animal_type] || petObj.animal_type);
+
+    const showPlaceholder = !imageUrl || imgError;
 
     return (
         <div className="mb-3 mx-auto w-100" style={{
@@ -20,8 +52,15 @@ function UserPetCard({ petObj }) {
             boxShadow: "var(--admin-shadow-sm)",
             overflow: "hidden",
         }}>
-            {imageUrl && (
-                <img src={imageUrl} alt={petObj.name} style={{ width: "100%", height: 220, objectFit: "cover" }} />
+            {showPlaceholder ? (
+                <PetImagePlaceholder petId={petObj.id} />
+            ) : (
+                <img
+                    src={imageUrl}
+                    alt={petObj.name}
+                    style={{ width: "100%", height: 220, objectFit: "cover" }}
+                    onError={() => setImgError(true)}
+                />
             )}
             <div style={{ padding: "16px 20px 20px" }}>
                 <h5 style={{ fontWeight: 700, fontSize: "1.1rem", color: "var(--admin-text)", borderBottom: "1px solid var(--admin-border)", paddingBottom: 10, marginBottom: 12 }}>
