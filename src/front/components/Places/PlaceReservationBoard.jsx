@@ -614,14 +614,7 @@ function ReservationsChart({ reservations, onBarClick, selectedDate }) {
           </div>
         ) : (
         <ResponsiveContainer width="100%" height={80}>
-          <BarChart data={data} barCategoryGap="35%" onClick={(d) => {
-            if (!d?.activePayload) return;
-            const bar = d.activePayload[0]?.payload;
-            if (!bar) return;
-            const next = activeBar === bar.key ? null : bar.key;
-            setActiveBar(next);
-            onBarClick(next === null ? null : { mode, key: next });
-          }}>
+          <BarChart data={data} barCategoryGap="35%">
             <XAxis
               dataKey="label"
               tick={{ fontSize: 8, fill: "#94a3b8" }}
@@ -634,7 +627,18 @@ function ReservationsChart({ reservations, onBarClick, selectedDate }) {
               cursor={{ fill: "rgba(99,102,241,0.08)" }}
               formatter={(v) => [v, "Reservations"]}
             />
-            <Bar dataKey="count" radius={[4, 4, 0, 0]} barSize={5}>
+            <Bar
+              dataKey="count"
+              radius={[4, 4, 0, 0]}
+              barSize={8}
+              cursor="pointer"
+              onClick={(data) => {
+                if (!data) return;
+                const next = activeBar === data.key ? null : data.key;
+                setActiveBar(next);
+                onBarClick(next === null ? null : { mode, key: next });
+              }}
+            >
               {data.map((entry) => {
                 const isActive = entry.key === activeBar;
                 // In day mode also highlight the bar matching the current selected date
@@ -643,7 +647,6 @@ function ReservationsChart({ reservations, onBarClick, selectedDate }) {
                   <Cell
                     key={entry.key}
                     fill={isActive || isSelected ? "#4338ca" : "#a5b4fc"}
-                    cursor="pointer"
                   />
                 );
               })}
