@@ -50,6 +50,7 @@ import DeleteCity from "./pages/Cities/DeleteCity";
 import CityDetail from "./pages/Cities/CityDetail";
 
 import AdminPets from "./pages/Pets/AdminPets";
+import AdminEditPet from "./pages/Pets/AdminEditPet";
 
 import Reservations from "./pages/Reservations/Reservations";
 import AddReservation from "./pages/Reservations/AddReservation";
@@ -158,6 +159,7 @@ export const router = createBrowserRouter(
           <Route path="eliminar/:id" element={<AdminDelete />} />
           <Route path="detalle/:id" element={<AdminDetail />} />
           <Route path="pets" element={<AdminPets />} />
+          <Route path="pets/edit/:id" element={<AdminEditPet />} />
           <Route path="community" element={<Chat />} />
         </Route>
 

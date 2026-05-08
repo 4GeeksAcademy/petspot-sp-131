@@ -2107,6 +2107,57 @@ def delete_race(race_id):
         return jsonify({"msg": str(e)}), 500
 
 
+# ── Admin pet management ──────────────────────────────────────────────────────
+
+@api.route('/admin/pets/<int:pet_id>', methods=['PUT'])
+@jwt_required()
+def admin_update_pet(pet_id):
+    """Admin can edit any pet regardless of owner."""
+    pet = db.session.execute(
+        select(Pet).options(joinedload(Pet.race)).where(Pet.id == pet_id)
+    ).unique().scalar_one_or_none()
+    if not pet:
+        return jsonify({"msg": "Pet not found"}), 404
+
+    body = request.get_json(silent=True)
+    if not body:
+        return jsonify({"msg": "Missing JSON in request"}), 400
+
+    if "name" in body:
+        pet.name = body["name"]
+    if "size" in body:
+        try:
+            pet.size = normalize_pet_size(body["size"])
+        except ValueError as e:
+            return jsonify({"msg": str(e)}), 400
+    if "animal_type" in body:
+        try:
+            pet.animal_type = normalize_pet_animal_type(body["animal_type"])
+        except ValueError as e:
+            return jsonify({"msg": str(e)}), 400
+    if "other_type" in body:
+        pet.other_type = body["other_type"]
+    if "race_id" in body:
+        pet.race_id = body["race_id"] or None
+    if "url" in body:
+        pet.url = body["url"] or None
+
+    db.session.commit()
+    return jsonify(pet.serialize()), 200
+
+
+@api.route('/admin/pets/<int:pet_id>', methods=['DELETE'])
+@jwt_required()
+def admin_delete_pet(pet_id):
+    """Admin can delete any pet."""
+    pet = db.session.get(Pet, pet_id)
+    if not pet:
+        return jsonify({"msg": "Pet not found"}), 404
+    db.session.delete(pet)
+    db.session.commit()
+    return jsonify({"msg": "Pet deleted"}), 200
+
+
 # CRUD for Pets
 
 @api.route('/pets', methods=['GET'])
