@@ -2111,7 +2111,9 @@ def delete_race(race_id):
 
 @api.route('/pets', methods=['GET'])
 def get_pets():
-    pets = db.session.execute(db.select(Pet)).scalars().all()
+    pets = db.session.execute(
+        select(Pet).options(joinedload(Pet.race))
+    ).unique().scalars().all()
     return jsonify([pet.serialize() for pet in pets]), 200
 
 
